@@ -1,0 +1,291 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TeamRole {
+  ADMIN
+  COACH
+  STAFF
+  PLAYER
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum EventType {
+  TRAINING
+  MATCH
+  OTHER
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+enum RsvpStatus {
+  UNANSWERED
+  YES
+  NO
+  MAYBE
+}
+
+enum FatigueLevel {
+  LOW
+  MED
+  HIGH
+}
+
+enum PainLevel {
+  NONE
+  MILD
+  SEVERE
+}
+
+enum CommentType {
+  ANNOUNCEMENT
+  COMMENT
+}
+
+enum FileAssetKind {
+  LINK
+  UPLOAD
+}
+
+/** 事件連結用途（註解：戰術板／影片整理；GENERAL 供未來其他附件）。 */
+enum FileAssetCategory {
+  GENERAL
+  TACTICAL_BOARD
+  VIDEO
+}
+
+model User {
+  id          String   @id @default(cuid())
+  clerkUserId String?  @unique
+  email       String?  @unique
+  name        String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships TeamMember[]
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  season      String?
+  timezone    String   @default("Asia/Taipei")
+  groupConfig Json?
+  /** Email 等通知偏好（註解：實際寄信／排程尚未接時仍可先存設定）。 */
+  notificationSettings Json?
+  /** 即時戰術版 JSON（註解：與 Event.courtSketch 同結構；供總覽進入之白板）。 */
+  liveTacticalSketch Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members      TeamMember[]
+  events       Event[]
+  trainingPlans TrainingPlan[]
+  comments     Comment[]
+  fileAssets   FileAsset[]
+}
+
+model TeamMember {
+  id                     String       @id @default(cuid())
+  teamId                 String
+  userId                 String
+  role                   TeamRole
+  status                 MemberStatus @default(ACTIVE)
+  jerseyNumber           Int?
+  position               String?
+  squad                  String?
+  phone                  String?
+  emergencyContactName   String?
+  emergencyContactPhone  String?
+  notes                  String?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdEvents Event[] @relation("EventCreatedBy")
+  publishedEvents Event[] @relation("EventPublishedBy")
+  comments Comment[] @relation("CommentAuthor")
+  fileAssets FileAsset[] @relation("FileAssetUploadedBy")
+
+  participants EventParticipant[]
+  attendanceAsMember Attendance[] @relation("AttendanceMember")
+  attendanceCheckedIn  Attendance[] @relation("AttendanceCheckedInBy")
+  feedback     Feedback[]
+
+  @@unique([teamId, userId])
+  @@unique([teamId, jerseyNumber])
+}
+
+model Event {
+  id                 String      @id @default(cuid())
+  teamId             String
+  type               EventType
+  title              String
+  description        String?
+  startsAt           DateTime
+  endsAt             DateTime
+  meetAt             DateTime?
+  locationName       String?
+  status             EventStatus @default(DRAFT)
+  rsvpDeadlineAt     DateTime?
+  createdByMemberId  String
+  publishedAt        DateTime?
+  publishedByMemberId String?
+  /** 場上企位示意 JSON（註解：正規化座標 tokens；教練編輯、球員唯讀）。 */
+  courtSketch         Json?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdBy TeamMember @relation("EventCreatedBy", fields: [createdByMemberId], references: [id], onDelete: Restrict)
+  publishedBy TeamMember? @relation("EventPublishedBy", fields: [publishedByMemberId], references: [id], onDelete: SetNull)
+
+  participants EventParticipant[]
+  attendance   Attendance[]
+  trainingPlan TrainingPlan?
+  feedback     Feedback[]
+  comments     Comment[]
+  fileAssets   FileAsset[]
+}
+
+model EventParticipant {
+  id        String   @id @default(cuid())
+  eventId   String
+  memberId  String
+  createdAt DateTime @default(now())
+
+  event  Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
+}
+
+model Attendance {
+  id               String     @id @default(cuid())
+  eventId          String
+  memberId         String
+  rsvpStatus       RsvpStatus @default(UNANSWERED)
+  rsvpReason       String?
+  rsvpAt           DateTime?
+  checkedIn        Boolean    @default(false)
+  checkedInAt      DateTime?
+  checkedInByMemberId String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  event  Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member TeamMember @relation("AttendanceMember", fields: [memberId], references: [id], onDelete: Cascade)
+  checkedInBy TeamMember? @relation("AttendanceCheckedInBy", fields: [checkedInByMemberId], references: [id], onDelete: SetNull)
+
+  @@unique([eventId, memberId])
+}
+
+model TrainingPlan {
+  id               String   @id @default(cuid())
+  teamId           String
+  eventId          String   @unique
+  title            String?
+  summary          String?
+  equipmentList    Json?
+  safetyNotes      String?
+  aiProvenance     Json?
+  createdByMemberId String
+  updatedByMemberId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  blocks TrainingBlock[]
+}
+
+model TrainingBlock {
+  id           String   @id @default(cuid())
+  planId       String
+  order        Int
+  name         String
+  minutes      Int
+  goal         String
+  setup        String?
+  steps        Json
+  coachCues    Json?
+  groupingPlan String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  plan TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, order])
+}
+
+model Feedback {
+  id          String       @id @default(cuid())
+  eventId     String
+  memberId    String
+  rpe         Int
+  fatigue     FatigueLevel
+  painLevel   PainLevel
+  painArea    String?
+  note        String?
+  submittedAt DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  event  Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  member TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, memberId])
+}
+
+model Comment {
+  id             String      @id @default(cuid())
+  teamId         String
+  eventId        String
+  authorMemberId String
+  type           CommentType @default(COMMENT)
+  content        String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  team   Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  event  Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  author TeamMember @relation("CommentAuthor", fields: [authorMemberId], references: [id], onDelete: Cascade)
+}
+
+model FileAsset {
+  id                String        @id @default(cuid())
+  teamId            String
+  eventId           String?
+  uploadedByMemberId String
+  kind              FileAssetKind @default(LINK)
+  category          FileAssetCategory @default(GENERAL)
+  url               String
+  name              String?
+  mimeType          String?
+  sizeBytes         Int?
+  createdAt         DateTime      @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  event Event? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  uploadedBy TeamMember @relation("FileAssetUploadedBy", fields: [uploadedByMemberId], references: [id], onDelete: Cascade)
+}
