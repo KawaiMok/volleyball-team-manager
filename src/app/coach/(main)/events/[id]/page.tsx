@@ -15,6 +15,11 @@ import { canManageEventCommentsAsStaff } from "@/lib/event-comment-access";
 import { inferParticipantRule } from "@/lib/infer-participant-rule";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
 import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
+import {
+  EventStatusIndicator,
+  EventStatusLegend,
+} from "@/components/domain-status-indicators";
+import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
 import { getPrisma } from "@/lib/prisma";
 import {
   EventStatus,
@@ -32,19 +37,6 @@ function typeLabel(t: EventType) {
       return "比賽";
     default:
       return "其他";
-  }
-}
-
-function statusLabel(s: EventStatus) {
-  switch (s) {
-    case EventStatus.DRAFT:
-      return "草稿";
-    case EventStatus.PUBLISHED:
-      return "已發布";
-    case EventStatus.CANCELLED:
-      return "已取消";
-    default:
-      return s;
   }
 }
 
@@ -207,20 +199,14 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{event.title}</h1>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              {typeLabel(event.type)} ·{" "}
-              <span
-                className={
-                  event.status === EventStatus.DRAFT ?
-                    "text-amber-700"
-                  : event.status === EventStatus.PUBLISHED ?
-                    "text-emerald-700"
-                  : "text-zinc-600 dark:text-zinc-400"
-                }
-              >
-                {statusLabel(event.status)}
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+              <span>{typeLabel(event.type)}</span>
+              <span aria-hidden className="text-zinc-400">
+                ·
               </span>
+              <EventStatusIndicator status={event.status} />
             </p>
+            <EventStatusLegend className="mt-2" />
           </div>
           <EventPublishButton eventId={event.id} isDraft={event.status === EventStatus.DRAFT} />
         </div>
@@ -273,10 +259,12 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           id="coach-ev-edit"
           className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
         >
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">編輯事件</h2>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            可調整標題、時間、場館、RSVP 截止與參與對象；變更參與者時將同步名單與出席列。
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">編輯事件</h2>
+            <HintExclamationToggle>
+              可調整標題、時間、場館、RSVP 截止與參與對象；變更參與者時將同步名單與出席列。
+            </HintExclamationToggle>
+          </div>
           <div className="mt-4">
             <EventEditForm
               key={participantRuleKey}
@@ -333,10 +321,12 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         id="coach-ev-court"
         className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
       >
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">場上企位</h2>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          全場示意（左為對方、右為我方）：球員／排球標記、畫線；儲存後球員於本事件頁可唯讀檢視。
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">場上企位</h2>
+          <HintExclamationToggle>
+            全場示意（左為對方、右為我方）：球員／排球標記、畫線；儲存後球員於本事件頁可唯讀檢視。
+          </HintExclamationToggle>
+        </div>
         <div className="mt-4">
           <CourtFormationEditor
             variant="event"
@@ -351,10 +341,12 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         id="coach-ev-media"
         className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
       >
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">戰術板與影片</h2>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          外部白板、錄影連結集中管理；球員在已發布事件中可見（唯讀）。
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">戰術板與影片</h2>
+          <HintExclamationToggle>
+            外部白板、錄影連結集中管理；球員在已發布事件中可見（唯讀）。
+          </HintExclamationToggle>
+        </div>
         <div className="mt-4">
           <CoachEventTacticalVideoPanel
             eventId={event.id}
@@ -369,10 +361,12 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         id="coach-ev-comments"
         className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
       >
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">公告與留言</h2>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          發布公告或討論；球員在「我的行程」對應事件頁可見（事件須已發布且對方為參與者）。
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">公告與留言</h2>
+          <HintExclamationToggle>
+            發布公告或討論；球員在「我的行程」對應事件頁可見（事件須已發布且對方為參與者）。
+          </HintExclamationToggle>
+        </div>
         <div className="mt-4">
           <CoachEventCommentsPanel
             eventId={event.id}

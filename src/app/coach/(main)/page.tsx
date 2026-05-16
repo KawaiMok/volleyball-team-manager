@@ -8,6 +8,8 @@ import {
 } from "@/app/coach/(main)/coach-dashboard-prefs";
 import { CoachDashboardRpeChart } from "@/app/coach/(main)/coach-dashboard-rpe-chart";
 import { CoachTodayTrainingLoadSection } from "@/app/coach/(main)/today-training-load";
+import { EventStatusIndicator } from "@/components/domain-status-indicators";
+import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { buildDailyRpeSeries } from "@/lib/coach-dashboard-rpe-series";
 import { getPrisma } from "@/lib/prisma";
@@ -21,19 +23,6 @@ function typeLabel(t: EventType) {
       return "比賽";
     default:
       return "其他";
-  }
-}
-
-function statusLabel(s: EventStatus) {
-  switch (s) {
-    case EventStatus.DRAFT:
-      return "草稿";
-    case EventStatus.PUBLISHED:
-      return "已發布";
-    case EventStatus.CANCELLED:
-      return "已取消";
-    default:
-      return s;
   }
 }
 
@@ -151,14 +140,19 @@ export default async function CoachDashboardPage() {
     <CoachDashboardProvider>
       <div className="space-y-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">總覽</h1>
-            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-              未來 7 天行程、RSVP 待追蹤與草稿狀態 ·{" "}
-              <Link href="/coach/calendar" className="text-blue-600 hover:underline">
-                行事曆
-              </Link>
-            </p>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight">總覽</h1>
+              <HintExclamationToggle>
+                <span>
+                  未來 7 天行程、RSVP 待追蹤與草稿狀態。前往{" "}
+                  <Link href="/coach/calendar" className="font-medium text-blue-600 hover:underline">
+                    行事曆
+                  </Link>
+                  。
+                </span>
+              </HintExclamationToggle>
+            </div>
           </div>
           <Link
             href="/coach/live-tactical"
@@ -269,7 +263,8 @@ export default async function CoachDashboardPage() {
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="font-medium text-zinc-900 dark:text-zinc-50">{ev.title}</span>
                         <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                          {typeLabel(ev.type)} · {statusLabel(ev.status)}
+                          {typeLabel(ev.type)} <span aria-hidden className="mx-1 text-zinc-400">·</span>{" "}
+                          <EventStatusIndicator status={ev.status} />
                         </span>
                       </div>
                       {showRsvp ?

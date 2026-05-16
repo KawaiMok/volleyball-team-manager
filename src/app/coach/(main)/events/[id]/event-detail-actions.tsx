@@ -9,7 +9,7 @@ type Props = {
   isDraft: boolean;
 };
 
-/** 發布事件（註解：草稿 → 已發布）。 */
+/** 發布事件（註解：草稿 → 已發布；已發布時僅顯示綠色圓點）。 */
 export function EventPublishButton({ eventId, isDraft }: Props) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -17,7 +17,12 @@ export function EventPublishButton({ eventId, isDraft }: Props) {
 
   if (!isDraft) {
     return (
-      <span className="rounded-md bg-emerald-50 px-3 py-1.5 text-sm text-emerald-800">已發布</span>
+      <span
+        className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500 align-middle"
+        role="img"
+        aria-label="已發布"
+        title="已發布"
+      />
     );
   }
 

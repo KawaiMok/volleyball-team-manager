@@ -6,6 +6,7 @@ import {
   TeamMemberEditForm,
   type TeamMemberEditInitial,
 } from "@/app/coach/(main)/team/team-member-edit-form";
+import { TeamMemberStatusIndicator } from "@/components/domain-status-indicators";
 
 /** 名單列（註解：由伺服端序列化後傳入，避免 client 直接拿 Date）。 */
 export type TeamRosterRow = {
@@ -44,17 +45,6 @@ function roleLabel(r: string) {
       return "球員";
     default:
       return r;
-  }
-}
-
-function statusLabel(s: string) {
-  switch (s) {
-    case "ACTIVE":
-      return "在籍";
-    case "INACTIVE":
-      return "停用";
-    default:
-      return s;
   }
 }
 
@@ -114,7 +104,7 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
               <th className="px-3 py-2.5 text-left font-medium sm:px-4 sm:py-3 md:min-w-[12rem] md:px-5 md:py-3.5">姓名</th>
               <th className="px-3 py-2.5 text-left font-medium sm:px-4 sm:py-3 md:whitespace-nowrap md:px-4 md:py-3.5">角色</th>
               <th className="px-3 py-2.5 text-center font-medium sm:px-4 sm:py-3 md:w-[4.5rem] md:px-3 md:py-3.5">背號</th>
-              <th className="px-3 py-2.5 text-left font-medium sm:px-4 sm:py-3 md:w-[6.5rem] md:py-3.5">狀態</th>
+              <th className="px-3 py-2.5 text-center font-medium sm:px-4 sm:py-3 md:w-[6.5rem] md:py-3.5">狀態</th>
               <th className="px-3 py-2.5 text-right font-medium sm:px-4 sm:py-3 md:min-w-[10rem] md:pl-2 md:pr-5 md:py-3.5">操作</th>
             </tr>
           </thead>
@@ -131,16 +121,8 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
                 <td className="px-3 py-2.5 font-medium text-zinc-900 dark:text-zinc-50 sm:px-4 sm:py-3 md:px-5 md:py-3.5">{r.displayName ?? "—"}</td>
                 <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200 sm:px-4 sm:py-3 md:px-4 md:py-3.5">{roleLabel(r.role)}</td>
                 <td className="whitespace-nowrap px-3 py-2.5 text-center tabular-nums text-zinc-800 dark:text-zinc-200 sm:px-4 sm:py-3 md:px-3 md:py-3.5">{r.jerseyNumber ?? "—"}</td>
-                <td className="px-3 py-2.5 sm:px-4 sm:py-3 md:py-3.5">
-                  <span
-                    className={
-                      r.status === "INACTIVE" ?
-                        "rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-800 dark:text-zinc-200"
-                      : "rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-900"
-                    }
-                  >
-                    {statusLabel(r.status)}
-                  </span>
+                <td className="whitespace-nowrap px-3 py-2.5 text-center sm:px-4 sm:py-3 md:py-3.5">
+                  <TeamMemberStatusIndicator status={r.status} />
                 </td>
                 <td className="px-3 py-2.5 text-right sm:px-4 sm:py-3 md:pl-2 md:pr-5 md:py-3.5">
                   <div className="inline-flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
@@ -214,15 +196,7 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
                 <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
                   <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">狀態</dt>
                   <dd>
-                    <span
-                      className={
-                        detail.status === "INACTIVE" ?
-                          "rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-800 dark:text-zinc-200"
-                        : "rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-900"
-                      }
-                    >
-                      {statusLabel(detail.status)}
-                    </span>
+                    <TeamMemberStatusIndicator status={detail.status} />
                   </dd>
                 </div>
                 <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">

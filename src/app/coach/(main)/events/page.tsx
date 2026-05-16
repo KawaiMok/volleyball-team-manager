@@ -11,6 +11,11 @@ import {
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { getPrisma } from "@/lib/prisma";
 import { EventStatus, EventType } from "@/generated/prisma/client";
+import {
+  EventStatusIndicator,
+  EventStatusLegend,
+} from "@/components/domain-status-indicators";
+import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
 
 function typeLabel(t: EventType) {
   switch (t) {
@@ -20,19 +25,6 @@ function typeLabel(t: EventType) {
       return "比賽";
     default:
       return "其他";
-  }
-}
-
-function statusLabel(s: EventStatus) {
-  switch (s) {
-    case EventStatus.DRAFT:
-      return "草稿";
-    case EventStatus.PUBLISHED:
-      return "已發布";
-    case EventStatus.CANCELLED:
-      return "已取消";
-    default:
-      return s;
   }
 }
 
@@ -81,14 +73,16 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">事件</h1>
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            依開始時間排序（最新在上）
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">事件</h1>
             {filterActive ?
-              <span className="ml-2 text-blue-700">· 已套用篩選</span>
+              <span className="rounded-md bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-900 dark:bg-blue-950 dark:text-blue-200">
+                已套用篩選
+              </span>
             : null}
-          </p>
+            <HintExclamationToggle>依開始時間排序（最新在上）。</HintExclamationToggle>
+          </div>
         </div>
         <Link
           href="/coach/events/new"
@@ -104,6 +98,8 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
         共 {events.length} 筆{events.length >= LIST_TAKE ? `（最多顯示 ${LIST_TAKE} 筆，請縮小篩選範圍）` : ""}
       </p>
 
+      <EventStatusLegend />
+
       <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400">
@@ -111,7 +107,7 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
               <th className="px-4 py-3 font-medium">標題</th>
               <th className="px-4 py-3 font-medium">類型</th>
               <th className="px-4 py-3 font-medium">開始</th>
-              <th className="px-4 py-3 font-medium">狀態</th>
+              <th className="px-4 py-3 text-center font-medium">狀態</th>
               <th className="px-4 py-3 font-medium">人數</th>
             </tr>
           </thead>
@@ -142,18 +138,8 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
                       minute: "2-digit",
                     })}
                   </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={
-                        ev.status === EventStatus.DRAFT ?
-                          "rounded bg-amber-100 px-2 py-0.5 text-amber-900"
-                        : ev.status === EventStatus.PUBLISHED ?
-                          "rounded bg-emerald-100 px-2 py-0.5 text-emerald-900"
-                        : "rounded bg-zinc-200 px-2 py-0.5 text-zinc-800 dark:text-zinc-200"
-                      }
-                    >
-                      {statusLabel(ev.status)}
-                    </span>
+                  <td className="whitespace-nowrap px-4 py-3 text-center">
+                    <EventStatusIndicator status={ev.status} />
                   </td>
                   <td className="px-4 py-3 tabular-nums text-zinc-600 dark:text-zinc-400">{ev._count.participants}</td>
                 </tr>
