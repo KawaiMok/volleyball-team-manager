@@ -86,9 +86,10 @@ export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video
   async function onAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!canEdit) return;
+    const form = e.currentTarget;
     setError(null);
     setPending(true);
-    const fd = new FormData(e.currentTarget);
+    const fd = new FormData(form);
     const category = String(fd.get("category") ?? "TACTICAL_BOARD");
     const url = String(fd.get("url") ?? "").trim();
     const name = String(fd.get("name") ?? "").trim() || null;
@@ -105,7 +106,7 @@ export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video
         setError((data as { error?: string }).error ?? `新增失敗 (${res.status})`);
         return;
       }
-      e.currentTarget.reset();
+      form.reset();
       router.refresh();
     } catch {
       setPending(false);

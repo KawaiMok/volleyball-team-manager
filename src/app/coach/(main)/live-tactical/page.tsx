@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CourtFormationEditor } from "@/app/coach/(main)/events/[id]/court-formation-editor";
 import { getDebugTeamMember } from "@/lib/debug-session";
+import { withLiveTacticalStarterTokens } from "@/lib/live-tactical-default-sketch";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
 import { getPrisma } from "@/lib/prisma";
 
@@ -15,7 +16,8 @@ export default async function CoachLiveTacticalPage() {
     select: { liveTacticalSketch: true },
   });
 
-  const initial = parseCourtSketch(team?.liveTacticalSketch ?? null);
+  const parsed = parseCourtSketch(team?.liveTacticalSketch ?? null);
+  const initial = withLiveTacticalStarterTokens(parsed);
 
   return (
     <div className="space-y-6">
@@ -25,7 +27,7 @@ export default async function CoachLiveTacticalPage() {
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">即時戰術版</h1>
         <p className="mt-1 text-sm text-zinc-600">
-          與「場上企位」相同工具（球員／球標記、畫線、備註）；適合場邊即時講解，儲存後僅影響此白板，與各事件企位圖分開。
+          與「場上企位」相同工具（球員／球標記、畫線、備註）；空白白板會自動放上雙方各 6 人（對方 1–6、我方 A–F）。儲存後僅影響此白板，與各事件企位圖分開。
         </p>
       </div>
 

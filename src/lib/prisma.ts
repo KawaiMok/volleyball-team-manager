@@ -8,7 +8,7 @@ import { PrismaClient } from "@/generated/prisma/client";
  * 延遲建立：避免 `next build` 在未設定環境變數時就連線失敗。
  */
 /** 變更 Prisma schema 後遞增，強制重建 Client（註解：避免 dev 熱重載仍沿用舊 singleton 而報 Unknown argument）。 */
-const PRISMA_CLIENT_SCHEMA_VERSION = 5;
+const PRISMA_CLIENT_SCHEMA_VERSION = 6;
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;

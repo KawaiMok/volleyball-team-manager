@@ -18,6 +18,8 @@ function roleLabel(role: string): string {
       return "管理員";
     case "COACH":
       return "教練";
+    case "COACH_PLAYER":
+      return "教練兼球員";
     case "STAFF":
       return "隊務";
     case "PLAYER":

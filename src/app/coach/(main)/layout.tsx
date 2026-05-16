@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 
 import { ActiveTeamSwitcher } from "@/components/active-team-switcher";
+import { CoachPlayerViewSwitch } from "@/components/coach-player-view-switch";
 import { getTeamMember, listActiveTeamsForSwitcher } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
 import { isCoachLike } from "@/lib/rbac";
@@ -45,7 +46,9 @@ export default async function CoachMainLayout({ children }: { children: React.Re
               </div>
             )}
           </div>
-          <nav className="flex flex-wrap items-center gap-4 text-sm">
+          <nav className="flex flex-wrap items-center gap-3 text-sm sm:gap-4">
+            {/** 註解：與球員端互相切換；進入此 layout 者皆為教練系，可前往球員 UI。 */}
+            <CoachPlayerViewSwitch current="coach" canAccessCoach={true} variant="coach" />
             <Link className="text-zinc-700 hover:text-zinc-900" href="/coach">
               總覽
             </Link>

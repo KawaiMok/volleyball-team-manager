@@ -8,7 +8,8 @@ import { z } from "zod";
 const DEMO_TEAM_NAME = "示範排球隊";
 
 const bodySchema = z.object({
-  role: z.enum(["COACH", "PLAYER"]).default("PLAYER"),
+  /** 教練兼球員：COACH_PLAYER（註解：單一隊籍雙身份）。 */
+  role: z.enum(["COACH", "PLAYER", "COACH_PLAYER"]).default("PLAYER"),
 });
 
 /**
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
   });
   if (existingMembership) {
     const path =
-      existingMembership.role === TeamRole.PLAYER ? "/player" : "/coach";
+      existingMembership.role === TeamRole.PLAYER ? "/player" : "/coach"; // 註解：COACH_PLAYER 等非純 PLAYER 導向教練端為預設入口
     return NextResponse.json({
       ok: true,
       alreadyMember: true,
@@ -62,8 +63,10 @@ export async function POST(req: Request) {
     });
   }
 
-  const roleEnum =
-    body.role === "COACH" ? TeamRole.COACH : TeamRole.PLAYER;
+  const roleEnum: TeamRole =
+    body.role === "COACH" ? TeamRole.COACH
+    : body.role === "COACH_PLAYER" ? TeamRole.COACH_PLAYER
+    : TeamRole.PLAYER;
 
   const member = await prisma.teamMember.upsert({
     where: {

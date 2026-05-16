@@ -83,8 +83,84 @@ export async function POST(req: Request) {
   const dup = await prisma.teamMember.findUnique({
     where: { teamId_userId: { teamId: member.teamId, userId: user.id } },
   });
+
   if (dup) {
-    return NextResponse.json({ error: "此信箱對應的使用者已在隊伍中" }, { status: 409 });
+    /** 在籍：無法重複新增；引導至名單編輯（註解：409 附 memberId 供前端提示）。 */
+    if (dup.status === MemberStatus.ACTIVE) {
+      return NextResponse.json(
+        {
+          error: "此信箱已在名單中（在籍）。請至下方隊員名單開啟該成員編輯，勿重複新增。",
+          memberId: dup.id,
+        },
+        { status: 409 },
+      );
+    }
+
+    /** 停用隊籍：視為復籍，套用本次表單（註解：避免「已存在」卻無法再次邀請）。 */
+    if (body.role === TeamRole.ADMIN && !isTeamAdmin(member)) {
+      return NextResponse.json({ error: "僅管理員可將新成員設為管理員" }, { status: 403 });
+    }
+    if (!isTeamAdmin(member)) {
+      if (dup.role === TeamRole.ADMIN && body.role !== TeamRole.ADMIN) {
+        return NextResponse.json({ error: "僅管理員可調整管理員角色" }, { status: 403 });
+      }
+    }
+    if (dup.role === TeamRole.ADMIN && body.role !== TeamRole.ADMIN) {
+      const otherActiveAdmins = await prisma.teamMember.count({
+        where: {
+          teamId: member.teamId,
+          role: TeamRole.ADMIN,
+          status: MemberStatus.ACTIVE,
+          NOT: { id: dup.id },
+        },
+      });
+      if (otherActiveAdmins < 1) {
+        return NextResponse.json({ error: "隊伍須至少保留一位在籍管理員" }, { status: 400 });
+      }
+    }
+
+    if (body.jerseyNumber != null) {
+      const clash = await prisma.teamMember.findFirst({
+        where: {
+          teamId: member.teamId,
+          jerseyNumber: body.jerseyNumber,
+          NOT: { id: dup.id },
+        },
+      });
+      if (clash) {
+        return NextResponse.json({ error: "背號與既有隊員衝突" }, { status: 400 });
+      }
+    }
+
+    const squadTrim = body.squad?.trim();
+
+    const [row] = await prisma.$transaction([
+      prisma.teamMember.update({
+        where: { id: dup.id },
+        data: {
+          role: body.role,
+          status: MemberStatus.ACTIVE,
+          jerseyNumber: body.jerseyNumber ?? undefined,
+          squad: squadTrim || undefined,
+          position: positionTrim ?? undefined,
+          phone: phoneTrim ?? undefined,
+          notes: notesTrim ?? undefined,
+        },
+        include: {
+          user: { select: { id: true, email: true, name: true, clerkUserId: true } },
+        },
+      }),
+      ...(displayTrim != null ?
+        [
+          prisma.user.update({
+            where: { id: user.id },
+            data: { name: displayTrim },
+          }),
+        ]
+      : []),
+    ]);
+
+    return NextResponse.json({ ...row, reactivated: true as const }, { status: 200 });
   }
 
   if (body.role === TeamRole.ADMIN && !isTeamAdmin(member)) {

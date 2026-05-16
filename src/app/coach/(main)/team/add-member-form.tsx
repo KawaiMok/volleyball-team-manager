@@ -11,7 +11,7 @@ type Props = {
 };
 
 /** 與 Prisma TeamRole 一致（註解：client 不 import generated enum）。 */
-const ROLES = ["ADMIN", "COACH", "STAFF", "PLAYER"] as const;
+const ROLES = ["ADMIN", "COACH", "COACH_PLAYER", "STAFF", "PLAYER"] as const;
 
 function roleLabel(r: string) {
   switch (r) {
@@ -19,6 +19,8 @@ function roleLabel(r: string) {
       return "管理員";
     case "COACH":
       return "教練";
+    case "COACH_PLAYER":
+      return "教練兼球員";
     case "STAFF":
       return "隊務";
     case "PLAYER":
@@ -40,10 +42,11 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
     setError(null);
     setDone(null);
     setPending(true);
-    const fd = new FormData(e.currentTarget);
+    const fd = new FormData(form);
     const email = String(fd.get("email") ?? "").trim();
     const role = String(fd.get("role") ?? "PLAYER");
     const displayName = String(fd.get("displayName") ?? "").trim();
@@ -87,14 +90,14 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
           notes: notes || null,
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json()) as { error?: string; reactivated?: boolean };
       setPending(false);
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `失敗 (${res.status})`);
+        setError(data.error ?? `失敗 (${res.status})`);
         return;
       }
-      setDone(`已加入：${email}`);
-      e.currentTarget.reset();
+      setDone(data.reactivated ? `已復籍（原為停用）：${email}` : `已加入：${email}`);
+      form.reset();
       setSquadChoice("");
       setSquadCustom("");
       router.refresh();

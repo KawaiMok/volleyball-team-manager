@@ -6,10 +6,10 @@ import { useState } from "react";
 /** ALLOW_BOOTSTRAP 時顯示：一鍵加入示範隊（註解：呼叫 POST /api/bootstrap/claim）。 */
 export function ClaimDemoTeamButtons() {
   const router = useRouter();
-  const [pending, setPending] = useState<false | "COACH" | "PLAYER">(false);
+  const [pending, setPending] = useState<false | "COACH" | "PLAYER" | "COACH_PLAYER">(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function claim(role: "COACH" | "PLAYER") {
+  async function claim(role: "COACH" | "PLAYER" | "COACH_PLAYER") {
     setError(null);
     setPending(role);
     try {
@@ -66,6 +66,14 @@ export function ClaimDemoTeamButtons() {
           className="rounded-md border border-emerald-700 bg-white px-3 py-2 text-sm font-medium text-emerald-900 hover:bg-emerald-100 disabled:opacity-60"
         >
           {pending === "PLAYER" ? "處理中…" : "以球員身分加入"}
+        </button>
+        <button
+          type="button"
+          disabled={pending !== false}
+          onClick={() => void claim("COACH_PLAYER")}
+          className="rounded-md border border-emerald-600 bg-emerald-100/90 px-3 py-2 text-sm font-medium text-emerald-950 hover:bg-emerald-200/90 disabled:opacity-60"
+        >
+          {pending === "COACH_PLAYER" ? "處理中…" : "教練兼球員"}
         </button>
       </div>
     </div>

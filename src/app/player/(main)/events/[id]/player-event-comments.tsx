@@ -24,19 +24,30 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
 
+  /** 與伺服端列表同步（註解：內部吞掉錯誤，避免 RSC refresh 失敗誤報「網路錯誤」）。 */
   async function refreshList() {
-    const res = await fetch(`/api/events/${eventId}/comments`, { credentials: "include" });
-    const data = await res.json().catch(() => null);
-    if (res.ok && Array.isArray(data)) {
-      setComments(data as EventCommentRow[]);
+    try {
+      const res = await fetch(`/api/events/${eventId}/comments`, { credentials: "include" });
+      const data = await res.json().catch(() => null);
+      if (res.ok && Array.isArray(data)) {
+        setComments(data as EventCommentRow[]);
+      }
+    } catch {
+      /* 列表重整失敗不阻擋已成功之建立／更新 */
     }
-    router.refresh();
+    try {
+      router.refresh();
+    } catch {
+      /* Next.js refresh 在部分情況會丟錯 */
+    }
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    /** await 後 e.currentTarget 可能為 null（註解：須先保存 form 參考再 reset）。 */
+    const form = e.currentTarget;
     setError(null);
-    const fd = new FormData(e.currentTarget);
+    const fd = new FormData(form);
     const content = String(fd.get("content") ?? "").trim();
     if (!content) {
       setError("請輸入內容");
@@ -50,17 +61,20 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "COMMENT", content }),
       });
-      const data = await res.json().catch(() => ({}));
-      setPending(false);
+      const data = (await res.json().catch(() => ({}))) as { error?: string } & Partial<EventCommentRow>;
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `送出失敗 (${res.status})`);
+        setError(data.error ?? `送出失敗 (${res.status})`);
         return;
       }
-      (e.currentTarget as HTMLFormElement).reset();
-      await refreshList();
+      if (data.id && data.createdAt) {
+        setComments((prev) => [...prev, data as EventCommentRow]);
+      }
+      form.reset();
+      void refreshList();
     } catch {
-      setPending(false);
       setError("網路錯誤");
+    } finally {
+      setPending(false);
     }
   }
 
@@ -80,16 +94,16 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
         body: JSON.stringify({ content }),
       });
       const data = await res.json().catch(() => ({}));
-      setPending(false);
       if (!res.ok) {
         setError((data as { error?: string }).error ?? `更新失敗 (${res.status})`);
         return;
       }
       setEditingId(null);
-      await refreshList();
+      void refreshList();
     } catch {
-      setPending(false);
       setError("網路錯誤");
+    } finally {
+      setPending(false);
     }
   }
 
@@ -102,16 +116,16 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
         method: "DELETE",
         credentials: "include",
       });
-      setPending(false);
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError((data as { error?: string }).error ?? `刪除失敗 (${res.status})`);
         return;
       }
-      await refreshList();
+      void refreshList();
     } catch {
-      setPending(false);
       setError("網路錯誤");
+    } finally {
+      setPending(false);
     }
   }
 

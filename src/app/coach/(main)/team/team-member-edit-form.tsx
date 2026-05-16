@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const ROLES = ["ADMIN", "COACH", "STAFF", "PLAYER"] as const;
+const ROLES = ["ADMIN", "COACH", "COACH_PLAYER", "STAFF", "PLAYER"] as const;
 
 function roleLabel(r: string) {
   switch (r) {
@@ -11,6 +11,8 @@ function roleLabel(r: string) {
       return "管理員";
     case "COACH":
       return "教練";
+    case "COACH_PLAYER":
+      return "教練兼球員";
     case "STAFF":
       return "隊務";
     case "PLAYER":
