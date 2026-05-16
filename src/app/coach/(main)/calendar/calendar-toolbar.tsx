@@ -50,9 +50,9 @@ export function CalendarToolbar({
   const base = { type: typeFilter, squad: squadFilter };
 
   return (
-    <div className="space-y-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+    <div className="space-y-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium uppercase text-zinc-500">視圖</span>
+        <span className="text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">視圖</span>
         {(
           [
             ["week", "週"],
@@ -66,7 +66,7 @@ export function CalendarToolbar({
             className={
               view === v ?
                 "rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white"
-              : "rounded-md border border-zinc-200 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-50"
+              : "rounded-md border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-950"
             }
           >
             {label}
@@ -75,19 +75,19 @@ export function CalendarToolbar({
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4">
-        <span className="text-xs font-medium uppercase text-zinc-500">時間</span>
+        <span className="text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">時間</span>
         {view === "month" ?
           <>
             <Link
               href={href({ view, dateYmd: prevMonth, ...base })}
-              className="rounded-md border border-zinc-200 px-2 py-1 text-sm hover:bg-zinc-50"
+              className="rounded-md border border-zinc-200 dark:border-zinc-800 px-2 py-1 text-sm hover:bg-zinc-50 dark:bg-zinc-950"
             >
               ← 上月
             </Link>
-            <span className="text-sm font-medium text-zinc-900">{monthLabel}</span>
+            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{monthLabel}</span>
             <Link
               href={href({ view, dateYmd: nextMonth, ...base })}
-              className="rounded-md border border-zinc-200 px-2 py-1 text-sm hover:bg-zinc-50"
+              className="rounded-md border border-zinc-200 dark:border-zinc-800 px-2 py-1 text-sm hover:bg-zinc-50 dark:bg-zinc-950"
             >
               下月 →
             </Link>
@@ -96,20 +96,20 @@ export function CalendarToolbar({
           <>
             <Link
               href={href({ view, dateYmd: prevWeek, ...base })}
-              className="rounded-md border border-zinc-200 px-2 py-1 text-sm hover:bg-zinc-50"
+              className="rounded-md border border-zinc-200 dark:border-zinc-800 px-2 py-1 text-sm hover:bg-zinc-50 dark:bg-zinc-950"
             >
               ← 上週
             </Link>
-            <span className="text-sm font-medium text-zinc-900">{weekLabel}</span>
+            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{weekLabel}</span>
             <Link
               href={href({ view, dateYmd: nextWeek, ...base })}
-              className="rounded-md border border-zinc-200 px-2 py-1 text-sm hover:bg-zinc-50"
+              className="rounded-md border border-zinc-200 dark:border-zinc-800 px-2 py-1 text-sm hover:bg-zinc-50 dark:bg-zinc-950"
             >
               下週 →
             </Link>
             <Link
               href={href({ view, dateYmd: todayYmd, ...base })}
-              className="rounded-md bg-zinc-100 px-2 py-1 text-sm text-zinc-800 hover:bg-zinc-200"
+              className="rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200"
             >
               本日／本週
             </Link>
@@ -118,7 +118,7 @@ export function CalendarToolbar({
       </div>
 
       <div className="flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4">
-        <span className="text-xs font-medium uppercase text-zinc-500">類型</span>
+        <span className="text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">類型</span>
         {(
           [
             ["ALL", "全部"],
@@ -133,7 +133,7 @@ export function CalendarToolbar({
             className={
               typeFilter === val ?
                 "rounded-md bg-violet-100 px-2.5 py-1 text-sm font-medium text-violet-900"
-              : "rounded-md px-2.5 py-1 text-sm text-zinc-600 hover:bg-zinc-100"
+              : "rounded-md px-2.5 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800"
             }
           >
             {label}
@@ -143,13 +143,13 @@ export function CalendarToolbar({
 
       {squads.length > 0 ?
         <div className="flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4">
-          <span className="text-xs font-medium uppercase text-zinc-500">分組</span>
+          <span className="text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">分組</span>
           <Link
             href={href({ view, dateYmd, type: typeFilter, squad: "" })}
             className={
               !squadFilter ?
                 "rounded-md bg-emerald-100 px-2.5 py-1 text-sm font-medium text-emerald-900"
-              : "rounded-md px-2.5 py-1 text-sm text-zinc-600 hover:bg-zinc-100"
+              : "rounded-md px-2.5 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800"
             }
           >
             全部
@@ -161,7 +161,7 @@ export function CalendarToolbar({
               className={
                 squadFilter === s ?
                   "rounded-md bg-emerald-100 px-2.5 py-1 text-sm font-medium text-emerald-900"
-                : "rounded-md px-2.5 py-1 text-sm text-zinc-600 hover:bg-zinc-100"
+                : "rounded-md px-2.5 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800"
               }
             >
               {s}

@@ -44,7 +44,7 @@ export function ClaimDemoTeamButtons() {
     <div className="rounded-lg border border-emerald-200 bg-emerald-50/80 p-4">
       <h2 className="text-sm font-semibold text-emerald-950">開發用：加入示範隊伍</h2>
       <p className="mt-1 text-xs leading-relaxed text-emerald-900/90">
-        需環境變數 <code className="rounded bg-white/80 px-1">ALLOW_BOOTSTRAP=1</code>。
+        需環境變數 <code className="rounded bg-white dark:bg-zinc-900/80 px-1">ALLOW_BOOTSTRAP=1</code>。
         會將你目前的 Clerk 帳號加入「示範排球隊」並取得隊籍（與舊版 POST /api/bootstrap 需相同 Email 才能合併的方式不同）。
       </p>
       {error ?
@@ -63,7 +63,7 @@ export function ClaimDemoTeamButtons() {
           type="button"
           disabled={pending !== false}
           onClick={() => void claim("PLAYER")}
-          className="rounded-md border border-emerald-700 bg-white px-3 py-2 text-sm font-medium text-emerald-900 hover:bg-emerald-100 disabled:opacity-60"
+          className="rounded-md border border-emerald-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm font-medium text-emerald-900 hover:bg-emerald-100 disabled:opacity-60"
         >
           {pending === "PLAYER" ? "處理中…" : "以球員身分加入"}
         </button>

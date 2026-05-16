@@ -9,7 +9,7 @@ export default function CoachForbiddenPage() {
         <h1 className="text-xl font-semibold">無權限</h1>
         <UserButton />
       </div>
-      <p className="text-sm text-zinc-600">
+      <p className="text-sm text-zinc-600 dark:text-zinc-400">
         此帳號在隊伍中的角色不是教練或管理員，無法使用教練端。
       </p>
       <Link href="/" className="text-sm text-blue-600 hover:underline">

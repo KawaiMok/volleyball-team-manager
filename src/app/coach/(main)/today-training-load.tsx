@@ -46,9 +46,9 @@ export function CoachTodayTrainingLoadSection({
       </div>
 
       {trainings.length === 0 ?
-        <p className="mt-4 text-sm text-zinc-600">今日尚無已發布訓練場次。</p>
+        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">今日尚無已發布訓練場次。</p>
       : n === 0 ?
-        <p className="mt-4 text-sm text-zinc-600">
+        <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
           今日場次尚無回饋資料。事件結束後球員可填寫；亦可至{" "}
           {trainings.map((t, i) => (
             <span key={t.id}>
@@ -64,21 +64,21 @@ export function CoachTodayTrainingLoadSection({
         <div className="mt-4 space-y-5">
           <div className="flex flex-wrap gap-6">
             <div>
-              <p className="text-xs text-zinc-500">回饋筆數</p>
-              <p className="text-2xl font-semibold tabular-nums text-zinc-900">{n}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">回饋筆數</p>
+              <p className="text-2xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{n}</p>
             </div>
             <div>
-              <p className="text-xs text-zinc-500">RPE 平均</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">RPE 平均</p>
               <p className="text-2xl font-semibold tabular-nums text-violet-900">
                 {avgRpe != null ? avgRpe.toFixed(1) : "—"}
               </p>
-              <p className="text-[10px] text-zinc-500">1–10 自覺強度</p>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-400">1–10 自覺強度</p>
             </div>
           </div>
 
           <div>
-            <p className="mb-1.5 text-xs font-medium text-zinc-600">疲勞（低／中／高）</p>
-            <div className="flex h-8 overflow-hidden rounded-md bg-zinc-100">
+            <p className="mb-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">疲勞（低／中／高）</p>
+            <div className="flex h-8 overflow-hidden rounded-md bg-zinc-100 dark:bg-zinc-800">
               {fatigueTotal === 0 ?
                 <div className="flex w-full items-center justify-center text-xs text-zinc-400">無資料</div>
               : (
@@ -107,20 +107,20 @@ export function CoachTodayTrainingLoadSection({
                 </>
               )}
             </div>
-            <p className="mt-1 text-[10px] text-zinc-500">
+            <p className="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
               低 {fatigue.LOW} · 中 {fatigue.MED} · 高 {fatigue.HIGH}
             </p>
           </div>
 
           <div>
-            <p className="mb-1.5 text-xs font-medium text-zinc-600">疼痛（無／輕／重）</p>
-            <div className="flex h-8 overflow-hidden rounded-md bg-zinc-100">
+            <p className="mb-1.5 text-xs font-medium text-zinc-600 dark:text-zinc-400">疼痛（無／輕／重）</p>
+            <div className="flex h-8 overflow-hidden rounded-md bg-zinc-100 dark:bg-zinc-800">
               {painTotal === 0 ?
                 <div className="flex w-full items-center justify-center text-xs text-zinc-400">無資料</div>
               : (
                 <>
                   <div
-                    className="flex items-center justify-center bg-slate-300/90 text-[10px] font-medium text-slate-900"
+                    className="flex items-center justify-center bg-slate-300/90 text-[10px] font-medium text-slate-900 dark:text-slate-50"
                     style={{ width: `${pct(pain.NONE, painTotal)}%` }}
                     title={`無 ${pain.NONE}`}
                   >
@@ -143,13 +143,13 @@ export function CoachTodayTrainingLoadSection({
                 </>
               )}
             </div>
-            <p className="mt-1 text-[10px] text-zinc-500">
+            <p className="mt-1 text-[10px] text-zinc-500 dark:text-zinc-400">
               無 {pain.NONE} · 輕 {pain.MILD} · 重 {pain.SEVERE}
             </p>
           </div>
 
           {trainings.length > 0 ?
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               場次：
               {trainings.map((t, i) => (
                 <span key={t.id}>

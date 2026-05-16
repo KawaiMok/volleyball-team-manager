@@ -76,7 +76,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
       : null}
 
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="title" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           標題
         </label>
         <input
@@ -84,20 +84,20 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
           name="title"
           type="text"
           required
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           placeholder="例如：接發球專項訓練"
         />
       </div>
 
       <div>
-        <label htmlFor="type" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="type" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           類型
         </label>
         <select
           id="type"
           name="type"
           defaultValue="TRAINING"
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         >
           {EVENT_TYPES.map((t) => (
             <option key={t} value={t}>
@@ -109,7 +109,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="startsAt" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="startsAt" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             開始
           </label>
           <input
@@ -117,11 +117,11 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
             name="startsAt"
             type="datetime-local"
             required
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
         <div>
-          <label htmlFor="endsAt" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="endsAt" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             結束
           </label>
           <input
@@ -129,35 +129,35 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
             name="endsAt"
             type="datetime-local"
             required
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor="rsvpDeadlineAt" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="rsvpDeadlineAt" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           RSVP 截止（選填）
         </label>
         <input
           id="rsvpDeadlineAt"
           name="rsvpDeadlineAt"
           type="datetime-local"
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           須早於或等於「開始」時間；未填則球員可隨時更新 RSVP（至事件結束前皆無強制截止）。
         </p>
       </div>
 
       <div>
-        <label htmlFor="locationName" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="locationName" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           場館（選填）
         </label>
         <input
           id="locationName"
           name="locationName"
           type="text"
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
       </div>
 

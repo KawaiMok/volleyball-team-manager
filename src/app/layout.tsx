@@ -1,6 +1,13 @@
+import { Suspense } from "react";
+
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { NavigationTransitionBar } from "@/components/navigation-transition-bar";
+import { ThemeProvider } from "@/components/theme-provider";
+import { THEME_STORAGE_KEY } from "@/lib/theme-preference";
 
 import "./globals.css";
 
@@ -29,8 +36,22 @@ export default function RootLayout({
       <html
         lang="zh-Hant"
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+        suppressHydrationWarning
       >
-        <body className="flex min-h-full flex-col">{children}</body>
+        {/** 註解：在 React 注水前套用 localStorage 主題，避免閃爍 */}
+        <Script
+          id="theme-boot"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var r=document.documentElement;var s=localStorage.getItem(k);var m=window.matchMedia("(prefers-color-scheme: dark)");var d=s==="dark"||(s!=="light"&&(!s||s==="system")&&m.matches);r.classList.toggle("dark",d);r.style.colorScheme=d?"dark":"light";}catch(e){}})();`,
+          }}
+        />
+        <body className="flex min-h-full flex-col">
+          <Suspense fallback={null}>
+            <NavigationTransitionBar />
+          </Suspense>
+          <ThemeProvider>{children}</ThemeProvider>
+        </body>
       </html>
     </ClerkProvider>
   );

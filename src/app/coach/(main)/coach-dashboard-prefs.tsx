@@ -103,25 +103,25 @@ export function CoachDashboardSettingsPanel() {
   const ids = Object.keys(WIDGET_LABELS) as CoachDashboardWidgetId[];
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 shadow-sm">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/80 p-3 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-medium text-zinc-800">儀表板配置</p>
+        <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">儀表板配置</p>
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-800 hover:bg-zinc-50"
+          className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:bg-zinc-950"
         >
           {open ? "收合" : "顯示項目"}
         </button>
       </div>
       {open ?
-        <ul className="mt-3 space-y-2 border-t border-zinc-200 pt-3">
+        <ul className="mt-3 space-y-2 border-t border-zinc-200 dark:border-zinc-800 pt-3">
           {ids.map((wid) => (
             <li key={wid}>
-              <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-800">
+              <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-800 dark:text-zinc-200">
                 <input
                   type="checkbox"
-                  className="mt-0.5 rounded border-zinc-300"
+                  className="mt-0.5 rounded border-zinc-300 dark:border-zinc-600"
                   checked={prefs[wid]}
                   onChange={(e) => setWidget(wid, e.target.checked)}
                 />
@@ -131,7 +131,7 @@ export function CoachDashboardSettingsPanel() {
           ))}
         </ul>
       : (
-        <p className="mt-2 text-xs text-zinc-500">勾選要顯示的區塊；設定僅存在此瀏覽器。</p>
+        <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">勾選要顯示的區塊；設定僅存在此瀏覽器。</p>
       )}
     </div>
   );

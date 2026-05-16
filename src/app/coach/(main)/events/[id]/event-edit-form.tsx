@@ -100,7 +100,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
       : null}
 
       <div>
-        <label htmlFor={`edit-title-${eventId}`} className="block text-sm font-medium text-zinc-700">
+        <label htmlFor={`edit-title-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           標題
         </label>
         <input
@@ -109,19 +109,19 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
           type="text"
           required
           defaultValue={initial.title}
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
       </div>
 
       <div>
-        <label htmlFor={`edit-type-${eventId}`} className="block text-sm font-medium text-zinc-700">
+        <label htmlFor={`edit-type-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           類型
         </label>
         <select
           id={`edit-type-${eventId}`}
           name="type"
           defaultValue={initial.type}
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         >
           {EVENT_TYPES.map((t) => (
             <option key={t} value={t}>
@@ -132,7 +132,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
       </div>
 
       <div>
-        <label htmlFor={`edit-desc-${eventId}`} className="block text-sm font-medium text-zinc-700">
+        <label htmlFor={`edit-desc-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           說明（選填）
         </label>
         <textarea
@@ -140,13 +140,13 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
           name="description"
           rows={3}
           defaultValue={initial.description ?? ""}
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor={`edit-starts-${eventId}`} className="block text-sm font-medium text-zinc-700">
+          <label htmlFor={`edit-starts-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             開始
           </label>
           <input
@@ -155,11 +155,11 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
             type="datetime-local"
             required
             defaultValue={isoToDatetimeLocal(initial.startsAtIso)}
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
         <div>
-          <label htmlFor={`edit-ends-${eventId}`} className="block text-sm font-medium text-zinc-700">
+          <label htmlFor={`edit-ends-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             結束
           </label>
           <input
@@ -168,13 +168,13 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
             type="datetime-local"
             required
             defaultValue={isoToDatetimeLocal(initial.endsAtIso)}
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor={`edit-meet-${eventId}`} className="block text-sm font-medium text-zinc-700">
+        <label htmlFor={`edit-meet-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           集合（選填）
         </label>
         <input
@@ -182,12 +182,12 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
           name="meetAt"
           type="datetime-local"
           defaultValue={initial.meetAtIso ? isoToDatetimeLocal(initial.meetAtIso) : ""}
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
       </div>
 
       <div>
-        <label htmlFor={`edit-loc-${eventId}`} className="block text-sm font-medium text-zinc-700">
+        <label htmlFor={`edit-loc-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           場館（選填）
         </label>
         <input
@@ -195,12 +195,12 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
           name="locationName"
           type="text"
           defaultValue={initial.locationName ?? ""}
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
       </div>
 
       <div>
-        <label htmlFor={`edit-rsvp-${eventId}`} className="block text-sm font-medium text-zinc-700">
+        <label htmlFor={`edit-rsvp-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           RSVP 截止（選填）
         </label>
         <input
@@ -208,9 +208,9 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
           name="rsvpDeadlineAt"
           type="datetime-local"
           defaultValue={initial.rsvpDeadlineIso ? isoToDatetimeLocal(initial.rsvpDeadlineIso) : ""}
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
-        <p className="mt-1 text-xs text-zinc-500">須早於或等於「開始」時間；清空表示不強制截止。</p>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">須早於或等於「開始」時間；清空表示不強制截止。</p>
       </div>
 
       <EventParticipantRuleFields
@@ -223,7 +223,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 disabled:opacity-60"
+        className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-50 hover:bg-zinc-50 dark:bg-zinc-950 disabled:opacity-60"
       >
         {pending ? "儲存中…" : "儲存變更"}
       </button>

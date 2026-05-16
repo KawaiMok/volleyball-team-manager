@@ -65,7 +65,7 @@ export function CoachTeamIdentitySettingsForm({ initialName, initialSeason, init
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label htmlFor="team-name" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="team-name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             隊名<span className="text-red-600">*</span>
           </label>
           <input
@@ -75,11 +75,11 @@ export function CoachTeamIdentitySettingsForm({ initialName, initialSeason, init
             required
             maxLength={120}
             defaultValue={initialName}
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
         <div className="sm:col-span-2">
-          <label htmlFor="team-season" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="team-season" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             賽季（選填）
           </label>
           <input
@@ -89,11 +89,11 @@ export function CoachTeamIdentitySettingsForm({ initialName, initialSeason, init
             maxLength={64}
             defaultValue={initialSeason}
             placeholder="例如：2026 春季聯賽"
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
         <div className="sm:col-span-2">
-          <label htmlFor="team-groups" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="team-groups" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             分組標籤（每行一個）
           </label>
           <textarea
@@ -102,9 +102,9 @@ export function CoachTeamIdentitySettingsForm({ initialName, initialSeason, init
             rows={5}
             defaultValue={initialGroupLines}
             placeholder={"A\nB"}
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 font-mono text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             用於行事曆／事件篩選與參與者規則。變更後若隊員既有「分組」值不在新清單內，請至名單逐一調整。
           </p>
         </div>

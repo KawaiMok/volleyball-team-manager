@@ -146,7 +146,7 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
       : null}
 
       {comments.length === 0 ?
-        <p className="text-sm text-zinc-500">尚無公告或留言。</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">尚無公告或留言。</p>
       : (
         <ul className="space-y-3">
           {comments.map((c) => {
@@ -158,16 +158,16 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
                 className={
                   c.type === "ANNOUNCEMENT" ?
                     "rounded-lg border border-amber-200 bg-amber-50/80 px-3 py-3"
-                  : "rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-3"
+                  : "rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/80 px-3 py-3"
                 }
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-500 dark:text-zinc-400">
                   <span>
-                    <span className="font-medium text-zinc-700">{c.authorName}</span>
+                    <span className="font-medium text-zinc-700 dark:text-zinc-300">{c.authorName}</span>
                     <span className="mx-1.5">·</span>
                     <span
                       className={
-                        c.type === "ANNOUNCEMENT" ? "text-amber-800" : "text-zinc-600"
+                        c.type === "ANNOUNCEMENT" ? "text-amber-800" : "text-zinc-600 dark:text-zinc-400"
                       }
                     >
                       {typeLabel(c.type)}
@@ -194,7 +194,7 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
                             type="button"
                             disabled={pending}
                             onClick={() => setEditingId(null)}
-                            className="text-zinc-600 hover:underline disabled:opacity-50"
+                            className="text-zinc-600 dark:text-zinc-400 hover:underline disabled:opacity-50"
                           >
                             取消
                           </button>
@@ -225,10 +225,10 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     rows={4}
-                    className="mt-2 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm text-zinc-900"
+                    className="mt-2 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-50"
                   />
                 : (
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-800">{c.content}</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-800 dark:text-zinc-200">{c.content}</p>
                 )}
               </li>
             );
@@ -239,14 +239,14 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
       <form onSubmit={(e) => void onSubmit(e)} className="space-y-3 border-t border-zinc-100 pt-4">
         {canManageAll ?
           <div>
-            <label htmlFor="coach-comment-type" className="block text-sm font-medium text-zinc-700">
+            <label htmlFor="coach-comment-type" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               類型
             </label>
             <select
               id="coach-comment-type"
               value={draftType}
               onChange={(e) => setDraftType(e.target.value as "ANNOUNCEMENT" | "COMMENT")}
-              className="mt-1 rounded-md border border-zinc-300 px-3 py-2 text-sm"
+              className="mt-1 rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm"
             >
               <option value="COMMENT">留言</option>
               <option value="ANNOUNCEMENT">公告</option>
@@ -254,7 +254,7 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
           </div>
         : null}
         <div>
-          <label htmlFor="coach-comment-body" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="coach-comment-body" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {canManageAll ? "新增內容" : "新增留言"}
           </label>
           <textarea
@@ -263,7 +263,7 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
             rows={4}
             maxLength={8000}
             placeholder="輸入文字…"
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
         <button

@@ -12,7 +12,7 @@ const R_BALL = 7;
 /** 球員端：唯讀全場企位（註解：與教練端 v2 座標一致）。 */
 export function CourtFormationReadonly({ data }: { data: CourtSketchData | null }) {
   if (!data) {
-    return <p className="text-sm text-slate-600">教練尚未設定企位圖。</p>;
+    return <p className="text-sm text-slate-600 dark:text-slate-400">教練尚未設定企位圖。</p>;
   }
 
   const hasTokens = data.tokens.length > 0;
@@ -21,13 +21,13 @@ export function CourtFormationReadonly({ data }: { data: CourtSketchData | null 
   const hasNotes = Boolean(notesTrim);
 
   if (!hasTokens && !hasLines && !hasNotes) {
-    return <p className="text-sm text-slate-600">教練尚未設定企位圖。</p>;
+    return <p className="text-sm text-slate-600 dark:text-slate-400">教練尚未設定企位圖。</p>;
   }
 
   return (
     <div className="space-y-3">
       {hasTokens || hasLines ?
-        <div className="relative mx-auto max-w-md overflow-hidden rounded-xl border border-slate-200 bg-white shadow-inner md:max-w-lg">
+        <div className="relative mx-auto max-w-md overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 shadow-inner md:max-w-lg">
           <svg viewBox={COURT_VIEWBOX} className="block h-auto w-full" role="img" aria-label="排球全場企位圖">
             <CourtFullSurface variant="player" />
 
@@ -99,7 +99,7 @@ export function CourtFormationReadonly({ data }: { data: CourtSketchData | null 
         </div>
       : null}
       {hasNotes ?
-        <p className="whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-800">
+        <p className="whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200">
           {notesTrim}
         </p>
       : null}

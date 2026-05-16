@@ -37,7 +37,7 @@ function statusShort(s: EventStatus) {
 }
 
 function eventCardClasses(ev: CalendarEventRow) {
-  if (ev.status === EventStatus.CANCELLED) return "border-zinc-200 bg-zinc-100 text-zinc-500 line-through";
+  if (ev.status === EventStatus.CANCELLED) return "border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 line-through";
   if (ev.status === EventStatus.DRAFT) return "border-amber-200 bg-amber-50 text-amber-950";
   return "border-violet-200 bg-violet-50 text-violet-950";
 }
@@ -62,12 +62,12 @@ export function CoachCalendarWeekGrid({ weekStart, events }: { weekStart: Date; 
         const key = toYmd(d);
         const dayEvents = byDay.get(key) ?? [];
         return (
-          <div key={key} className="rounded-lg border border-zinc-200 bg-white p-3 shadow-sm">
-            <div className="text-sm font-semibold text-zinc-900">
+          <div key={key} className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-sm">
+            <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
               {d.toLocaleDateString("zh-TW", { weekday: "long", month: "numeric", day: "numeric" })}
             </div>
             {dayEvents.length === 0 ?
-              <p className="mt-2 text-xs text-zinc-500">無事件</p>
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">無事件</p>
             : (
               <ul className="mt-2 space-y-2">
                 {dayEvents.map((ev) => (
@@ -108,15 +108,15 @@ export function CoachCalendarWeekGridDesktop({ weekStart, events }: { weekStart:
   }
 
   return (
-    <div className="hidden overflow-hidden rounded-lg border border-zinc-200 bg-zinc-200 shadow-sm md:grid md:grid-cols-7 md:gap-px">
+    <div className="hidden overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-200 shadow-sm md:grid md:grid-cols-7 md:gap-px">
       {days.map((d) => {
         const key = toYmd(d);
         const dayEvents = byDay.get(key) ?? [];
         return (
-          <div key={key} className="flex min-h-[14rem] flex-col bg-white">
-            <div className="border-b border-zinc-100 px-2 py-2 text-center text-xs font-semibold text-zinc-700">
+          <div key={key} className="flex min-h-[14rem] flex-col bg-white dark:bg-zinc-900">
+            <div className="border-b border-zinc-100 px-2 py-2 text-center text-xs font-semibold text-zinc-700 dark:text-zinc-300">
               {d.toLocaleDateString("zh-TW", { weekday: "short" })}
-              <div className="text-sm tabular-nums text-zinc-900">{d.getDate()}</div>
+              <div className="text-sm tabular-nums text-zinc-900 dark:text-zinc-50">{d.getDate()}</div>
             </div>
             <div className="flex flex-1 flex-col gap-1 p-1.5">
               {dayEvents.map((ev) => (
@@ -143,22 +143,22 @@ export function CoachCalendarWeekGridDesktop({ weekStart, events }: { weekStart:
 export function CoachCalendarListView({ events }: { events: CalendarEventRow[] }) {
   const sorted = [...events].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   return (
-    <ul className="divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+    <ul className="divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
       {sorted.length === 0 ?
-        <li className="px-4 py-10 text-center text-sm text-zinc-500">此區間無事件</li>
+        <li className="px-4 py-10 text-center text-sm text-zinc-500 dark:text-zinc-400">此區間無事件</li>
       : sorted.map((ev) => (
           <li key={ev.id}>
             <Link
               href={`/coach/events/${ev.id}`}
-              className="flex flex-col gap-1 px-4 py-3 transition hover:bg-zinc-50 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-1 px-4 py-3 transition hover:bg-zinc-50 dark:bg-zinc-950 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
-                <span className="font-medium text-zinc-900">{ev.title}</span>
-                <span className="ml-2 text-sm text-zinc-500">
+                <span className="font-medium text-zinc-900 dark:text-zinc-50">{ev.title}</span>
+                <span className="ml-2 text-sm text-zinc-500 dark:text-zinc-400">
                   {typeLabel(ev.type)} · {statusShort(ev.status)}
                 </span>
               </div>
-              <time className="shrink-0 text-sm tabular-nums text-zinc-600">
+              <time className="shrink-0 text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
                 {ev.startsAt.toLocaleString("zh-TW", {
                   month: "short",
                   day: "numeric",
@@ -196,10 +196,10 @@ export function CoachCalendarMonthGrid({ monthAnchor, events }: { monthAnchor: D
   const weekDayLabels = ["一", "二", "三", "四", "五", "六", "日"];
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
       <div className="grid min-w-[640px] grid-cols-7 gap-px bg-zinc-200">
         {weekDayLabels.map((w) => (
-          <div key={w} className="bg-zinc-50 py-2 text-center text-xs font-semibold text-zinc-600">
+          <div key={w} className="bg-zinc-50 dark:bg-zinc-950 py-2 text-center text-xs font-semibold text-zinc-600 dark:text-zinc-400">
             週{w}
           </div>
         ))}
@@ -210,9 +210,9 @@ export function CoachCalendarMonthGrid({ monthAnchor, events }: { monthAnchor: D
           return (
             <div
               key={key}
-              className={`min-h-[6.5rem] bg-white p-1 ${inMonth ? "" : "bg-zinc-50/80 text-zinc-400"}`}
+              className={`min-h-[6.5rem] bg-white dark:bg-zinc-900 p-1 ${inMonth ? "" : "bg-zinc-50 dark:bg-zinc-950/80 text-zinc-400"}`}
             >
-              <div className={`text-xs font-medium tabular-nums ${inMonth ? "text-zinc-900" : "text-zinc-400"}`}>
+              <div className={`text-xs font-medium tabular-nums ${inMonth ? "text-zinc-900 dark:text-zinc-50" : "text-zinc-400"}`}>
                 {d.getDate()}
               </div>
               <ul className="mt-1 space-y-0.5">
@@ -229,7 +229,7 @@ export function CoachCalendarMonthGrid({ monthAnchor, events }: { monthAnchor: D
                   </li>
                 ))}
                 {dayEvents.length > 3 ?
-                  <li className="text-[10px] text-zinc-500">+{dayEvents.length - 3} 場</li>
+                  <li className="text-[10px] text-zinc-500 dark:text-zinc-400">+{dayEvents.length - 3} 場</li>
                 : null}
               </ul>
             </div>

@@ -100,7 +100,7 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
     <>
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-zinc-100 bg-zinc-50 text-xs uppercase text-zinc-500">
+          <thead className="border-b border-zinc-100 bg-zinc-50 dark:bg-zinc-950 text-xs uppercase text-zinc-500 dark:text-zinc-400">
             <tr>
               <th className="px-4 py-3 font-medium">姓名</th>
               <th className="px-4 py-3 font-medium">Email</th>
@@ -120,29 +120,29 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
                 key={r.id}
                 className={
                   r.status === "INACTIVE" ?
-                    "bg-zinc-50 text-zinc-600 hover:bg-zinc-100/80"
-                  : "hover:bg-zinc-50/80"
+                    "bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800/80"
+                  : "hover:bg-zinc-50 dark:bg-zinc-950/80"
                 }
               >
-                <td className="px-4 py-3 font-medium text-zinc-900">{r.displayName ?? "—"}</td>
-                <td className="px-4 py-3 text-zinc-700">{r.email ?? "—"}</td>
+                <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-50">{r.displayName ?? "—"}</td>
+                <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.email ?? "—"}</td>
                 <td className="px-4 py-3">{roleLabel(r.role)}</td>
                 <td className="px-4 py-3 tabular-nums">{r.jerseyNumber ?? "—"}</td>
-                <td className="px-4 py-3 text-zinc-700">{r.position ?? "—"}</td>
+                <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{r.position ?? "—"}</td>
                 <td className="px-4 py-3">{r.squad ?? "—"}</td>
-                <td className="px-4 py-3 tabular-nums text-zinc-600">{r.phone ?? "—"}</td>
+                <td className="px-4 py-3 tabular-nums text-zinc-600 dark:text-zinc-400">{r.phone ?? "—"}</td>
                 <td className="px-4 py-3">
                   <span
                     className={
                       r.status === "INACTIVE" ?
-                        "rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-800"
+                        "rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-800 dark:text-zinc-200"
                       : "rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-900"
                     }
                   >
                     {statusLabel(r.status)}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-xs text-zinc-500">{r.clerkLinked ? "已連結" : "待登入合併"}</td>
+                <td className="px-4 py-3 text-xs text-zinc-500 dark:text-zinc-400">{r.clerkLinked ? "已連結" : "待登入合併"}</td>
                 <td className="px-4 py-3">
                   <button
                     type="button"
@@ -157,7 +157,7 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
           </tbody>
         </table>
         {rows.length === 0 ?
-          <p className="px-4 py-8 text-center text-sm text-zinc-500">尚無成員</p>
+          <p className="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">尚無成員</p>
         : null}
       </div>
 
@@ -174,18 +174,18 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
             aria-label="關閉編輯"
             onClick={close}
           />
-          <div className="relative z-10 flex max-h-[min(92vh,880px)] w-full max-w-lg flex-col rounded-t-2xl border border-zinc-200 bg-white shadow-2xl sm:max-h-[85vh] sm:rounded-2xl">
+          <div className="relative z-10 flex max-h-[min(92vh,880px)] w-full max-w-lg flex-col rounded-t-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl sm:max-h-[85vh] sm:rounded-2xl">
             <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4">
               <div className="min-w-0">
-                <h3 id="roster-edit-title" className="text-lg font-semibold text-zinc-900">
+                <h3 id="roster-edit-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
                   編輯隊員
                 </h3>
-                <p className="mt-1 truncate text-sm text-zinc-600">{editing.email ?? editing.id}</p>
+                <p className="mt-1 truncate text-sm text-zinc-600 dark:text-zinc-400">{editing.email ?? editing.id}</p>
               </div>
               <button
                 type="button"
                 onClick={close}
-                className="rounded-md p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800"
+                className="rounded-md p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800 hover:text-zinc-800 dark:text-zinc-200"
                 aria-label="關閉"
               >
                 <span className="text-xl leading-none">×</span>

@@ -10,11 +10,11 @@ export default async function CoachLoginRedirectPage({
   const sp = await searchParams;
 
   return (
-    <div className="flex min-h-full flex-col items-center justify-center bg-zinc-50 px-4 py-16">
+    <div className="flex min-h-full flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4 py-16">
       <div className="w-full max-w-md space-y-4">
         <div className="text-center">
           <h1 className="text-xl font-semibold tracking-tight">教練端登入</h1>
-          <p className="mt-2 text-sm text-zinc-600">
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             使用 Clerk 登入；也可改用{" "}
             <Link href="/sign-in" className="text-blue-600 hover:underline">
               /sign-in
@@ -38,8 +38,8 @@ export default async function CoachLoginRedirectPage({
           }}
         />
 
-        <p className="text-center text-xs text-zinc-500">
-          <Link href="/" className="hover:text-zinc-800">
+        <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
+          <Link href="/" className="hover:text-zinc-800 dark:text-zinc-200">
             回首頁
           </Link>
         </p>

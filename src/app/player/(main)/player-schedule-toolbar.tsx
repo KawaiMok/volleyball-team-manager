@@ -39,15 +39,15 @@ export function PlayerScheduleToolbar({ view, dateYmd, weekLabel, monthLabel }: 
   const todayYmd = toYmd(new Date());
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="space-y-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 p-4 shadow-sm">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-medium uppercase text-slate-500">視圖</span>
+        <span className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">視圖</span>
         <Link
           href="/player"
           className={
             view === "list" ?
               "rounded-lg bg-slate-900 px-3 py-1.5 text-sm text-white"
-            : "rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+            : "rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-950"
           }
         >
           列表
@@ -57,7 +57,7 @@ export function PlayerScheduleToolbar({ view, dateYmd, weekLabel, monthLabel }: 
           className={
             view === "week" ?
               "rounded-lg bg-slate-900 px-3 py-1.5 text-sm text-white"
-            : "rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+            : "rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-950"
           }
         >
           週
@@ -67,7 +67,7 @@ export function PlayerScheduleToolbar({ view, dateYmd, weekLabel, monthLabel }: 
           className={
             view === "month" ?
               "rounded-lg bg-slate-900 px-3 py-1.5 text-sm text-white"
-            : "rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+            : "rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:bg-slate-950"
           }
         >
           月
@@ -76,52 +76,52 @@ export function PlayerScheduleToolbar({ view, dateYmd, weekLabel, monthLabel }: 
 
       {view === "week" ?
         <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
-          <span className="text-xs font-medium uppercase text-slate-500">時間</span>
+          <span className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">時間</span>
           <Link
             href={href("week", prevWeek)}
-            className="rounded-lg border border-slate-200 px-2 py-1 text-sm hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-1 text-sm hover:bg-slate-50 dark:bg-slate-950"
           >
             ← 上週
           </Link>
-          <span className="text-sm font-medium text-slate-900">{weekLabel}</span>
+          <span className="text-sm font-medium text-slate-900 dark:text-slate-50">{weekLabel}</span>
           <Link
             href={href("week", nextWeek)}
-            className="rounded-lg border border-slate-200 px-2 py-1 text-sm hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-1 text-sm hover:bg-slate-50 dark:bg-slate-950"
           >
             下週 →
           </Link>
           <Link
             href={href("week", todayYmd)}
-            className="rounded-lg bg-slate-100 px-2 py-1 text-sm text-slate-800 hover:bg-slate-200"
+            className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-1 text-sm text-slate-800 dark:text-slate-200 hover:bg-slate-200"
           >
             本週
           </Link>
         </div>
       : view === "month" ?
         <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
-          <span className="text-xs font-medium uppercase text-slate-500">時間</span>
+          <span className="text-xs font-medium uppercase text-slate-500 dark:text-slate-400">時間</span>
           <Link
             href={href("month", prevMonth)}
-            className="rounded-lg border border-slate-200 px-2 py-1 text-sm hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-1 text-sm hover:bg-slate-50 dark:bg-slate-950"
           >
             ← 上月
           </Link>
-          <span className="text-sm font-medium text-slate-900">{monthLabel}</span>
+          <span className="text-sm font-medium text-slate-900 dark:text-slate-50">{monthLabel}</span>
           <Link
             href={href("month", nextMonth)}
-            className="rounded-lg border border-slate-200 px-2 py-1 text-sm hover:bg-slate-50"
+            className="rounded-lg border border-slate-200 dark:border-slate-700 px-2 py-1 text-sm hover:bg-slate-50 dark:bg-slate-950"
           >
             下月 →
           </Link>
           <Link
             href={href("month", todayYmd)}
-            className="rounded-lg bg-slate-100 px-2 py-1 text-sm text-slate-800 hover:bg-slate-200"
+            className="rounded-lg bg-slate-100 dark:bg-slate-800 px-2 py-1 text-sm text-slate-800 dark:text-slate-200 hover:bg-slate-200"
           >
             本月
           </Link>
         </div>
       : (
-        <p className="border-t border-slate-100 pt-3 text-xs text-slate-500">
+        <p className="border-t border-slate-100 pt-3 text-xs text-slate-500 dark:text-slate-400">
           使用「週」或「月」可依日曆瀏覽已發布、且你有參與的場次。
         </p>
       )}

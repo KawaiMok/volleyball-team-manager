@@ -52,17 +52,17 @@ function EventListItem({ ev }: { ev: EventRow }) {
     <li>
       <Link
         href={`/player/events/${ev.id}`}
-        className="flex flex-col gap-1 px-4 py-4 transition hover:bg-slate-50"
+        className="flex flex-col gap-1 px-4 py-4 transition hover:bg-slate-50 dark:bg-slate-950"
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="font-medium text-slate-900">{ev.title}</span>
+          <span className="font-medium text-slate-900 dark:text-slate-50">{ev.title}</span>
           {needRsvp ?
             <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
               待 RSVP
             </span>
           : null}
         </div>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs text-slate-500 dark:text-slate-400">
           {typeLabel(ev.type)} ·{" "}
           {ev.startsAt.toLocaleString("zh-TW", {
             weekday: "short",
@@ -72,7 +72,7 @@ function EventListItem({ ev }: { ev: EventRow }) {
             minute: "2-digit",
           })}
         </span>
-        {ev.locationName ? <span className="text-xs text-slate-500">{ev.locationName}</span> : null}
+        {ev.locationName ? <span className="text-xs text-slate-500 dark:text-slate-400">{ev.locationName}</span> : null}
       </Link>
     </li>
   );
@@ -173,7 +173,7 @@ export default async function PlayerSchedulePage({ searchParams }: PageProps) {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">我的行程</h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           僅顯示已發布、且你有被列入參與者的場次（含今日起與更早）
         </p>
       </div>
@@ -195,19 +195,19 @@ export default async function PlayerSchedulePage({ searchParams }: PageProps) {
       : (
         <>
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">今日起</h2>
-            <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">今日起</h2>
+            <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 shadow-sm">
               {upcoming.length === 0 ?
-                <li className="px-4 py-10 text-center text-sm text-slate-500">目前沒有即將到來的行程</li>
+                <li className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">目前沒有即將到來的行程</li>
               : upcoming.map((ev) => <EventListItem key={ev.id} ev={ev} />)}
             </ul>
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">更早的行程</h2>
-            <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">更早的行程</h2>
+            <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 shadow-sm">
               {past.length === 0 ?
-                <li className="px-4 py-10 text-center text-sm text-slate-500">尚無更早的紀錄</li>
+                <li className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">尚無更早的紀錄</li>
               : past.map((ev) => <EventListItem key={ev.id} ev={ev} />)}
             </ul>
           </section>

@@ -38,7 +38,7 @@ export function TrainingPlanPanel({ eventId, isTraining, initialPlan }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   if (!isTraining) {
-    return <p className="text-sm text-zinc-500">非訓練事件，無訓練計畫。</p>;
+    return <p className="text-sm text-zinc-500 dark:text-zinc-400">非訓練事件，無訓練計畫。</p>;
   }
 
   async function generateAi() {
@@ -70,7 +70,7 @@ export function TrainingPlanPanel({ eventId, isTraining, initialPlan }: Props) {
       <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-4">
         <h3 className="text-sm font-medium text-violet-900">AI 產生訓練內容</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-xs text-zinc-600">
+          <label className="text-xs text-zinc-600 dark:text-zinc-400">
             人數
             <input
               type="number"
@@ -78,10 +78,10 @@ export function TrainingPlanPanel({ eventId, isTraining, initialPlan }: Props) {
               max={200}
               value={headcount}
               onChange={(e) => setHeadcount(Number(e.target.value))}
-              className="mt-1 w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded border border-zinc-300 dark:border-zinc-600 px-2 py-1.5 text-sm"
             />
           </label>
-          <label className="text-xs text-zinc-600">
+          <label className="text-xs text-zinc-600 dark:text-zinc-400">
             時長（分鐘）
             <input
               type="number"
@@ -89,24 +89,24 @@ export function TrainingPlanPanel({ eventId, isTraining, initialPlan }: Props) {
               max={600}
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
-              className="mt-1 w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded border border-zinc-300 dark:border-zinc-600 px-2 py-1.5 text-sm"
             />
           </label>
-          <label className="text-xs text-zinc-600 sm:col-span-2">
+          <label className="text-xs text-zinc-600 dark:text-zinc-400 sm:col-span-2">
             技術重點（選填）
             <input
               value={skillFocus}
               onChange={(e) => setSkillFocus(e.target.value)}
-              className="mt-1 w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded border border-zinc-300 dark:border-zinc-600 px-2 py-1.5 text-sm"
               placeholder="例如：接發球、攔網"
             />
           </label>
-          <label className="text-xs text-zinc-600 sm:col-span-2">
+          <label className="text-xs text-zinc-600 dark:text-zinc-400 sm:col-span-2">
             限制（選填）
             <input
               value={constraints}
               onChange={(e) => setConstraints(e.target.value)}
-              className="mt-1 w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+              className="mt-1 w-full rounded border border-zinc-300 dark:border-zinc-600 px-2 py-1.5 text-sm"
               placeholder="場地、球數、傷兵…"
             />
           </label>
@@ -123,10 +123,10 @@ export function TrainingPlanPanel({ eventId, isTraining, initialPlan }: Props) {
       </div>
 
       {initialPlan ? (
-        <div className="rounded-lg border border-zinc-200 bg-white p-4">
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
           <h3 className="font-medium">{initialPlan.title ?? "訓練計畫"}</h3>
           {initialPlan.summary ? (
-            <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{initialPlan.summary}</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">{initialPlan.summary}</p>
           ) : null}
           {initialPlan.safetyNotes ? (
             <p className="mt-3 text-sm text-amber-900">
@@ -136,20 +136,20 @@ export function TrainingPlanPanel({ eventId, isTraining, initialPlan }: Props) {
           ) : null}
           <ol className="mt-4 space-y-4">
             {initialPlan.blocks.map((b) => (
-              <li key={b.id} className="border-l-2 border-zinc-300 pl-3">
+              <li key={b.id} className="border-l-2 border-zinc-300 dark:border-zinc-600 pl-3">
                 <p className="font-medium">
                   {b.name}{" "}
-                  <span className="font-normal text-zinc-500">
+                  <span className="font-normal text-zinc-500 dark:text-zinc-400">
                     （{b.minutes} 分鐘）
                   </span>
                 </p>
-                <p className="mt-1 text-sm text-zinc-700">{b.goal}</p>
+                <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">{b.goal}</p>
               </li>
             ))}
           </ol>
         </div>
       ) : (
-        <p className="text-sm text-zinc-500">尚無訓練計畫，可用 AI 產生或稍後以 API 建立。</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">尚無訓練計畫，可用 AI 產生或稍後以 API 建立。</p>
       )}
     </div>
   );

@@ -131,13 +131,13 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-slate-900">公告與留言</h2>
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">公告與留言</h2>
       {error ?
         <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
       : null}
 
       {comments.length === 0 ?
-        <p className="text-sm text-slate-600">尚無公告或留言。</p>
+        <p className="text-sm text-slate-600 dark:text-slate-400">尚無公告或留言。</p>
       : (
         <ul className="space-y-3">
           {comments.map((c) => {
@@ -149,14 +149,14 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
                 className={
                   c.type === "ANNOUNCEMENT" ?
                     "rounded-xl border border-amber-200 bg-amber-50/90 px-3 py-3"
-                  : "rounded-xl border border-slate-200 bg-white px-3 py-3 shadow-sm"
+                  : "rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 px-3 py-3 shadow-sm"
                 }
               >
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
                   <span>
-                    <span className="font-medium text-slate-800">{c.authorName}</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200">{c.authorName}</span>
                     <span className="mx-1.5">·</span>
-                    <span className={c.type === "ANNOUNCEMENT" ? "text-amber-900" : "text-slate-600"}>
+                    <span className={c.type === "ANNOUNCEMENT" ? "text-amber-900" : "text-slate-600 dark:text-slate-400"}>
                       {typeLabel(c.type)}
                     </span>
                     <span className="mx-1.5">·</span>
@@ -178,7 +178,7 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
                             type="button"
                             disabled={pending}
                             onClick={() => setEditingId(null)}
-                            className="text-slate-600 hover:underline disabled:opacity-50"
+                            className="text-slate-600 dark:text-slate-400 hover:underline disabled:opacity-50"
                           >
                             取消
                           </button>
@@ -212,10 +212,10 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     rows={4}
-                    className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-900"
+                    className="mt-2 w-full rounded-md border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-slate-50"
                   />
                 : (
-                  <p className="mt-2 whitespace-pre-wrap text-sm text-slate-800">{c.content}</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-slate-800 dark:text-slate-200">{c.content}</p>
                 )}
               </li>
             );
@@ -223,8 +223,8 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
         </ul>
       )}
 
-      <form onSubmit={(e) => void onSubmit(e)} className="space-y-2 border-t border-slate-200 pt-4">
-        <label htmlFor="player-comment-body" className="block text-sm font-medium text-slate-800">
+      <form onSubmit={(e) => void onSubmit(e)} className="space-y-2 border-t border-slate-200 dark:border-slate-700 pt-4">
+        <label htmlFor="player-comment-body" className="block text-sm font-medium text-slate-800 dark:text-slate-200">
           發表留言
         </label>
         <textarea
@@ -233,7 +233,7 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
           rows={3}
           maxLength={8000}
           placeholder="與隊友／教練交流…"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
+          className="w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900"
         />
         <button
           type="submit"

@@ -118,7 +118,7 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label htmlFor="invite-email" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="invite-email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             對方登入信箱（Clerk 主要 Email）<span className="text-red-600">*</span>
           </label>
           <input
@@ -128,15 +128,15 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
             required
             autoComplete="email"
             placeholder="name@example.com"
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             須與對方 Clerk 帳號信箱一致，首次登入才能自動合併至此使用者。
           </p>
         </div>
 
         <div className="sm:col-span-2">
-          <label htmlFor="invite-display" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="invite-display" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             預備顯示姓名（選填）
           </label>
           <input
@@ -145,22 +145,22 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
             type="text"
             maxLength={120}
             placeholder="例如：王小明（尚未登入時可先顯示於名單）"
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             若對方 User 尚無姓名，會寫入顯示名；已有 Clerk 姓名則不覆蓋。
           </p>
         </div>
 
         <div>
-          <label htmlFor="invite-role" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="invite-role" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             角色
           </label>
           <select
             id="invite-role"
             name="role"
             defaultValue="PLAYER"
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           >
             {rolesForInvite.map((r) => (
               <option key={r} value={r}>
@@ -171,7 +171,7 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
         </div>
 
         <div>
-          <label htmlFor="invite-jersey" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="invite-jersey" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             背號（選填）
           </label>
           <input
@@ -180,12 +180,12 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
             type="number"
             min={0}
             max={999}
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
 
         <div>
-          <label htmlFor="invite-position" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="invite-position" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             位置（選填）
           </label>
           <input
@@ -194,12 +194,12 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
             type="text"
             maxLength={64}
             placeholder="例如：舉球員、自由球員"
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
 
         <div className="sm:col-span-2">
-          <label htmlFor="invite-squad-select" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="invite-squad-select" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             分組
           </label>
           {squads.length > 0 ?
@@ -208,7 +208,7 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
                 id="invite-squad-select"
                 value={squadChoice}
                 onChange={(e) => setSquadChoice(e.target.value)}
-                className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
               >
                 <option value="">不指定</option>
                 {squads.map((s) => (
@@ -225,7 +225,7 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
                   onChange={(e) => setSquadCustom(e.target.value)}
                   maxLength={32}
                   placeholder="自訂分組名稱"
-                  className="mt-2 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                  className="mt-2 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
                   aria-label="自訂分組"
                 />
               : null}
@@ -238,18 +238,18 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
               value={squadCustom}
               onChange={(e) => setSquadCustom(e.target.value)}
               placeholder="例如：A（尚未設定隊伍分組標籤時可自由填寫）"
-              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           )}
           {squads.length === 0 ?
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               隊伍尚未設定分組清單時可直接填寫；送出時會帶入「分組」欄位。
             </p>
           : null}
         </div>
 
         <div className="sm:col-span-2">
-          <label htmlFor="invite-phone" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="invite-phone" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             聯絡電話（選填）
           </label>
           <input
@@ -258,12 +258,12 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
             type="tel"
             maxLength={32}
             autoComplete="tel"
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
 
         <div className="sm:col-span-2">
-          <label htmlFor="invite-notes" className="block text-sm font-medium text-zinc-700">
+          <label htmlFor="invite-notes" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             備註（選填）
           </label>
           <textarea
@@ -272,7 +272,7 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
             rows={2}
             maxLength={2000}
             placeholder="隊內備註（僅教練端可見）"
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
       </div>

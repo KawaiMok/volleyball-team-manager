@@ -69,12 +69,12 @@ export function PlayerScheduleWeekGrid({
         const key = toYmd(d);
         const dayEvents = byDay.get(key) ?? [];
         return (
-          <div key={key} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-            <div className="text-sm font-semibold text-slate-900">
+          <div key={key} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 p-3 shadow-sm">
+            <div className="text-sm font-semibold text-slate-900 dark:text-slate-50">
               {d.toLocaleDateString("zh-TW", { weekday: "long", month: "numeric", day: "numeric" })}
             </div>
             {dayEvents.length === 0 ?
-              <p className="mt-2 text-xs text-slate-500">無行程</p>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">無行程</p>
             : (
               <ul className="mt-2 space-y-2">
                 {dayEvents.map((ev) => (
@@ -129,15 +129,15 @@ export function PlayerScheduleWeekGridDesktop({
   }
 
   return (
-    <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-slate-200 shadow-sm md:grid md:grid-cols-7 md:gap-px">
+    <div className="hidden overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-200 shadow-sm md:grid md:grid-cols-7 md:gap-px">
       {days.map((d) => {
         const key = toYmd(d);
         const dayEvents = byDay.get(key) ?? [];
         return (
-          <div key={key} className="flex min-h-[14rem] flex-col bg-white">
-            <div className="border-b border-slate-100 px-2 py-2 text-center text-xs font-semibold text-slate-700">
+          <div key={key} className="flex min-h-[14rem] flex-col bg-white dark:bg-zinc-900">
+            <div className="border-b border-slate-100 px-2 py-2 text-center text-xs font-semibold text-slate-700 dark:text-slate-300">
               {d.toLocaleDateString("zh-TW", { weekday: "short" })}
-              <div className="text-sm tabular-nums text-slate-900">{d.getDate()}</div>
+              <div className="text-sm tabular-nums text-slate-900 dark:text-slate-50">{d.getDate()}</div>
             </div>
             <div className="flex flex-1 flex-col gap-1 p-1.5">
               {dayEvents.map((ev) => (
@@ -191,10 +191,10 @@ export function PlayerScheduleMonthGrid({
   const weekDayLabels = ["一", "二", "三", "四", "五", "六", "日"];
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 shadow-sm">
       <div className="grid min-w-[640px] grid-cols-7 gap-px bg-slate-200">
         {weekDayLabels.map((w) => (
-          <div key={w} className="bg-slate-50 py-2 text-center text-xs font-semibold text-slate-600">
+          <div key={w} className="bg-slate-50 dark:bg-slate-950 py-2 text-center text-xs font-semibold text-slate-600 dark:text-slate-400">
             週{w}
           </div>
         ))}
@@ -205,9 +205,9 @@ export function PlayerScheduleMonthGrid({
           return (
             <div
               key={key}
-              className={`min-h-[6.5rem] bg-white p-1 ${inMonth ? "" : "bg-slate-50/90 text-slate-400"}`}
+              className={`min-h-[6.5rem] bg-white dark:bg-zinc-900 p-1 ${inMonth ? "" : "bg-slate-50 dark:bg-slate-950/90 text-slate-400"}`}
             >
-              <div className={`text-xs font-medium tabular-nums ${inMonth ? "text-slate-900" : "text-slate-400"}`}>
+              <div className={`text-xs font-medium tabular-nums ${inMonth ? "text-slate-900 dark:text-slate-50" : "text-slate-400"}`}>
                 {d.getDate()}
               </div>
               <ul className="mt-1 space-y-0.5">
@@ -226,7 +226,7 @@ export function PlayerScheduleMonthGrid({
                   </li>
                 ))}
                 {dayEvents.length > 3 ?
-                  <li className="text-[10px] text-slate-500">+{dayEvents.length - 3} 場</li>
+                  <li className="text-[10px] text-slate-500 dark:text-slate-400">+{dayEvents.length - 3} 場</li>
                 : null}
               </ul>
             </div>

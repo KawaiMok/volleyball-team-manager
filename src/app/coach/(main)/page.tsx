@@ -153,7 +153,7 @@ export default async function CoachDashboardPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">總覽</h1>
-            <p className="mt-1 text-sm text-zinc-600">
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
               未來 7 天行程、RSVP 待追蹤與草稿狀態 ·{" "}
               <Link href="/coach/calendar" className="text-blue-600 hover:underline">
                 行事曆
@@ -172,15 +172,15 @@ export default async function CoachDashboardPage() {
 
         <CoachDashboardSection id="stats">
           <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-zinc-500">草稿事件</p>
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">草稿事件</p>
           <p className="mt-1 text-3xl font-semibold tabular-nums">{draftCount}</p>
           <Link href="/coach/events" className="mt-2 inline-block text-sm text-blue-600 hover:underline">
             查看全部
           </Link>
         </div>
-        <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-zinc-500">未來 7 天場次</p>
+        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">未來 7 天場次</p>
           <p className="mt-1 text-3xl font-semibold tabular-nums">{upcoming.length}</p>
         </div>
         <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 shadow-sm">
@@ -216,15 +216,15 @@ export default async function CoachDashboardPage() {
                         className="flex flex-col gap-1 px-4 py-3 transition hover:bg-amber-100/60 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
-                          <span className="font-medium text-zinc-900">{ev.title}</span>
-                          <span className="ml-2 text-sm text-zinc-600">{typeLabel(ev.type)}</span>
+                          <span className="font-medium text-zinc-900 dark:text-zinc-50">{ev.title}</span>
+                          <span className="ml-2 text-sm text-zinc-600 dark:text-zinc-400">{typeLabel(ev.type)}</span>
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
                           <span className="rounded-full bg-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-950">
                             未回覆 {u}
                             {total > 0 ? ` / ${total}` : ""}
                           </span>
-                          <time className="text-sm tabular-nums text-zinc-600">
+                          <time className="text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
                             {ev.startsAt.toLocaleString("zh-TW", {
                               month: "short",
                               day: "numeric",
@@ -239,7 +239,7 @@ export default async function CoachDashboardPage() {
                   );
                 })}
               </ul>
-            : <p className="text-sm text-zinc-500">目前無待追蹤場次（未來 7 天內已發布且尚有未回覆 RSVP 者會出現在此）。</p>}
+            : <p className="text-sm text-zinc-500 dark:text-zinc-400">目前無待追蹤場次（未來 7 天內已發布且尚有未回覆 RSVP 者會出現在此）。</p>}
           </section>
         </CoachDashboardSection>
 
@@ -251,9 +251,9 @@ export default async function CoachDashboardPage() {
             新增事件
           </Link>
         </div>
-        <ul className="divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 bg-white">
+        <ul className="divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
           {upcoming.length === 0 ?
-            <li className="px-4 py-8 text-center text-sm text-zinc-500">尚未安排未來 7 天內事件</li>
+            <li className="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">尚未安排未來 7 天內事件</li>
           : upcoming.map((ev) => {
               const u = unansweredByEvent[ev.id] ?? 0;
               const total = participantsByEvent[ev.id] ?? 0;
@@ -263,25 +263,25 @@ export default async function CoachDashboardPage() {
                 <li key={ev.id}>
                   <Link
                     href={`/coach/events/${ev.id}`}
-                    className="flex flex-col gap-2 px-4 py-3 transition hover:bg-zinc-50 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-2 px-4 py-3 transition hover:bg-zinc-50 dark:bg-zinc-950 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="font-medium text-zinc-900">{ev.title}</span>
-                        <span className="text-sm text-zinc-500">
+                        <span className="font-medium text-zinc-900 dark:text-zinc-50">{ev.title}</span>
+                        <span className="text-sm text-zinc-500 dark:text-zinc-400">
                           {typeLabel(ev.type)} · {statusLabel(ev.status)}
                         </span>
                       </div>
                       {showRsvp ?
-                        <p className="mt-1 text-xs text-zinc-600">
+                        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                           RSVP：{u === 0 ? "全員已回覆" : `未回覆 ${u} 人`}
                           {total > 0 ? `（共 ${total} 位參與者）` : ""}
                         </p>
                       : ev.status === EventStatus.DRAFT ?
-                        <p className="mt-1 text-xs text-zinc-500">發布後球員才可 RSVP</p>
+                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">發布後球員才可 RSVP</p>
                       : null}
                     </div>
-                    <time className="shrink-0 text-sm tabular-nums text-zinc-600">
+                    <time className="shrink-0 text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
                       {ev.startsAt.toLocaleString("zh-TW", {
                         month: "short",
                         day: "numeric",

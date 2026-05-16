@@ -9,13 +9,13 @@ export default function PlayerForbiddenPage() {
         <h1 className="text-xl font-semibold">此區僅限球員</h1>
         <UserButton />
       </div>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-slate-600 dark:text-slate-400">
         你的身分不是「球員」，請使用教練端或其他入口。
       </p>
       <Link href="/coach" className="text-sm text-blue-600 hover:underline">
         前往教練端（若你有權限）
       </Link>
-      <Link href="/" className="text-sm text-slate-500 hover:underline">
+      <Link href="/" className="text-sm text-slate-500 dark:text-slate-400 hover:underline">
         回首頁
       </Link>
     </div>

@@ -39,7 +39,7 @@ export default async function CoachNewEventPage() {
           ← 返回事件列表
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">新增事件</h1>
-        <p className="mt-1 text-sm text-zinc-600">建立後為草稿，可在詳情頁發布</p>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">建立後為草稿，可在詳情頁發布</p>
       </div>
       <EventCreateForm teamId={member.teamId} squads={squads} roster={roster} />
     </div>

@@ -66,14 +66,14 @@ export default async function PlayerFeedbackHistoryPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">我的回饋</h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           列出你已提交的身體回饋；送出後 24 小時內可於該場事件頁修改。
         </p>
       </div>
 
-      <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 shadow-sm">
         {rows.length === 0 ?
-          <li className="px-4 py-12 text-center text-sm text-slate-500">
+          <li className="px-4 py-12 text-center text-sm text-slate-500 dark:text-slate-400">
             尚無回饋紀錄。事件結束後可在該場「身體回饋」區填寫。
           </li>
         : rows.map((fb) => {
@@ -85,23 +85,23 @@ export default async function PlayerFeedbackHistoryPage() {
                   <div>
                     <Link
                       href={`/player/events/${fb.event.id}`}
-                      className="font-medium text-slate-900 hover:text-blue-700 hover:underline"
+                      className="font-medium text-slate-900 dark:text-slate-50 hover:text-blue-700 hover:underline"
                     >
                       {fb.event.title}
                     </Link>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                       場次：{fb.event.startsAt.toLocaleString("zh-TW", { dateStyle: "short", timeStyle: "short" })}
                     </p>
-                    <p className="mt-2 text-sm text-slate-700">
+                    <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
                       RPE {fb.rpe} · 疲勞 {fatigueLabel(fb.fatigue)} · 疼痛 {painLabel(fb.painLevel)}
                       {fb.painArea ?
-                        <span className="text-slate-600">（{fb.painArea}）</span>
+                        <span className="text-slate-600 dark:text-slate-400">（{fb.painArea}）</span>
                       : null}
                     </p>
                     {fb.note ?
-                      <p className="mt-1 text-sm text-slate-600">備註：{fb.note}</p>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">備註：{fb.note}</p>
                     : null}
-                    <p className="mt-2 text-xs text-slate-500">
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                       送出時間：{fb.submittedAt.toLocaleString("zh-TW")}
                     </p>
                   </div>
@@ -111,7 +111,7 @@ export default async function PlayerFeedbackHistoryPage() {
                         可編輯至 {editDeadline.toLocaleString("zh-TW", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                       </span>
                     : (
-                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                      <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:text-slate-400">
                         已鎖定
                       </span>
                     )}

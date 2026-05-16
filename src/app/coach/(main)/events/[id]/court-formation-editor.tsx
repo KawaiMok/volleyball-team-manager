@@ -273,8 +273,8 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
         </p>
       : null}
 
-      <div className="flex flex-wrap gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-2">
-        <span className="self-center text-xs font-medium uppercase text-zinc-500">工具</span>
+      <div className="flex flex-wrap gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-2">
+        <span className="self-center text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">工具</span>
         {(
           [
             ["select", "選取／拖曳"],
@@ -295,7 +295,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
             className={
               tool === k ?
                 "rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white"
-              : "rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-700 hover:bg-zinc-100"
+              : "rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:bg-zinc-800"
             }
           >
             {label}
@@ -307,7 +307,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
         <p className="text-xs text-amber-800">已點第一點，請再點一下完成線段（按「選取」可取消第一點）。</p>
       : null}
 
-      <div className="relative mx-auto max-w-md overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-inner touch-none md:max-w-lg">
+      <div className="relative mx-auto max-w-md overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-inner touch-none md:max-w-lg">
         <svg
           ref={svgRef}
           viewBox={COURT_VIEWBOX}
@@ -437,7 +437,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
 
       {selectedToken ?
         <div>
-          <label htmlFor={`court-token-label-${formId}`} className="block text-sm font-medium text-zinc-700">
+          <label htmlFor={`court-token-label-${formId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {selectedToken.kind === "PLAYER" ?
               "選中球員標籤（最多 8 字）"
             : "排球標籤（最多 4 字，可簡寫）"}
@@ -462,7 +462,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
                 }),
               }));
             }}
-            className="mt-1 w-full max-w-md rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 disabled:bg-zinc-100"
+            className="mt-1 w-full max-w-md rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 disabled:bg-zinc-100 dark:bg-zinc-800"
             placeholder={selectedToken.kind === "PLAYER" ? "例如：7、舉…" : "球"}
           />
         </div>
@@ -473,7 +473,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
           type="button"
           disabled={disabled || !selectedId || tool !== "select"}
           onClick={() => labelInputRef.current?.focus()}
-          className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-50"
+          className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:bg-zinc-950 disabled:opacity-50"
         >
           編輯標籤
         </button>
@@ -481,7 +481,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
           type="button"
           disabled={disabled || !selectedId || tool !== "select"}
           onClick={removeSelected}
-          className="rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-50 disabled:opacity-50"
+          className="rounded-md border border-red-200 bg-white dark:bg-zinc-900 px-3 py-1.5 text-sm font-medium text-red-800 hover:bg-red-50 disabled:opacity-50"
         >
           刪除選中標記
         </button>
@@ -504,7 +504,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
       </div>
 
       <div>
-        <label htmlFor={`court-notes-${formId}`} className="block text-sm font-medium text-zinc-700">
+        <label htmlFor={`court-notes-${formId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           備註（選填）
         </label>
         <textarea
@@ -515,11 +515,11 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
           value={data.notes ?? ""}
           onChange={(e) => setData((d) => ({ ...d, notes: e.target.value }))}
           placeholder="例如：接發輪轉後站位…"
-          className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 disabled:bg-zinc-100"
+          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 disabled:bg-zinc-100 dark:bg-zinc-800"
         />
       </div>
 
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
         {isLiveTactical ?
           <>
             全場左側為對方、右側為我方；選取工具可拖曳標記。畫線請連點兩下場地。完成後請按「儲存戰術版」。此白板與各事件的「場上企位」分開儲存。

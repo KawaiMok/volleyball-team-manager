@@ -14,6 +14,7 @@ import { getDebugTeamMember } from "@/lib/debug-session";
 import { canManageEventCommentsAsStaff } from "@/lib/event-comment-access";
 import { inferParticipantRule } from "@/lib/infer-participant-rule";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
+import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
 import { getPrisma } from "@/lib/prisma";
 import {
   EventStatus,
@@ -46,6 +47,18 @@ function statusLabel(s: EventStatus) {
       return s;
   }
 }
+
+/** 與下方 `<section id>` 對齊（註解：段落導覽列）。 */
+const COACH_EVENT_DETAIL_SECTIONS = [
+  { id: "coach-ev-when", label: "時間地點" },
+  { id: "coach-ev-edit", label: "編輯" },
+  { id: "coach-ev-attendance", label: "出席點名" },
+  { id: "coach-ev-training", label: "訓練計畫" },
+  { id: "coach-ev-court", label: "企位" },
+  { id: "coach-ev-media", label: "戰術影片" },
+  { id: "coach-ev-comments", label: "公告留言" },
+  { id: "coach-ev-feedback", label: "身體回饋" },
+] as const;
 
 /** 事件詳情：發布、出席／點名、訓練計畫（註解：資料由伺服端直查 DB）。 */
 export default async function CoachEventDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -194,7 +207,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">{event.title}</h1>
-            <p className="mt-1 text-sm text-zinc-600">
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
               {typeLabel(event.type)} ·{" "}
               <span
                 className={
@@ -202,7 +215,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
                     "text-amber-700"
                   : event.status === EventStatus.PUBLISHED ?
                     "text-emerald-700"
-                  : "text-zinc-600"
+                  : "text-zinc-600 dark:text-zinc-400"
                 }
               >
                 {statusLabel(event.status)}
@@ -211,39 +224,43 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           </div>
           <EventPublishButton eventId={event.id} isDraft={event.status === EventStatus.DRAFT} />
         </div>
+        <CoachEventDetailSectionNav sections={[...COACH_EVENT_DETAIL_SECTIONS]} />
       </div>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">時間與地點</h2>
+      <section
+        id="coach-ev-when"
+        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+      >
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">時間與地點</h2>
         <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
           <div>
-            <dt className="text-zinc-500">開始</dt>
-            <dd className="font-medium tabular-nums text-zinc-900">
+            <dt className="text-zinc-500 dark:text-zinc-400">開始</dt>
+            <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
               {event.startsAt.toLocaleString("zh-TW")}
             </dd>
           </div>
           <div>
-            <dt className="text-zinc-500">結束</dt>
-            <dd className="font-medium tabular-nums text-zinc-900">
+            <dt className="text-zinc-500 dark:text-zinc-400">結束</dt>
+            <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
               {event.endsAt.toLocaleString("zh-TW")}
             </dd>
           </div>
           {event.meetAt ?
             <div>
-              <dt className="text-zinc-500">集合</dt>
+              <dt className="text-zinc-500 dark:text-zinc-400">集合</dt>
               <dd className="font-medium tabular-nums">{event.meetAt.toLocaleString("zh-TW")}</dd>
             </div>
           : null}
           {event.locationName ?
             <div className="sm:col-span-2">
-              <dt className="text-zinc-500">場館</dt>
+              <dt className="text-zinc-500 dark:text-zinc-400">場館</dt>
               <dd>{event.locationName}</dd>
             </div>
           : null}
           {event.rsvpDeadlineAt ?
             <div>
-              <dt className="text-zinc-500">RSVP 截止</dt>
-              <dd className="font-medium tabular-nums text-zinc-900">
+              <dt className="text-zinc-500 dark:text-zinc-400">RSVP 截止</dt>
+              <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
                 {event.rsvpDeadlineAt.toLocaleString("zh-TW")}
               </dd>
             </div>
@@ -252,9 +269,12 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
       </section>
 
       {event.status !== EventStatus.CANCELLED ?
-        <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">編輯事件</h2>
-          <p className="mt-1 text-xs text-zinc-500">
+        <section
+          id="coach-ev-edit"
+          className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+        >
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">編輯事件</h2>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             可調整標題、時間、場館、RSVP 截止與參與對象；變更參與者時將同步名單與出席列。
           </p>
           <div className="mt-4">
@@ -278,20 +298,28 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           </div>
         </section>
       : (
-        <section className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 shadow-sm">
-          <p className="text-sm text-zinc-600">已取消的事件無法編輯。</p>
+        <section
+          id="coach-ev-edit"
+          className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-4 shadow-sm"
+        >
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">已取消的事件無法編輯。</p>
         </section>
       )}
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">出席與點名</h2>
+      <section
+        id="coach-ev-attendance"
+        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+      >
         <div className="mt-3">
           <AttendanceTable eventId={event.id} rows={attendanceRows} />
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">訓練計畫</h2>
+      <section
+        id="coach-ev-training"
+        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+      >
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">訓練計畫</h2>
         <div className="mt-3">
           <TrainingPlanPanel
             eventId={event.id}
@@ -301,9 +329,12 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">場上企位</h2>
-        <p className="mt-1 text-xs text-zinc-500">
+      <section
+        id="coach-ev-court"
+        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+      >
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">場上企位</h2>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           全場示意（左為對方、右為我方）：球員／排球標記、畫線；儲存後球員於本事件頁可唯讀檢視。
         </p>
         <div className="mt-4">
@@ -316,9 +347,12 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">戰術板與影片</h2>
-        <p className="mt-1 text-xs text-zinc-500">
+      <section
+        id="coach-ev-media"
+        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+      >
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">戰術板與影片</h2>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           外部白板、錄影連結集中管理；球員在已發布事件中可見（唯讀）。
         </p>
         <div className="mt-4">
@@ -331,9 +365,12 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">公告與留言</h2>
-        <p className="mt-1 text-xs text-zinc-500">
+      <section
+        id="coach-ev-comments"
+        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+      >
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">公告與留言</h2>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           發布公告或討論；球員在「我的行程」對應事件頁可見（事件須已發布且對方為參與者）。
         </p>
         <div className="mt-4">
@@ -346,7 +383,11 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </div>
       </section>
 
-      <EventFeedbackSummarySection eventEndsAt={event.endsAt} entries={feedbackEntries} />
+      <EventFeedbackSummarySection
+        eventEndsAt={event.endsAt}
+        entries={feedbackEntries}
+        anchorId="coach-ev-feedback"
+      />
     </div>
   );
 }

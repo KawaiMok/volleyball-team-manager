@@ -33,9 +33,9 @@ export function CoachDashboardRpeChart({ points }: Props) {
   const ticks = [10, 7, 4, 1];
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-zinc-800">近 {n} 天 · 每日平均 RPE</h3>
-      <p className="mt-1 text-xs text-zinc-500">僅含本隊訓練／事件底下已提交之身體回饋；無回饋日不連線。</p>
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+      <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">近 {n} 天 · 每日平均 RPE</h3>
+      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">僅含本隊訓練／事件底下已提交之身體回饋；無回饋日不連線。</p>
       <div className="mt-4 w-full overflow-x-auto">
         <svg
           viewBox={`0 0 ${w} ${h}`}

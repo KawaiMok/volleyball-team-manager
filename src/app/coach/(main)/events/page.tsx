@@ -83,7 +83,7 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">事件</h1>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             依開始時間排序（最新在上）
             {filterActive ?
               <span className="ml-2 text-blue-700">· 已套用篩選</span>
@@ -100,13 +100,13 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
 
       <CoachEventsListFilters values={formValues} squads={squads} hasActiveFilters={filterActive} />
 
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
         共 {events.length} 筆{events.length >= LIST_TAKE ? `（最多顯示 ${LIST_TAKE} 筆，請縮小篩選範圍）` : ""}
       </p>
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
         <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-zinc-200 bg-zinc-50 text-zinc-600">
+          <thead className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400">
             <tr>
               <th className="px-4 py-3 font-medium">標題</th>
               <th className="px-4 py-3 font-medium">類型</th>
@@ -118,22 +118,22 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
           <tbody className="divide-y divide-zinc-100">
             {events.length === 0 ?
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-zinc-500">
+                <td colSpan={5} className="px-4 py-12 text-center text-zinc-500 dark:text-zinc-400">
                   {filterActive ? "沒有符合條件的事件，請調整篩選或重設" : "尚無事件，請新增一場訓練或比賽"}
                 </td>
               </tr>
             : events.map((ev) => (
-                <tr key={ev.id} className="hover:bg-zinc-50/80">
+                <tr key={ev.id} className="hover:bg-zinc-50 dark:bg-zinc-950/80">
                   <td className="px-4 py-3">
                     <Link href={`/coach/events/${ev.id}`} className="font-medium text-blue-600 hover:underline">
                       {ev.title}
                     </Link>
                     {ev.locationName ?
-                      <span className="mt-0.5 block text-xs text-zinc-500">{ev.locationName}</span>
+                      <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{ev.locationName}</span>
                     : null}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700">{typeLabel(ev.type)}</td>
-                  <td className="px-4 py-3 tabular-nums text-zinc-700">
+                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{typeLabel(ev.type)}</td>
+                  <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
                     {ev.startsAt.toLocaleString("zh-TW", {
                       year: "numeric",
                       month: "2-digit",
@@ -149,13 +149,13 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
                           "rounded bg-amber-100 px-2 py-0.5 text-amber-900"
                         : ev.status === EventStatus.PUBLISHED ?
                           "rounded bg-emerald-100 px-2 py-0.5 text-emerald-900"
-                        : "rounded bg-zinc-200 px-2 py-0.5 text-zinc-800"
+                        : "rounded bg-zinc-200 px-2 py-0.5 text-zinc-800 dark:text-zinc-200"
                       }
                     >
                       {statusLabel(ev.status)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 tabular-nums text-zinc-600">{ev._count.participants}</td>
+                  <td className="px-4 py-3 tabular-nums text-zinc-600 dark:text-zinc-400">{ev._count.participants}</td>
                 </tr>
               ))
             }

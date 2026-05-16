@@ -52,8 +52,8 @@ export function PlayerRsvpForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-900">出席意願（RSVP）</h3>
+    <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 p-4 shadow-sm">
+      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">出席意願（RSVP）</h3>
       <fieldset disabled={disabled || pending} className="flex flex-wrap gap-4">
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -83,13 +83,13 @@ export function PlayerRsvpForm({
           不到
         </label>
       </fieldset>
-      <label className="block text-xs text-slate-600">
+      <label className="block text-xs text-slate-600 dark:text-slate-400">
         備註（選填）
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           rows={2}
-          className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm"
           placeholder="例如：可能晚到 15 分鐘"
         />
       </label>
@@ -102,7 +102,7 @@ export function PlayerRsvpForm({
         {pending ? "送出中…" : "更新 RSVP"}
       </button>
       {disabled ?
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           {disabledReason === "deadline" ?
             "已超過 RSVP 截止時間，無法再變更出席意願；若有異動請洽教練／隊務。"
           : "目前已鎖定 RSVP（逾時或已由隊務處理時請洽教練）。"}

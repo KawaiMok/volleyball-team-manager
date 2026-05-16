@@ -31,7 +31,7 @@ function LinkRow({
 }) {
   const label = row.name?.trim() || row.url;
   return (
-    <li className="flex flex-wrap items-start justify-between gap-2 rounded-md border border-zinc-100 bg-zinc-50/80 px-3 py-2 text-sm">
+    <li className="flex flex-wrap items-start justify-between gap-2 rounded-md border border-zinc-100 bg-zinc-50 dark:bg-zinc-950/80 px-3 py-2 text-sm">
       <a
         href={row.url}
         target="_blank"
@@ -122,10 +122,10 @@ export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video
 
       <div className="grid gap-6 md:grid-cols-2">
         <div>
-          <h3 className="text-sm font-semibold text-zinc-800">戰術板</h3>
-          <p className="mt-1 text-xs text-zinc-500">Excalidraw、Miro、Google Jam 等外部白板連結。</p>
+          <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">戰術板</h3>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Excalidraw、Miro、Google Jam 等外部白板連結。</p>
           {tactical.length === 0 ?
-            <p className="mt-2 text-sm text-zinc-500">尚無連結</p>
+            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">尚無連結</p>
           : (
             <ul className="mt-2 space-y-2">
               {tactical.map((row) => (
@@ -141,10 +141,10 @@ export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video
           )}
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-zinc-800">影片／重播</h3>
-          <p className="mt-1 text-xs text-zinc-500">YouTube、隊內錄影雲端等連結，方便賽後複習。</p>
+          <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">影片／重播</h3>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">YouTube、隊內錄影雲端等連結，方便賽後複習。</p>
           {video.length === 0 ?
-            <p className="mt-2 text-sm text-zinc-500">尚無連結</p>
+            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">尚無連結</p>
           : (
             <ul className="mt-2 space-y-2">
               {video.map((row) => (
@@ -162,14 +162,14 @@ export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video
       </div>
 
       {canEdit ?
-        <form onSubmit={(e) => void onAdd(e)} className="space-y-3 rounded-lg border border-dashed border-zinc-300 bg-zinc-50/50 p-4">
-          <p className="text-sm font-medium text-zinc-800">新增連結</p>
+        <form onSubmit={(e) => void onAdd(e)} className="space-y-3 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-950/50 p-4">
+          <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">新增連結</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1 sm:col-span-2">
-              <span className="text-xs font-medium text-zinc-600">類型</span>
+              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">類型</span>
               <select
                 name="category"
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"
                 defaultValue="TACTICAL_BOARD"
               >
                 <option value="TACTICAL_BOARD">戰術板</option>
@@ -177,23 +177,23 @@ export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video
               </select>
             </label>
             <label className="space-y-1 sm:col-span-2">
-              <span className="text-xs font-medium text-zinc-600">網址（https…）</span>
+              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">網址（https…）</span>
               <input
                 name="url"
                 type="url"
                 required
                 placeholder="https://"
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"
               />
             </label>
             <label className="space-y-1 sm:col-span-2">
-              <span className="text-xs font-medium text-zinc-600">顯示名稱（選填）</span>
+              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">顯示名稱（選填）</span>
               <input
                 name="name"
                 type="text"
                 maxLength={200}
                 placeholder="例如：對手發球輪轉位"
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm"
+                className="w-full rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"
               />
             </label>
           </div>
@@ -206,7 +206,7 @@ export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video
           </button>
         </form>
       : (
-        <p className="text-xs text-zinc-500">已取消的事件無法變更連結。</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">已取消的事件無法變更連結。</p>
       )}
     </div>
   );

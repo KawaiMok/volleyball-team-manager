@@ -88,14 +88,14 @@ export function EventParticipantRuleFields({ squads, roster, value, onChange, di
   };
 
   return (
-    <fieldset disabled={disabled} className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50/50 p-4">
-      <legend className="text-sm font-semibold text-zinc-800">參與對象</legend>
-      <p className="text-xs text-zinc-600">
+    <fieldset disabled={disabled} className="space-y-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 p-4">
+      <legend className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">參與對象</legend>
+      <p className="text-xs text-zinc-600 dark:text-zinc-400">
         決定哪些在籍隊員會收到 RSVP／出席；儲存後會同步名單（移除者將刪除該場回饋紀錄）。
       </p>
 
       <div className="space-y-2">
-        <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-800">
+        <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-800 dark:text-zinc-200">
           <input
             type="radio"
             name="participant-rule-kind"
@@ -105,11 +105,11 @@ export function EventParticipantRuleFields({ squads, roster, value, onChange, di
           />
           <span>
             <span className="font-medium">全隊</span>
-            <span className="block text-xs font-normal text-zinc-500">所有狀態為在籍的隊員</span>
+            <span className="block text-xs font-normal text-zinc-500 dark:text-zinc-400">所有狀態為在籍的隊員</span>
           </span>
         </label>
 
-        <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-800">
+        <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-800 dark:text-zinc-200">
           <input
             type="radio"
             name="participant-rule-kind"
@@ -120,7 +120,7 @@ export function EventParticipantRuleFields({ squads, roster, value, onChange, di
           />
           <span>
             <span className="font-medium">依分組</span>
-            <span className="block text-xs font-normal text-zinc-500">
+            <span className="block text-xs font-normal text-zinc-500 dark:text-zinc-400">
               {squads.length === 0 ?
                 "尚未設定分組標籤（請至隊伍／隊員的「分組」欄或隊伍分組設定）"
               : "可複選分組，符合任一分組即在名單內"}
@@ -129,14 +129,14 @@ export function EventParticipantRuleFields({ squads, roster, value, onChange, di
         </label>
 
         {value.kind === "SQUADS" && squads.length > 0 ?
-          <div className="ml-6 flex flex-wrap gap-3 rounded-md border border-zinc-200 bg-white p-3">
+          <div className="ml-6 flex flex-wrap gap-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3">
             {squads.map((sq) => (
               <label key={sq} className="inline-flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={value.squads.includes(sq)}
                   onChange={(e) => toggleSquad(sq, e.target.checked)}
-                  className="rounded border-zinc-300"
+                  className="rounded border-zinc-300 dark:border-zinc-600"
                 />
                 {sq}
               </label>
@@ -144,7 +144,7 @@ export function EventParticipantRuleFields({ squads, roster, value, onChange, di
           </div>
         : null}
 
-        <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-800">
+        <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-800 dark:text-zinc-200">
           <input
             type="radio"
             name="participant-rule-kind"
@@ -154,24 +154,24 @@ export function EventParticipantRuleFields({ squads, roster, value, onChange, di
           />
           <span>
             <span className="font-medium">指名隊員</span>
-            <span className="block text-xs font-normal text-zinc-500">自下列在籍名單勾選（可含教練／隊務）</span>
+            <span className="block text-xs font-normal text-zinc-500 dark:text-zinc-400">自下列在籍名單勾選（可含教練／隊務）</span>
           </span>
         </label>
 
         {value.kind === "MEMBERS" ?
-          <div className="ml-6 max-h-56 space-y-2 overflow-y-auto rounded-md border border-zinc-200 bg-white p-3">
+          <div className="ml-6 max-h-56 space-y-2 overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3">
             <div className="flex flex-wrap gap-2 text-xs">
               <button
                 type="button"
                 onClick={() => selectAllMembers()}
-                className="rounded border border-zinc-300 px-2 py-1 hover:bg-zinc-50"
+                className="rounded border border-zinc-300 dark:border-zinc-600 px-2 py-1 hover:bg-zinc-50 dark:bg-zinc-950"
               >
                 全選
               </button>
               <button
                 type="button"
                 onClick={() => clearMembers()}
-                className="rounded border border-zinc-300 px-2 py-1 hover:bg-zinc-50"
+                className="rounded border border-zinc-300 dark:border-zinc-600 px-2 py-1 hover:bg-zinc-50 dark:bg-zinc-950"
               >
                 全不選
               </button>
@@ -184,10 +184,10 @@ export function EventParticipantRuleFields({ squads, roster, value, onChange, di
                       type="checkbox"
                       checked={value.memberIds.includes(m.id)}
                       onChange={(e) => toggleMember(m.id, e.target.checked)}
-                      className="rounded border-zinc-300"
+                      className="rounded border-zinc-300 dark:border-zinc-600"
                     />
-                    <span className="font-medium text-zinc-900">{m.displayName}</span>
-                    <span className="text-xs text-zinc-500">
+                    <span className="font-medium text-zinc-900 dark:text-zinc-50">{m.displayName}</span>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
                       {roleLabel(m.role)}
                       {m.squad ? ` · ${m.squad}` : ""}
                     </span>

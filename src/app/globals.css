@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
+/** 暗色模式：由 `html.dark` 控制（註解：toolbar 可選系統／淺／深，見 `theme-preference`）。 */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+}
+
+html.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
 }
 
 @theme inline {
@@ -12,15 +20,26 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: light dark;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 導航轉場頂條（註解：見 `navigation-transition-bar.tsx`） */
+@keyframes navigation-bar-slide {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+
+.navigation-bar-indeterminate {
+  animation: navigation-bar-slide 0.65s ease-in-out infinite;
 }

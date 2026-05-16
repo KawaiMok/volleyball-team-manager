@@ -95,7 +95,7 @@ export default async function CoachCalendarPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">行事曆</h1>
-        <p className="mt-1 text-sm text-zinc-600">週／列表／月視圖；可依類型與分組篩選，點事件進入詳情</p>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">週／列表／月視圖；可依類型與分組篩選，點事件進入詳情</p>
       </div>
 
       <CalendarToolbar

@@ -143,21 +143,21 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-zinc-700">顯示姓名</label>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">顯示姓名</label>
           <input
             name="displayName"
             type="text"
             maxLength={120}
             defaultValue={initial.displayName}
-            className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700">角色</label>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">角色</label>
           {!actorIsAdmin && initial.role === "ADMIN" ?
             <>
               <input type="hidden" name="role" value="ADMIN" />
-              <p className="mt-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-800">
+              <p className="mt-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3 py-2 text-sm text-zinc-800 dark:text-zinc-200">
                 管理員（僅管理員可變更此角色）
               </p>
             </>
@@ -165,7 +165,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
             <select
               name="role"
               defaultValue={initial.role}
-              className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
             >
               {(actorIsAdmin ? ROLES : ROLES.filter((r) => r !== "ADMIN")).map((r) => (
                 <option key={r} value={r}>
@@ -176,12 +176,12 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700">隊籍狀態</label>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">隊籍狀態</label>
           <select
             name="status"
             defaultValue={initial.status}
             disabled={isSelf}
-            className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 disabled:bg-zinc-100"
+            className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 disabled:bg-zinc-100 dark:bg-zinc-800"
           >
             <option value="ACTIVE">在籍</option>
             <option value="INACTIVE">停用</option>
@@ -191,34 +191,34 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
           : null}
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700">背號（留空表示無）</label>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">背號（留空表示無）</label>
           <input
             name="jerseyNumber"
             type="number"
             min={0}
             max={999}
             defaultValue={initial.jerseyNumber ?? ""}
-            className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-700">位置</label>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">位置</label>
           <input
             name="position"
             type="text"
             maxLength={64}
             defaultValue={initial.position ?? ""}
-            className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-zinc-700">分組</label>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">分組</label>
           {squads.length > 0 ?
             <>
               <select
                 value={squadChoice}
                 onChange={(e) => setSquadChoice(e.target.value)}
-                className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
               >
                 <option value="">不指定</option>
                 {squads.map((s) => (
@@ -235,7 +235,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
                   onChange={(e) => setSquadCustom(e.target.value)}
                   maxLength={32}
                   placeholder="自訂分組"
-                  className="mt-2 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+                  className="mt-2 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
                   aria-label="自訂分組"
                 />
               : null}
@@ -246,28 +246,28 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
               maxLength={32}
               value={squadCustom}
               onChange={(e) => setSquadCustom(e.target.value)}
-              className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+              className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
             />
           )}
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-zinc-700">電話</label>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">電話</label>
           <input
             name="phone"
             type="tel"
             maxLength={32}
             defaultValue={initial.phone ?? ""}
-            className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-zinc-700">備註</label>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">備註</label>
           <textarea
             name="notes"
             rows={3}
             maxLength={2000}
             defaultValue={initial.notes ?? ""}
-            className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+            className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
       </div>
@@ -284,7 +284,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
             type="button"
             onClick={onCancel}
             disabled={pending}
-            className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-60"
+            className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:bg-zinc-950 disabled:opacity-60"
           >
             取消
           </button>

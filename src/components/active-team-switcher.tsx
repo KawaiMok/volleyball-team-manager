@@ -25,8 +25,8 @@ export function ActiveTeamSwitcher({ teams, currentTeamId, variant }: Props) {
 
   const selectClass =
     variant === "coach" ?
-      "min-w-[10rem] max-w-[min(100vw-8rem,18rem)] truncate rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm font-semibold text-zinc-900 shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-    : "min-w-[10rem] max-w-[min(100vw-8rem,18rem)] truncate rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm font-semibold text-slate-900 shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900";
+      "min-w-[10rem] max-w-[min(100vw-8rem,18rem)] truncate rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-2 py-1.5 text-sm font-semibold text-zinc-900 dark:text-zinc-50 shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+    : "min-w-[10rem] max-w-[min(100vw-8rem,18rem)] truncate rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm font-semibold text-slate-900 dark:text-slate-50 shadow-sm focus:border-slate-900 focus:outline-none focus:ring-1 focus:ring-slate-900";
 
   async function onChange(teamId: string) {
     if (teamId === currentTeamId) return;
