@@ -6,20 +6,21 @@ type Props = {
   sections: CoachEventSection[];
 };
 
+/** 膠囊共用樣式（註解：與舊版視覺一致，hover 補上 dark）。 */
+const pillClass =
+  "flex w-full min-h-9 items-center justify-center rounded-full border border-zinc-200 bg-white px-2 py-1.5 text-center text-xs font-medium text-zinc-700 shadow-sm hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-950 sm:w-auto sm:min-w-0 sm:shrink-0 sm:justify-center sm:px-3";
+
 /**
- * 事件詳情快捷跳段（註解：橫向捲動標籤，避免長頁漏看區塊）。
+ * 事件詳情快捷跳段（註解：手機兩欄網格全顯，免橫向捲動；寬螢幕 flex 換行）。
  * 對應各 `<section id={...}>` 須加 `scroll-mt-28` 以免被 sticky 頂欄遮住。
  */
 export function CoachEventDetailSectionNav({ sections }: Props) {
   return (
-    <nav className="-mx-4 mb-6 overflow-x-auto px-4 pb-1 pt-1 [scrollbar-width:thin]" aria-label="本頁段落快速跳轉">
-      <div className="flex w-max max-w-none gap-2 pr-2">
+    <nav className="-mx-4 mb-6 px-4 pb-1 pt-1" aria-label="本頁段落快速跳轉">
+      {/** 註解：預設（窄螢幕）兩欄 grid；sm 以上改 flex-wrap。 */}
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
         {sections.map((s) => (
-          <a
-            key={s.id}
-            href={`#${s.id}`}
-            className="shrink-0 rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 shadow-sm hover:border-zinc-400 hover:bg-zinc-50 dark:bg-zinc-950"
-          >
+          <a key={s.id} href={`#${s.id}`} className={pillClass}>
             {s.label}
           </a>
         ))}

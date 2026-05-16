@@ -90,7 +90,9 @@ export default async function CoachTeamPage() {
       <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
         <div className="border-b border-zinc-100 px-4 py-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">目前名單</h2>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">點「編輯」於大視窗修改資料；手機由下往上滑出面板，可按 ×、背景或 Esc 關閉。</p>
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            主表僅顯示姓名、角色、背號、狀態；「詳情」可檢視聯絡方式與備註，「編輯」開大視窗修改。手機面板由下往上，可按 ×、背景或 Esc 關閉。
+          </p>
         </div>
         <TeamRosterSection
           key={teamSettingsKey}
