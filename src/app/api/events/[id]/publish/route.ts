@@ -1,5 +1,6 @@
 import { EventStatus } from "@/generated/prisma/client";
 import { getDebugTeamMember } from "@/lib/debug-session";
+import { notifyTeamEventPublished } from "@/lib/push/notify-team";
 import { getPrisma } from "@/lib/prisma";
 import { isCoachLike } from "@/lib/rbac";
 import { NextResponse } from "next/server";
@@ -29,5 +30,10 @@ export async function PATCH(_req: Request, ctx: Ctx) {
   }
 
   const event = await prisma.event.findFirst({ where: { id, teamId: member.teamId } });
+  if (event) {
+    void notifyTeamEventPublished(event.teamId, event.title).catch(() => {
+      /** 註解：推播失敗不影響發布 API 回應。 */
+    });
+  }
   return NextResponse.json(event);
 }

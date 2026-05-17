@@ -31,9 +31,14 @@ npm run open:ios       # Xcode
 
 ## Android 推播（FCM）
 
-1. 在 [Firebase Console](https://console.firebase.google.com) 建立專案並加入 **Android App**，`applicationId` 須與 `capacitor.config.ts` 的 `appId`（`com.volleyball.teammanager`）一致，或你改成與 Firebase 相同。
-2. 下載 `google-services.json`，放到 `android/app/`（Capacitor／Firebase 標準位置）。
-3. 依 [Firebase Android 設定](https://firebase.google.com/docs/android/setup) 確認 Gradle 已套用 Google 服務外掛（Capacitor 8 產生的專案可依官方文件補齊）。
+完整步驟見 **[docs/PUSH-SETUP.md](../docs/PUSH-SETUP.md)**（Firebase、`google-services.json`、Vercel 環境變數、驗收）。
+
+摘要：
+
+1. Firebase 建立 Android App，套件名 `com.volleyball.teammanager`。
+2. `google-services.json` → `android/app/`。
+3. `npx cap sync android` 後 Android Studio **Run** 重裝。
+4. Vercel 設 `FIREBASE_*` 與 `NEXT_PUBLIC_ENABLE_NATIVE_PUSH=true` 後 redeploy。
 
 ## iOS 推播（APNs）
 

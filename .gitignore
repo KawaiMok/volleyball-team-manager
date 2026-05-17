@@ -43,5 +43,9 @@ next-env.d.ts
 
 /src/generated/prisma
 
+# Firebase（註解：google-services.json 可選擇提交；服務帳戶金鑰切勿提交）
+mobile/android/app/google-services.json
+**/firebase-service-account*.json
+
 # clerk configuration (can include secrets)
 /.clerk/

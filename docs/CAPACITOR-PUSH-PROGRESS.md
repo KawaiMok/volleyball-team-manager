@@ -12,7 +12,10 @@
 |------|------|------|
 | Prisma `PushDevice` + `PushPlatform` | [x] | [`prisma/schema.prisma`](../prisma/schema.prisma)、migration `20260516200000_add_push_device` |
 | `POST` / `DELETE` `/api/me/push-token` | [x] | [`src/app/api/me/push-token/route.ts`](../src/app/api/me/push-token/route.ts)；以 `getOrSyncPrismaUserFromClerk` 驗證（無須已有隊籍） |
-| 推播發送 stub | [x] | [`src/lib/push/send.ts`](../src/lib/push/send.ts)（預留 FCM／APNs） |
+| 推播發送 FCM（Android） | [x] | [`src/lib/push/fcm.ts`](../src/lib/push/fcm.ts)、[`send.ts`](../src/lib/push/send.ts)；iOS APNs 仍待做 |
+| 測試 API `POST /api/me/push-test` | [x] | 對目前帳號已註冊裝置發測試推播 |
+| 發布活動推播 | [x] | [`notify-team.ts`](../src/lib/push/notify-team.ts) ← 發布事件 API |
+| 設定指南 | [x] | [`docs/PUSH-SETUP.md`](./PUSH-SETUP.md) |
 | Web 橋接（Capacitor 內註冊推播並上傳 token） | [x] | [`src/components/capacitor-push-bridge.tsx`](../src/components/capacitor-push-bridge.tsx)，已掛於 [`src/app/layout.tsx`](../src/app/layout.tsx) |
 | 依賴 | [x] | 主專案 `package.json`：`@capacitor/core`、`@capacitor/push-notifications` |
 | `mobile/` Capacitor 專案 | [x] | [`mobile/`](../mobile/)、已 `cap add android` / `ios`、`@capacitor/push-notifications` |
@@ -45,8 +48,8 @@
 | 12 | Token 寫入後端 | [x] | API 已就緒；依賴使用者已登入 |
 | 13 | DB migration 上線 | [ ] | 正式環境執行 `db:deploy` |
 | 14 | API 驗證行為 | [ ] | 可自行用已登入 session `POST` 測試 |
-| 15 | 實作 `send.ts`（FCM HTTP v1 + APNs） | [ ] | 目前為 stub |
-| 16 | 業務事件觸發推播 | [ ] | 例：賽事發布、留言 |
+| 15 | 實作 `send.ts`（FCM + APNs） | [~] | Android FCM 已完成；iOS APNs 待做 |
+| 16 | 業務事件觸發推播 | [~] | 發布活動已接；留言等可再加 |
 
 ---
 
@@ -78,3 +81,4 @@ npm run open:android   # 或 open:ios
 
 - `POST /api/me/push-token`，JSON：`{ "token": "<裝置 token>", "platform": "ios" | "android" }`（需 Clerk 登入 cookie）。
 - `DELETE /api/me/push-token`，可選 body：`{ "token": "<僅刪單一裝置>" }`；若無 body 刪除該使用者全部裝置記錄。
+- `POST /api/me/push-test`（需登入 + 伺服端 `FIREBASE_*`）→ 測試推播。

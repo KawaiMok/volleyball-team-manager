@@ -38,4 +38,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 註解：Android 13+ 顯示推播須有此權限；Capacitor 會在執行時請求。 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>
