@@ -57,6 +57,27 @@ npm run open:ios       # Xcode
 
 設定 → 應用程式 → **排球隊管理** → 設為預設 → **支援的連結** → 選「在此應用程式中開啟」（勿選「一律在瀏覽器中開啟」）。
 
+## 登入後閃退、一開 App 就閃退
+
+**常見原因**：已登入時會跑推播註冊，但 Android 尚未設定 Firebase（沒有 `android/app/google-services.json`），原生層在 `PushNotifications.register()` 崩潰。
+
+**處理**：
+
+1. 確認 Vercel **未**設 `NEXT_PUBLIC_ENABLE_NATIVE_PUSH=true`（程式預設關閉推播橋接）。重新 deploy 後再開 App。
+2. 若仍閃退：Android Studio → **Logcat**（見下節）搜尋 `FATAL` 或 `volleyball`。
+3. 完成 FCM 設定後，再在 Vercel 設 `NEXT_PUBLIC_ENABLE_NATIVE_PUSH=true`。
+
+### 在 Android Studio 看 Log（Logcat）
+
+1. 手機 USB 連線，開啟 **USB 偵錯**。
+2. Android Studio 開啟 `mobile/android`，底部點 **Logcat**。
+3. 裝置選你的三星手機；篩選：
+   - **package:mine**（只顯示本 App），或
+   - 搜尋：`com.volleyball.teammanager`、`FATAL EXCEPTION`、`AndroidRuntime`。
+4. 清空 log（垃圾桶圖示）→ 在手機**再開一次 App** → 看閃退當下紅色錯誤堆疊。
+
+終端機也可：`adb logcat | grep -iE "volleyball|FATAL|capacitor"`（需已安裝 platform-tools）。
+
 ## `403: disallowed_useragent`（Google 登入）
 
 Google **禁止**在 App 內嵌 WebView 做 OAuth，會出現此錯誤。Web 專案已在 App 內**隱藏** Google 等第三方按鈕，請改用 **Email + 密碼**。部署新版網站到 Vercel 後，在 App 內重新整理登入頁即可（殼載入遠端網址，無需重裝 APK，除非只改原生設定）。
