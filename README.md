@@ -1,5 +1,7 @@
 # 排球隊管理（M1 實作）
 
+**發佈版本：v1.0.0**
+
 Next.js 16（App Router）+ Prisma 7 + Postgres。規格見工作區 `docs/volleyball-team-manager/`。
 
 **正式環境部署**（Vercel + Neon、選用 Render、Clerk、Prisma、安全檢查）：見 [docs/PRODUCTION-DEPLOY.md](docs/PRODUCTION-DEPLOY.md)。

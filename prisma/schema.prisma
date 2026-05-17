@@ -74,6 +74,12 @@ enum FileAssetCategory {
   VIDEO
 }
 
+/** 原生推播通路（註解：Capacitor FCM／APNs；之後若加 Web Push 再擴充）。 */
+enum PushPlatform {
+  IOS
+  ANDROID
+}
+
 model User {
   id          String   @id @default(cuid())
   clerkUserId String?  @unique
@@ -83,7 +89,22 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  memberships TeamMember[]
+  memberships  TeamMember[]
+  pushDevices  PushDevice[]
+}
+
+/** 使用者裝置推播 token（註解：以 token 全域唯一；換帳登入時由 API 改綁）。 */
+model PushDevice {
+  id        String       @id @default(cuid())
+  userId    String
+  token     String       @unique
+  platform  PushPlatform
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Team {

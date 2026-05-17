@@ -1,5 +1,4 @@
-import { SignUp } from "@clerk/nextjs";
-
+import { ClerkSignUpShell } from "@/components/clerk-sign-up-shell";
 import { postAuthPathFromDest } from "@/lib/auth-landing-dest";
 
 type SearchProps = {
@@ -15,15 +14,7 @@ export default async function SignUpPage({ searchParams }: SearchProps) {
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-zinc-950">
-      <SignUp
-        fallbackRedirectUrl={fallbackRedirectUrl}
-        appearance={{
-          elements: {
-            rootBox: "mx-auto",
-            card: "shadow-lg",
-          },
-        }}
-      />
+      <ClerkSignUpShell fallbackRedirectUrl={fallbackRedirectUrl} />
     </div>
   );
 }

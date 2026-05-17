@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { CapacitorPushBridge } from "@/components/capacitor-push-bridge";
 import { NavigationTransitionBar } from "@/components/navigation-transition-bar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { THEME_STORAGE_KEY } from "@/lib/theme-preference";
@@ -50,6 +51,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <NavigationTransitionBar />
           </Suspense>
+          <CapacitorPushBridge />
           <ThemeProvider>{children}</ThemeProvider>
         </body>
       </html>

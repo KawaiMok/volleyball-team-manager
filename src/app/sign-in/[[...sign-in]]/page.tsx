@@ -1,5 +1,4 @@
-import { SignIn } from "@clerk/nextjs";
-
+import { ClerkSignInShell } from "@/components/clerk-sign-in-shell";
 import { postAuthPathFromDest } from "@/lib/auth-landing-dest";
 
 type SearchProps = {
@@ -15,15 +14,8 @@ export default async function SignInPage({ searchParams }: SearchProps) {
 
   return (
     <div className="flex min-h-full flex-col items-center justify-center bg-zinc-50 px-4 py-16 dark:bg-zinc-950">
-      <SignIn
-        fallbackRedirectUrl={fallbackRedirectUrl}
-        appearance={{
-          elements: {
-            rootBox: "mx-auto",
-            card: "shadow-lg",
-          },
-        }}
-      />
+      <ClerkSignInShell fallbackRedirectUrl={fallbackRedirectUrl} />
     </div>
   );
 }
+

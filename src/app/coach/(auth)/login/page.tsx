@@ -1,4 +1,4 @@
-import { SignIn } from "@clerk/nextjs";
+import { ClerkSignInShell } from "@/components/clerk-sign-in-shell";
 import Link from "next/link";
 
 /** 相容舊連結 `/coach/login`（註解：與 `/sign-in` 相同元件）。 */
@@ -28,15 +28,7 @@ export default async function CoachLoginRedirectPage({
           </p>
         ) : null}
 
-        <SignIn
-          fallbackRedirectUrl="/coach"
-          appearance={{
-            elements: {
-              rootBox: "mx-auto w-full",
-              card: "shadow-lg",
-            },
-          }}
-        />
+        <ClerkSignInShell fallbackRedirectUrl="/coach" rootBoxClassName="w-full" />
 
         <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">
           <Link href="/" className="hover:text-zinc-800 dark:text-zinc-200">
