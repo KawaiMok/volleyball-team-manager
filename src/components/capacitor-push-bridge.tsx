@@ -1,16 +1,42 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useEffect, useRef } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef } from "react";
 
 import { isNativePushBridgeEnabled } from "@/lib/native-push-enabled";
+import { normalizeInAppPath, resolvePathFromPushData } from "@/lib/push/deep-link";
 
 /**
  * 僅在 Capacitor 原生殼內註冊推播並將 token 同步至 `/api/me/push-token`（註解：預設關閉，見 `NEXT_PUBLIC_ENABLE_NATIVE_PUSH`）。
  */
 export function CapacitorPushBridge() {
   const { isSignedIn, isLoaded } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const syncedTokenRef = useRef<string | null>(null);
+
+  const navigateFromPush = useCallback(
+    (rawPath: string) => {
+      const path = normalizeInAppPath(rawPath);
+      if (!path) return;
+
+      const targetUrl = new URL(path, "http://local");
+      const targetPathname = targetUrl.pathname;
+      const targetSearch = targetUrl.search;
+      const currentSearch = searchParams.toString();
+      const samePathname = targetPathname === pathname;
+      const sameSearch = targetSearch === (currentSearch ? `?${currentSearch}` : "");
+
+      if (samePathname && sameSearch) {
+        router.refresh();
+        return;
+      }
+      router.push(path);
+    },
+    [pathname, router, searchParams],
+  );
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !isNativePushBridgeEnabled()) return;
@@ -56,11 +82,18 @@ export function CapacitorPushBridge() {
           syncedTokenRef.current = null;
         });
 
+        const actionSub = await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+          const data = (action.notification.data ?? {}) as Record<string, string>;
+          const path = resolvePathFromPushData(data);
+          if (path) navigateFromPush(path);
+        });
+
         await PushNotifications.register();
 
         teardown.current = () => {
           void sub.remove();
           void errSub.remove();
+          void actionSub.remove();
         };
       } catch {
         /** 註解：未設定 FCM 等情況下避免未處理錯誤；原生層閃退仍須關閉 `NEXT_PUBLIC_ENABLE_NATIVE_PUSH`。 */
@@ -71,7 +104,7 @@ export function CapacitorPushBridge() {
       cancelled = true;
       teardown.current?.();
     };
-  }, [isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn, navigateFromPush]);
 
   return null;
 }

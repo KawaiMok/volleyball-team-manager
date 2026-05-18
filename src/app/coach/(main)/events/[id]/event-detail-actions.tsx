@@ -1,7 +1,8 @@
 "use client";
 import { useToast } from "@/components/toast-provider";
+import { InlineSpinner } from "@/components/inline-spinner";
+import { useRefreshThen } from "@/lib/use-refresh-then";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 type Props = {
@@ -12,9 +13,10 @@ type Props = {
 
 /** 發布事件（註解：草稿 → 已發布；已發布時僅顯示綠色圓點）。 */
 export function EventPublishButton({ eventId, isDraft }: Props) {
-  const router = useRouter();
   const { showError, showSuccess } = useToast();
+  const { refreshThen, isRefreshing } = useRefreshThen();
   const [pending, setPending] = useState(false);
+  const busy = pending || isRefreshing;
 
   if (!isDraft) {
     return (
@@ -39,8 +41,7 @@ export function EventPublishButton({ eventId, isDraft }: Props) {
       showError((data as { error?: string }).error ?? "發布失敗");
       return;
     }
-    showSuccess("已發布給球員");
-    router.refresh();
+    refreshThen(() => showSuccess("已發布給球員"));
   }
 
   return (
@@ -48,10 +49,13 @@ export function EventPublishButton({ eventId, isDraft }: Props) {
       <button
         type="button"
         onClick={() => void publish()}
-        disabled={pending}
-        className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
+        disabled={busy}
+        className="inline-flex min-h-[2.5rem] min-w-[7rem] items-center justify-center rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-800 disabled:opacity-60"
+        aria-busy={busy}
       >
-        {pending ? "發布中…" : "發布給球員"}
+        {busy ?
+          <InlineSpinner />
+        : "發布給球員"}
       </button>
     </div>
   );

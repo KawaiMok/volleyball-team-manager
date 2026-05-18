@@ -1,3 +1,4 @@
+import { pushDeepLinkPath } from "@/lib/push/deep-link";
 import type { PushNotificationPayload } from "@/lib/push/types";
 
 /** 推播種類（註解：FCM `data.type` 與 App 深連結可共用）。 */
@@ -17,6 +18,8 @@ export type PushPayloadInput = {
   authorName?: string;
   preview?: string;
   rsvpLabel?: string;
+  /** 覆寫預設深連結（註解：例如球員留言 → 教練事件頁）。 */
+  path?: string;
 };
 
 const RSVP_LABELS: Record<string, string> = {
@@ -42,6 +45,7 @@ export function buildPushPayload(input: PushPayloadInput): PushNotificationPaylo
   if (input.eventId) {
     data.eventId = input.eventId;
   }
+  data.path = input.path ?? pushDeepLinkPath(input.kind, input.eventId);
 
   switch (input.kind) {
     case "push_test":

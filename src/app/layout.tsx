@@ -52,7 +52,9 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <NavigationTransitionBar />
           </Suspense>
-          <CapacitorPushBridge />
+          <Suspense fallback={null}>
+            <CapacitorPushBridge />
+          </Suspense>
           <ThemeProvider>
             <ToastProvider>{children}</ToastProvider>
           </ThemeProvider>

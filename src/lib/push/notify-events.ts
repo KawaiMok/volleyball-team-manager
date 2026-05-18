@@ -78,6 +78,10 @@ export function notifyEventComment(args: {
       eventTitle: args.eventTitle,
       authorName: args.authorName,
       preview: args.preview,
+      path:
+        args.fromCoachSide ?
+          `/player/events/${args.eventId}`
+        : `/coach/events/${args.eventId}`,
     });
 
     const userIds =
