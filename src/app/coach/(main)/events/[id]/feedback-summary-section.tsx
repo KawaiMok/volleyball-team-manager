@@ -1,4 +1,5 @@
 import type { FatigueLevel, PainLevel } from "@/generated/prisma/client";
+import { formatDateTimeZh } from "@/lib/format-datetime";
 
 function fatigueLabel(f: FatigueLevel) {
   switch (f) {
@@ -128,7 +129,7 @@ export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId }: 
                       {row.note ?? "—"}
                     </td>
                     <td className="py-2 whitespace-nowrap text-xs text-zinc-500 dark:text-zinc-400">
-                      {row.submittedAt.toLocaleString("zh-TW")}
+                      {formatDateTimeZh(row.submittedAt)}
                     </td>
                   </tr>
                 ))}

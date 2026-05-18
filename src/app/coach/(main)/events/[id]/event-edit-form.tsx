@@ -7,6 +7,11 @@ import {
   validateParticipantRuleForSubmit,
 } from "@/app/coach/(main)/events/event-participant-rule-fields";
 import type { ParticipantRule } from "@/lib/participant-rule-types";
+import {
+  DATETIME_LOCAL_STEP_SECONDS,
+  isoToDatetimeLocal,
+  parseDatetimeLocalToIso,
+} from "@/lib/datetime-local";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -30,12 +35,10 @@ type Props = {
   initialParticipantRule: ParticipantRule;
 };
 
-/** ISO → datetime-local 字串（註解：依使用者本機時區）。 */
-function isoToDatetimeLocal(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+const datetimeInputProps = {
+  type: "datetime-local" as const,
+  step: DATETIME_LOCAL_STEP_SECONDS,
+};
 
 /** 教練編輯事件（註解：PATCH /api/events/[id]，含 RSVP 截止與參與者規則）。 */
 export function EventEditForm({ eventId, initial, squads, roster, initialParticipantRule }: Props) {
@@ -72,11 +75,11 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
           title: title || "未命名事件",
           type,
           description: descriptionRaw || null,
-          startsAt: new Date(startsAt).toISOString(),
-          endsAt: new Date(endsAt).toISOString(),
-          meetAt: meetAtRaw ? new Date(meetAtRaw).toISOString() : null,
+          startsAt: parseDatetimeLocalToIso(startsAt),
+          endsAt: parseDatetimeLocalToIso(endsAt),
+          meetAt: meetAtRaw ? parseDatetimeLocalToIso(meetAtRaw) : null,
           locationName: locationName || null,
-          rsvpDeadlineAt: rsvpDeadlineRaw ? new Date(rsvpDeadlineRaw).toISOString() : null,
+          rsvpDeadlineAt: rsvpDeadlineRaw ? parseDatetimeLocalToIso(rsvpDeadlineRaw) : null,
           participantRule,
         }),
       });
@@ -149,7 +152,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
           <input
             id={`edit-starts-${eventId}`}
             name="startsAt"
-            type="datetime-local"
+            {...datetimeInputProps}
             required
             defaultValue={isoToDatetimeLocal(initial.startsAtIso)}
             className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
@@ -162,7 +165,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
           <input
             id={`edit-ends-${eventId}`}
             name="endsAt"
-            type="datetime-local"
+            {...datetimeInputProps}
             required
             defaultValue={isoToDatetimeLocal(initial.endsAtIso)}
             className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
@@ -177,7 +180,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
         <input
           id={`edit-meet-${eventId}`}
           name="meetAt"
-          type="datetime-local"
+          {...datetimeInputProps}
           defaultValue={initial.meetAtIso ? isoToDatetimeLocal(initial.meetAtIso) : ""}
           className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
@@ -203,7 +206,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
         <input
           id={`edit-rsvp-${eventId}`}
           name="rsvpDeadlineAt"
-          type="datetime-local"
+          {...datetimeInputProps}
           defaultValue={initial.rsvpDeadlineIso ? isoToDatetimeLocal(initial.rsvpDeadlineIso) : ""}
           className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { addDays, startOfDay, startOfMonth, startOfWeekMonday, toYmd } from "@/app/coach/(main)/calendar/calendar-utils";
 import { EventStatus, EventType } from "@/generated/prisma/client";
+import { formatDateTimeZh, formatDateZh, formatTimeZh } from "@/lib/format-datetime";
 
 export type CalendarEventRow = {
   id: string;
@@ -64,7 +65,7 @@ export function CoachCalendarWeekGrid({ weekStart, events }: { weekStart: Date; 
         return (
           <div key={key} className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 shadow-sm">
             <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-              {d.toLocaleDateString("zh-TW", { weekday: "long", month: "numeric", day: "numeric" })}
+              {formatDateZh(d, { weekday: "long", month: "numeric", day: "numeric" })}
             </div>
             {dayEvents.length === 0 ?
               <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">無事件</p>
@@ -78,7 +79,7 @@ export function CoachCalendarWeekGrid({ weekStart, events }: { weekStart: Date; 
                     >
                       <span className="font-medium">{ev.title}</span>
                       <span className="mt-0.5 block text-xs opacity-90">
-                        {ev.startsAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })} ·{" "}
+                        {formatTimeZh(ev.startsAt, { hour: "2-digit", minute: "2-digit" })} ·{" "}
                         {typeLabel(ev.type)} · {statusShort(ev.status)}
                       </span>
                     </Link>
@@ -115,7 +116,7 @@ export function CoachCalendarWeekGridDesktop({ weekStart, events }: { weekStart:
         return (
           <div key={key} className="flex min-h-[14rem] flex-col bg-white dark:bg-zinc-900">
             <div className="border-b border-zinc-100 px-2 py-2 text-center text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-              {d.toLocaleDateString("zh-TW", { weekday: "short" })}
+              {formatDateZh(d, { weekday: "short" })}
               <div className="text-sm tabular-nums text-zinc-900 dark:text-zinc-50">{d.getDate()}</div>
             </div>
             <div className="flex flex-1 flex-col gap-1 p-1.5">
@@ -127,7 +128,7 @@ export function CoachCalendarWeekGridDesktop({ weekStart, events }: { weekStart:
                 >
                   <span className="line-clamp-2 font-medium">{ev.title}</span>
                   <span className="mt-0.5 block tabular-nums opacity-90">
-                    {ev.startsAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}
+                    {formatTimeZh(ev.startsAt, { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </Link>
               ))}
@@ -159,7 +160,7 @@ export function CoachCalendarListView({ events }: { events: CalendarEventRow[] }
                 </span>
               </div>
               <time className="shrink-0 text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
-                {ev.startsAt.toLocaleString("zh-TW", {
+                {formatDateTimeZh(ev.startsAt, {
                   month: "short",
                   day: "numeric",
                   weekday: "short",
@@ -223,7 +224,7 @@ export function CoachCalendarMonthGrid({ monthAnchor, events }: { monthAnchor: D
                       className={`block truncate rounded px-0.5 py-0.5 text-[10px] leading-tight sm:text-xs ${eventCardClasses(ev)}`}
                       title={ev.title}
                     >
-                      {ev.startsAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}{" "}
+                      {formatTimeZh(ev.startsAt, { hour: "2-digit", minute: "2-digit" })}{" "}
                       {ev.title}
                     </Link>
                   </li>

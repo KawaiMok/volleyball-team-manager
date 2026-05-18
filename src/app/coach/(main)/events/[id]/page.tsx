@@ -21,6 +21,7 @@ import {
 } from "@/components/domain-status-indicators";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
 import { getPrisma } from "@/lib/prisma";
+import { formatDateTimeZh } from "@/lib/format-datetime";
 import {
   EventStatus,
   EventType,
@@ -222,19 +223,19 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           <div>
             <dt className="text-zinc-500 dark:text-zinc-400">開始</dt>
             <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-              {event.startsAt.toLocaleString("zh-TW")}
+              {formatDateTimeZh(event.startsAt)}
             </dd>
           </div>
           <div>
             <dt className="text-zinc-500 dark:text-zinc-400">結束</dt>
             <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-              {event.endsAt.toLocaleString("zh-TW")}
+              {formatDateTimeZh(event.endsAt)}
             </dd>
           </div>
           {event.meetAt ?
             <div>
               <dt className="text-zinc-500 dark:text-zinc-400">集合</dt>
-              <dd className="font-medium tabular-nums">{event.meetAt.toLocaleString("zh-TW")}</dd>
+              <dd className="font-medium tabular-nums">{formatDateTimeZh(event.meetAt)}</dd>
             </div>
           : null}
           {event.locationName ?
@@ -247,7 +248,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
             <div>
               <dt className="text-zinc-500 dark:text-zinc-400">RSVP 截止</dt>
               <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-                {event.rsvpDeadlineAt.toLocaleString("zh-TW")}
+                {formatDateTimeZh(event.rsvpDeadlineAt)}
               </dd>
             </div>
           : null}

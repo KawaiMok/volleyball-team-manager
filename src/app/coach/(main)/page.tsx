@@ -14,6 +14,7 @@ import { getDebugTeamMember } from "@/lib/debug-session";
 import { buildDailyRpeSeries } from "@/lib/coach-dashboard-rpe-series";
 import { getPrisma } from "@/lib/prisma";
 import { EventStatus, EventType, RsvpStatus } from "@/generated/prisma/client";
+import { formatDateTimeZh } from "@/lib/format-datetime";
 
 function typeLabel(t: EventType) {
   switch (t) {
@@ -219,7 +220,7 @@ export default async function CoachDashboardPage() {
                             {total > 0 ? ` / ${total}` : ""}
                           </span>
                           <time className="text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
-                            {ev.startsAt.toLocaleString("zh-TW", {
+                            {formatDateTimeZh(ev.startsAt, {
                               month: "short",
                               day: "numeric",
                               weekday: "short",
@@ -277,7 +278,7 @@ export default async function CoachDashboardPage() {
                       : null}
                     </div>
                     <time className="shrink-0 text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
-                      {ev.startsAt.toLocaleString("zh-TW", {
+                      {formatDateTimeZh(ev.startsAt, {
                         month: "short",
                         day: "numeric",
                         weekday: "short",

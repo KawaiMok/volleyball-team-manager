@@ -2,9 +2,8 @@ import Link from "next/link";
 
 import { CoachTeamIdentitySettingsForm } from "@/app/coach/(main)/team/coach-team-identity-settings-form";
 import { CoachTeamRolesEmailPanel } from "@/app/coach/(main)/team/coach-team-roles-email-panel";
-import { AddTeamMemberForm } from "@/app/coach/(main)/team/add-member-form";
-import { TeamRosterSection } from "@/app/coach/(main)/team/team-roster-section";
-import { TeamMemberStatusLegend } from "@/components/domain-status-indicators";
+import { TeamPageMembers } from "@/app/coach/(main)/team/team-page-members";
+import { mapTeamMemberToRosterRow } from "@/lib/team-roster-map";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
 import { TeamRole } from "@/generated/prisma/client";
 import { getDebugTeamMember } from "@/lib/debug-session";
@@ -38,20 +37,7 @@ export default async function CoachTeamPage() {
   /** 切換作用中隊伍時強制重掛 client 表單（註解：defaultValue／useState 初值不會隨 router.refresh 自動更新）。 */
   const teamSettingsKey = member.teamId;
 
-  const rosterRows = rows.map((r) => ({
-    id: r.id,
-    updatedAt: r.updatedAt.toISOString(),
-    displayName: r.user.name,
-    email: r.user.email,
-    clerkLinked: Boolean(r.user.clerkUserId),
-    role: r.role,
-    status: r.status,
-    jerseyNumber: r.jerseyNumber,
-    position: r.position,
-    squad: r.squad,
-    phone: r.phone,
-    notes: r.notes,
-  }));
+  const rosterRows = rows.map((r) => mapTeamMemberToRosterRow({ ...r, updatedAt: r.updatedAt }));
 
   return (
     <div className="space-y-10">
@@ -86,31 +72,13 @@ export default async function CoachTeamPage() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">新增隊員／隊務</h2>
-        <div className="mt-4">
-          <AddTeamMemberForm key={teamSettingsKey} squads={squads} actorIsAdmin={actorIsAdmin} />
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
-        <div className="border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">目前名單</h2>
-            <HintExclamationToggle>
-              主表僅顯示姓名、角色、背號、狀態；「詳情」可檢視聯絡方式與備註，「編輯」開大視窗修改。手機面板由下往上，可按 ×、背景或 Esc 關閉。
-            </HintExclamationToggle>
-          </div>
-          <TeamMemberStatusLegend className="mt-2" />
-        </div>
-        <TeamRosterSection
-          key={teamSettingsKey}
-          squads={squads}
-          currentMemberId={member.id}
-          rows={rosterRows}
-          actorIsAdmin={actorIsAdmin}
-        />
-      </section>
+      <TeamPageMembers
+        key={teamSettingsKey}
+        initialRows={rosterRows}
+        squads={squads}
+        currentMemberId={member.id}
+        actorIsAdmin={actorIsAdmin}
+      />
     </div>
   );
 }

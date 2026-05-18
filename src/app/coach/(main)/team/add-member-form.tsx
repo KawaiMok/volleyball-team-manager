@@ -9,6 +9,8 @@ type Props = {
   squads: string[];
   /** 是否可選「管理員」（註解：與 API 僅管理員可指派 ADMIN 一致）。 */
   actorIsAdmin: boolean;
+  /** 新增／復籍成功後回傳 API 成員列（註解：供父層立即更新名單）。 */
+  onMemberAdded?: (row: unknown) => void;
 };
 
 /** 與 Prisma TeamRole 一致（註解：client 不 import generated enum）。 */
@@ -32,7 +34,7 @@ function roleLabel(r: string) {
 }
 
 /** 依 Email 新增隊員／隊務（註解：POST /api/team/members；含預備姓名、位置、分組、聯絡與備註）。 */
-export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
+export function AddTeamMemberForm({ squads, actorIsAdmin, onMemberAdded }: Props) {
   const router = useRouter();
   const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
@@ -94,6 +96,7 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
         showError(data.error ?? `失敗 (${res.status})`);
         return;
       }
+      onMemberAdded?.(data);
       showSuccess(data.reactivated ? `已復籍（原為停用）：${email}` : `已加入：${email}`);
       form.reset();
       setSquadChoice("");

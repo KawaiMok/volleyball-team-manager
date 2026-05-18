@@ -7,6 +7,7 @@ import {
   validateParticipantRuleForSubmit,
 } from "@/app/coach/(main)/events/event-participant-rule-fields";
 import type { ParticipantRule } from "@/lib/participant-rule-types";
+import { DATETIME_LOCAL_STEP_SECONDS, parseDatetimeLocalToIso } from "@/lib/datetime-local";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -48,10 +49,10 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
           teamId,
           type,
           title: title || "未命名事件",
-          startsAt: new Date(startsAt).toISOString(),
-          endsAt: new Date(endsAt).toISOString(),
+          startsAt: parseDatetimeLocalToIso(startsAt),
+          endsAt: parseDatetimeLocalToIso(endsAt),
           locationName,
-          rsvpDeadlineAt: rsvpDeadlineRaw ? new Date(rsvpDeadlineRaw).toISOString() : null,
+          rsvpDeadlineAt: rsvpDeadlineRaw ? parseDatetimeLocalToIso(rsvpDeadlineRaw) : null,
           participantRule,
         }),
       });
@@ -113,6 +114,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
             id="startsAt"
             name="startsAt"
             type="datetime-local"
+            step={DATETIME_LOCAL_STEP_SECONDS}
             required
             className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
@@ -125,6 +127,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
             id="endsAt"
             name="endsAt"
             type="datetime-local"
+            step={DATETIME_LOCAL_STEP_SECONDS}
             required
             className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
@@ -139,6 +142,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
           id="rsvpDeadlineAt"
           name="rsvpDeadlineAt"
           type="datetime-local"
+          step={DATETIME_LOCAL_STEP_SECONDS}
           className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">

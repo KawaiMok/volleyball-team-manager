@@ -1,4 +1,5 @@
 "use client";
+import { formatDateTimeZh } from "@/lib/format-datetime";
 
 import { useCallback, useEffect, useState } from "react";
 
@@ -232,7 +233,7 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
                 <div className="flex flex-col gap-0.5 border-t border-zinc-100 pt-3 dark:border-zinc-800 sm:flex-row sm:gap-3">
                   <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">更新時間</dt>
                   <dd className="text-xs text-zinc-600 dark:text-zinc-400">
-                    {new Date(detail.updatedAt).toLocaleString("zh-TW", {
+                    {formatDateTimeZh(new Date(detail.updatedAt), {
                       dateStyle: "medium",
                       timeStyle: "short",
                     })}

@@ -16,6 +16,7 @@ import {
   EventStatusLegend,
 } from "@/components/domain-status-indicators";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
+import { formatDateTimeZh } from "@/lib/format-datetime";
 
 function typeLabel(t: EventType) {
   switch (t) {
@@ -130,7 +131,7 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
                   </td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{typeLabel(ev.type)}</td>
                   <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
-                    {ev.startsAt.toLocaleString("zh-TW", {
+                    {formatDateTimeZh(ev.startsAt, {
                       year: "numeric",
                       month: "2-digit",
                       day: "2-digit",

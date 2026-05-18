@@ -1,4 +1,5 @@
 "use client";
+import { formatDateTimeZh } from "@/lib/format-datetime";
 import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
@@ -157,7 +158,7 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
                       {typeLabel(c.type)}
                     </span>
                     <span className="mx-1.5">·</span>
-                    {new Date(c.createdAt).toLocaleString("zh-TW")}
+                    {formatDateTimeZh(new Date(c.createdAt))}
                   </span>
                   {canEditOwn ?
                     <span className="flex gap-2">

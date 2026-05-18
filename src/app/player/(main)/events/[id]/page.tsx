@@ -11,6 +11,7 @@ import { getPrisma } from "@/lib/prisma";
 
 import { PlayerFeedbackForm } from "./feedback-form";
 import { PlayerRsvpForm } from "./rsvp-form";
+import { formatDateTimeZh, formatTimeZh } from "@/lib/format-datetime";
 
 function typeLabel(t: EventType) {
   switch (t) {
@@ -148,7 +149,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">{event.title}</h1>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
           {typeLabel(event.type)} ·{" "}
-          {event.startsAt.toLocaleString("zh-TW", {
+          {formatDateTimeZh(event.startsAt, {
             weekday: "long",
             month: "numeric",
             day: "numeric",
@@ -156,7 +157,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
             minute: "2-digit",
           })}
           {" — "}
-          {event.endsAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}
+          {formatTimeZh(event.endsAt, { hour: "2-digit", minute: "2-digit" })}
         </p>
         {event.locationName ?
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">地點：{event.locationName}</p>
@@ -167,7 +168,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         {rsvpDeadlineAt ?
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             RSVP 截止：
-            {rsvpDeadlineAt.toLocaleString("zh-TW", {
+            {formatDateTimeZh(rsvpDeadlineAt, {
               month: "numeric",
               day: "numeric",
               hour: "2-digit",

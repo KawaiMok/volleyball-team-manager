@@ -1,4 +1,5 @@
 "use client";
+import { formatDateTimeZh } from "@/lib/format-datetime";
 import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
@@ -170,7 +171,7 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
                       {typeLabel(c.type)}
                     </span>
                     <span className="mx-1.5">·</span>
-                    {new Date(c.createdAt).toLocaleString("zh-TW")}
+                    {formatDateTimeZh(new Date(c.createdAt))}
                     {c.updatedAt !== c.createdAt ?
                       <span className="text-zinc-400">（已編輯）</span>
                     : null}

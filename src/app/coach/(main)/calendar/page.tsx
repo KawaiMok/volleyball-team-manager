@@ -18,6 +18,7 @@ import { getDebugTeamMember } from "@/lib/debug-session";
 import { parseGroupConfig } from "@/lib/group-config";
 import { getPrisma } from "@/lib/prisma";
 import { EventType, Prisma } from "@/generated/prisma/client";
+import { formatDateZh } from "@/lib/format-datetime";
 
 type PageProps = {
   searchParams: Promise<{ view?: string; date?: string; type?: string; squad?: string }>;
@@ -88,8 +89,8 @@ export default async function CoachCalendarPage({ searchParams }: PageProps) {
   const events: CalendarEventRow[] = rawEvents;
 
   const dateYmd = toYmd(anchor);
-  const weekLabel = `${weekStart.toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })} — ${addDays(weekStart, 6).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric", year: "numeric" })}`;
-  const monthLabel = anchor.toLocaleDateString("zh-TW", { year: "numeric", month: "long" });
+  const weekLabel = `${formatDateZh(weekStart, { month: "numeric", day: "numeric" })} — ${formatDateZh(addDays(weekStart, 6), { month: "numeric", day: "numeric", year: "numeric" })}`;
+  const monthLabel = formatDateZh(anchor, { year: "numeric", month: "long" });
 
   return (
     <div className="space-y-6">

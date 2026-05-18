@@ -18,6 +18,7 @@ import { parsePlayerScheduleView } from "@/app/player/(main)/player-schedule-vie
 import { getTeamMember } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
 import { EventStatus, EventType } from "@/generated/prisma/client";
+import { formatDateTimeZh, formatDateZh } from "@/lib/format-datetime";
 
 function typeLabel(t: EventType) {
   switch (t) {
@@ -64,7 +65,7 @@ function EventListItem({ ev }: { ev: EventRow }) {
         </div>
         <span className="text-xs text-slate-500 dark:text-slate-400">
           {typeLabel(ev.type)} ·{" "}
-          {ev.startsAt.toLocaleString("zh-TW", {
+          {formatDateTimeZh(ev.startsAt, {
             weekday: "short",
             month: "numeric",
             day: "numeric",
@@ -117,8 +118,8 @@ export default async function PlayerSchedulePage({ searchParams }: PageProps) {
   const rangeStart = view === "month" ? monthStart : weekStart;
   const rangeEndExcl = view === "month" ? monthEndExcl : weekEndExcl;
 
-  const weekLabel = `${weekStart.toLocaleDateString("zh-TW", { month: "numeric", day: "numeric" })} — ${addDays(weekStart, 6).toLocaleDateString("zh-TW", { month: "numeric", day: "numeric", year: "numeric" })}`;
-  const monthLabel = anchor.toLocaleDateString("zh-TW", { year: "numeric", month: "long" });
+  const weekLabel = `${formatDateZh(weekStart, { month: "numeric", day: "numeric" })} — ${formatDateZh(addDays(weekStart, 6), { month: "numeric", day: "numeric", year: "numeric" })}`;
+  const monthLabel = formatDateZh(anchor, { year: "numeric", month: "long" });
 
   const [upcoming, past, rangeRaw] = await Promise.all([
     view === "list" ?

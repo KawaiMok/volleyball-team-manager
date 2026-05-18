@@ -8,6 +8,7 @@ import {
   toYmd,
 } from "@/app/coach/(main)/calendar/calendar-utils";
 import { EventType } from "@/generated/prisma/client";
+import { formatDateZh, formatTimeZh } from "@/lib/format-datetime";
 
 export type PlayerScheduleCalendarEvent = {
   id: string;
@@ -71,7 +72,7 @@ export function PlayerScheduleWeekGrid({
         return (
           <div key={key} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 p-3 shadow-sm">
             <div className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-              {d.toLocaleDateString("zh-TW", { weekday: "long", month: "numeric", day: "numeric" })}
+              {formatDateZh(d, { weekday: "long", month: "numeric", day: "numeric" })}
             </div>
             {dayEvents.length === 0 ?
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">無行程</p>
@@ -92,7 +93,7 @@ export function PlayerScheduleWeekGrid({
                         : null}
                       </span>
                       <span className="mt-0.5 block text-xs opacity-90">
-                        {ev.startsAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })} ·{" "}
+                        {formatTimeZh(ev.startsAt, { hour: "2-digit", minute: "2-digit" })} ·{" "}
                         {typeLabel(ev.type)}
                       </span>
                     </Link>
@@ -136,7 +137,7 @@ export function PlayerScheduleWeekGridDesktop({
         return (
           <div key={key} className="flex min-h-[14rem] flex-col bg-white dark:bg-zinc-900">
             <div className="border-b border-slate-100 px-2 py-2 text-center text-xs font-semibold text-slate-700 dark:text-slate-300">
-              {d.toLocaleDateString("zh-TW", { weekday: "short" })}
+              {formatDateZh(d, { weekday: "short" })}
               <div className="text-sm tabular-nums text-slate-900 dark:text-slate-50">{d.getDate()}</div>
             </div>
             <div className="flex flex-1 flex-col gap-1 p-1.5">
@@ -148,7 +149,7 @@ export function PlayerScheduleWeekGridDesktop({
                 >
                   <span className="line-clamp-2 font-medium">{ev.title}</span>
                   <span className="mt-0.5 flex items-center justify-between gap-1 tabular-nums opacity-90">
-                    {ev.startsAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}
+                    {formatTimeZh(ev.startsAt, { hour: "2-digit", minute: "2-digit" })}
                     {needRsvp(ev, now) ?
                       <span className="rounded bg-amber-100 px-1 text-[9px] text-amber-900">RSVP</span>
                     : null}
@@ -220,7 +221,7 @@ export function PlayerScheduleMonthGrid({
                         needRsvp(ev, now) ? `${ev.title}（待 RSVP）` : ev.title
                       }
                     >
-                      {ev.startsAt.toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit" })}{" "}
+                      {formatTimeZh(ev.startsAt, { hour: "2-digit", minute: "2-digit" })}{" "}
                       {ev.title}
                     </Link>
                   </li>
