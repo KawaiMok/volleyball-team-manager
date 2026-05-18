@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -12,7 +13,7 @@ type Props = {
 /** 角色說明 + Email 通知開關（註解：開關先寫入 DB；實際寄信需後端排程接上）。 */
 export function CoachTeamRolesEmailPanel({ initialNotifications }: Props) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
   const [rPlayers, setRPlayers] = useState(initialNotifications.emailRsvpReminderToPlayers);
   const [digestCoaches, setDigestCoaches] = useState(initialNotifications.emailDigestToCoaches);
@@ -23,7 +24,6 @@ export function CoachTeamRolesEmailPanel({ initialNotifications }: Props) {
   }, [initialNotifications.emailRsvpReminderToPlayers, initialNotifications.emailDigestToCoaches]);
 
   async function saveNotifications() {
-    setError(null);
     setPending(true);
     try {
       const res = await fetch("/api/team/settings", {
@@ -40,13 +40,14 @@ export function CoachTeamRolesEmailPanel({ initialNotifications }: Props) {
       const data = await res.json().catch(() => ({}));
       setPending(false);
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `儲存失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `儲存失敗 (${res.status})`);
         return;
       }
+      showSuccess("已儲存通知設定");
       router.refresh();
     } catch {
       setPending(false);
-      setError("網路錯誤");
+      showError("網路錯誤");
     }
   }
 
@@ -80,9 +81,6 @@ export function CoachTeamRolesEmailPanel({ initialNotifications }: Props) {
       <div className="border-t border-zinc-100 pt-4">
         <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Email 通知（偏好）</h3>
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">以下選項僅儲存隊伍偏好；實際寄信需接上郵件服務與排程後才會生效。</p>
-        {error ?
-          <p className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-        : null}
         <ul className="mt-3 space-y-3">
           <li className="flex items-start gap-3">
             <input

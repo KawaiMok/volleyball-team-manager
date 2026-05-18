@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -15,9 +16,9 @@ type Props = {
 /** 多隊切換：POST /api/me/active-team 後 refresh（註解：事件詳情會改隊導致查無資料 → 改導向列表）。 */
 export function ActiveTeamSwitcher({ teams, currentTeamId, variant }: Props) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
 
   if (teams.length <= 1) {
     return null;
@@ -30,7 +31,6 @@ export function ActiveTeamSwitcher({ teams, currentTeamId, variant }: Props) {
 
   async function onChange(teamId: string) {
     if (teamId === currentTeamId) return;
-    setError(null);
     startTransition(async () => {
       const res = await fetch("/api/me/active-team", {
         method: "POST",
@@ -40,9 +40,11 @@ export function ActiveTeamSwitcher({ teams, currentTeamId, variant }: Props) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `失敗 (${res.status})`);
         return;
       }
+      const name = teams.find((t) => t.id === teamId)?.name;
+      showSuccess(name ? `已切換至「${name}」` : "已切換隊伍");
       const onCoachEventDetail = /^\/coach\/events\/[^/]+$/.test(pathname ?? "");
       const onPlayerEventDetail = /^\/player\/events\/[^/]+$/.test(pathname ?? "");
       if (onCoachEventDetail) {
@@ -72,7 +74,6 @@ export function ActiveTeamSwitcher({ teams, currentTeamId, variant }: Props) {
           </option>
         ))}
       </select>
-      {error ? <span className="text-xs text-red-600">{error}</span> : null}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import {
   EventParticipantRuleFields,
@@ -39,16 +40,15 @@ function isoToDatetimeLocal(iso: string): string {
 /** 教練編輯事件（註解：PATCH /api/events/[id]，含 RSVP 截止與參與者規則）。 */
 export function EventEditForm({ eventId, initial, squads, roster, initialParticipantRule }: Props) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
   const [participantRule, setParticipantRule] = useState<ParticipantRule>(initialParticipantRule);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
     const vr = validateParticipantRuleForSubmit(participantRule, squads);
     if (vr) {
-      setError(vr);
+      showError(vr);
       return;
     }
 
@@ -83,22 +83,19 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
       const data = await res.json().catch(() => ({}));
       setPending(false);
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `更新失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `更新失敗 (${res.status})`);
         return;
       }
+      showSuccess("已更新活動");
       router.refresh();
     } catch {
       setPending(false);
-      setError("網路錯誤");
+      showError("網路錯誤");
     }
   }
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="space-y-5">
-      {error ?
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-      : null}
-
       <div>
         <label htmlFor={`edit-title-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           標題

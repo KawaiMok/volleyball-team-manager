@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -54,13 +55,12 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
   const { initial, disabled } = props;
   const formId = props.variant === "event" ? props.eventId : "live-tactical";
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const svgRef = useRef<SVGSVGElement>(null);
   const [data, setData] = useState<CourtSketchData>(initial ?? emptyCourtSketch());
   const [tool, setTool] = useState<EditorTool>("select");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [savedOk, setSavedOk] = useState(false);
   const [pending, setPending] = useState(false);
   const labelInputRef = useRef<HTMLInputElement>(null);
 
@@ -222,8 +222,6 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
   const selectedToken = selectedId ? data.tokens.find((t) => t.id === selectedId) : undefined;
 
   async function save() {
-    setError(null);
-    setSavedOk(false);
     setPending(true);
     try {
       const payload: CourtSketchData = {
@@ -245,15 +243,14 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
       const j = await res.json().catch(() => ({}));
       setPending(false);
       if (!res.ok) {
-        setError((j as { error?: string }).error ?? `儲存失敗 (${res.status})`);
+        showError((j as { error?: string }).error ?? `儲存失敗 (${res.status})`);
         return;
       }
-      setSavedOk(true);
+      showSuccess(savedToastLabel);
       router.refresh();
-      setTimeout(() => setSavedOk(false), 2500);
     } catch {
       setPending(false);
-      setError("網路錯誤");
+      showError("網路錯誤");
     }
   }
 
@@ -264,15 +261,6 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
 
   return (
     <div className="space-y-4">
-      {error ?
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-      : null}
-      {savedOk ?
-        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-          {savedToastLabel}
-        </p>
-      : null}
-
       <div className="flex flex-wrap gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-2">
         <span className="self-center text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">工具</span>
         {(

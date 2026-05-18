@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -33,9 +34,8 @@ function roleLabel(r: string) {
 /** 依 Email 新增隊員／隊務（註解：POST /api/team/members；含預備姓名、位置、分組、聯絡與備註）。 */
 export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
   const [squadChoice, setSquadChoice] = useState("");
   const [squadCustom, setSquadCustom] = useState("");
   const rolesForInvite = actorIsAdmin ? ROLES : ROLES.filter((r) => r !== "ADMIN");
@@ -43,8 +43,6 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
-    setError(null);
-    setDone(null);
     setPending(true);
     const fd = new FormData(form);
     const email = String(fd.get("email") ?? "").trim();
@@ -63,13 +61,13 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
     const jerseyNumber =
       jerseyRaw === "" ? null : Number.parseInt(jerseyRaw, 10);
     if (jerseyRaw !== "" && Number.isNaN(jerseyNumber)) {
-      setError("背號請填數字");
+      showError("背號請填數字");
       setPending(false);
       return;
     }
 
     if (squads.length > 0 && squadChoice === "__custom" && !squadCustom.trim()) {
-      setError("已選「其他分組」時請填寫分組名稱");
+      showError("已選「其他分組」時請填寫分組名稱");
       setPending(false);
       return;
     }
@@ -93,29 +91,22 @@ export function AddTeamMemberForm({ squads, actorIsAdmin }: Props) {
       const data = (await res.json()) as { error?: string; reactivated?: boolean };
       setPending(false);
       if (!res.ok) {
-        setError(data.error ?? `失敗 (${res.status})`);
+        showError(data.error ?? `失敗 (${res.status})`);
         return;
       }
-      setDone(data.reactivated ? `已復籍（原為停用）：${email}` : `已加入：${email}`);
+      showSuccess(data.reactivated ? `已復籍（原為停用）：${email}` : `已加入：${email}`);
       form.reset();
       setSquadChoice("");
       setSquadCustom("");
       router.refresh();
     } catch {
       setPending(false);
-      setError("網路錯誤");
+      showError("網路錯誤");
     }
   }
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
-      {error ?
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-      : null}
-      {done ?
-        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{done}</p>
-      : null}
-
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="invite-email" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">

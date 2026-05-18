@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -59,7 +60,7 @@ function deriveSquadState(squads: string[], squad: string | null) {
 /** 單一隊員編輯／停用（註解：PATCH /api/team/members/[id]）。 */
 export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, initial, onSaved, onCancel }: Props) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
 
   const squadInit = deriveSquadState(squads, initial.squad);
@@ -68,7 +69,6 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
     setPending(true);
 
     const fd = new FormData(e.currentTarget);
@@ -81,7 +81,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
     const jerseyRaw = String(fd.get("jerseyNumber") ?? "").trim();
 
     if (isSelf && status === "INACTIVE") {
-      setError("不可將自己的隊籍設為停用");
+      showError("不可將自己的隊籍設為停用");
       setPending(false);
       return;
     }
@@ -92,7 +92,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
       : squadChoice.trim();
 
     if (squads.length > 0 && squadChoice === "__custom" && !squadCustom.trim()) {
-      setError("已選「其他分組」時請填寫分組名稱");
+      showError("已選「其他分組」時請填寫分組名稱");
       setPending(false);
       return;
     }
@@ -100,7 +100,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
     const jerseyNumber =
       jerseyRaw === "" ? null : Number.parseInt(jerseyRaw, 10);
     if (jerseyRaw !== "" && Number.isNaN(jerseyNumber)) {
-      setError("背號請填數字或留空");
+      showError("背號請填數字或留空");
       setPending(false);
       return;
     }
@@ -124,23 +124,20 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
       const data = await res.json().catch(() => ({}));
       setPending(false);
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `更新失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `更新失敗 (${res.status})`);
         return;
       }
+      showSuccess("已儲存成員資料");
       onSaved?.();
       router.refresh();
     } catch {
       setPending(false);
-      setError("網路錯誤");
+      showError("網路錯誤");
     }
   }
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="space-y-4 text-left">
-      {error ?
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-      : null}
-
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">顯示姓名</label>

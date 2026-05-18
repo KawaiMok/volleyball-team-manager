@@ -8,6 +8,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { CapacitorPushBridge } from "@/components/capacitor-push-bridge";
 import { NavigationTransitionBar } from "@/components/navigation-transition-bar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/components/toast-provider";
 import { THEME_STORAGE_KEY } from "@/lib/theme-preference";
 
 import "./globals.css";
@@ -52,7 +53,9 @@ export default function RootLayout({
             <NavigationTransitionBar />
           </Suspense>
           <CapacitorPushBridge />
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

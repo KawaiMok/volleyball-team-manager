@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import {
   EventParticipantRuleFields,
@@ -17,16 +18,15 @@ const EVENT_TYPES = ["TRAINING", "MATCH", "OTHER"] as const;
 /** 建立草稿事件表單（註解：含完整參與者規則 ALL／SQUADS／MEMBERS）。 */
 export function EventCreateForm({ teamId, squads, roster }: Props) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
   const [participantRule, setParticipantRule] = useState<ParticipantRule>({ kind: "ALL" });
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
     const vr = validateParticipantRuleForSubmit(participantRule, squads);
     if (vr) {
-      setError(vr);
+      showError(vr);
       return;
     }
 
@@ -57,24 +57,21 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `建立失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `建立失敗 (${res.status})`);
         setPending(false);
         return;
       }
+      showSuccess("已建立草稿活動");
       router.push(`/coach/events/${(data as { id: string }).id}`);
       router.refresh();
     } catch {
-      setError("網路錯誤");
+      showError("網路錯誤");
       setPending(false);
     }
   }
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="max-w-lg space-y-5">
-      {error ?
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-      : null}
-
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           標題

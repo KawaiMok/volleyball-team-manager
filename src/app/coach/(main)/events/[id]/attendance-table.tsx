@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -19,6 +20,7 @@ type Props = {
 /** 點名：批次更新 checkedIn（註解：依 RSVP 一鍵全到）。 */
 export function AttendanceTable({ eventId, rows }: Props) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const [local, setLocal] = useState(() =>
     rows.reduce<Record<string, boolean>>((acc, r) => {
       acc[r.memberId] = r.checkedIn;
@@ -26,7 +28,6 @@ export function AttendanceTable({ eventId, rows }: Props) {
     }, {}),
   );
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const updatesPayload = useMemo(
     () => rows.map((r) => ({ memberId: r.memberId, checkedIn: local[r.memberId] ?? false })),
@@ -34,7 +35,6 @@ export function AttendanceTable({ eventId, rows }: Props) {
   );
 
   async function save() {
-    setError(null);
     setPending(true);
     const res = await fetch(`/api/events/${eventId}/check-in`, {
       method: "PATCH",
@@ -45,9 +45,10 @@ export function AttendanceTable({ eventId, rows }: Props) {
     const data = await res.json().catch(() => ({}));
     setPending(false);
     if (!res.ok) {
-      setError((data as { error?: string }).error ?? "儲存失敗");
+      showError((data as { error?: string }).error ?? "儲存失敗");
       return;
     }
+    showSuccess("已儲存點名");
     router.refresh();
   }
 
@@ -67,7 +68,6 @@ export function AttendanceTable({ eventId, rows }: Props) {
 
   return (
     <div className="space-y-3">
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
       <div className="flex flex-wrap gap-2">
         <button
           type="button"

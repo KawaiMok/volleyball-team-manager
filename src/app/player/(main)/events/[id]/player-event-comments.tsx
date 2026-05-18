@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -18,8 +19,8 @@ function typeLabel(t: string) {
 /** 球員端：瀏覽公告與留言、發表留言（註解：不可發公告；僅能編刪自己的留言）。 */
 export function PlayerEventComments({ eventId, currentMemberId, initialComments }: Props) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const [comments, setComments] = useState(initialComments);
-  const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
@@ -46,11 +47,10 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
     e.preventDefault();
     /** await 後 e.currentTarget 可能為 null（註解：須先保存 form 參考再 reset）。 */
     const form = e.currentTarget;
-    setError(null);
     const fd = new FormData(form);
     const content = String(fd.get("content") ?? "").trim();
     if (!content) {
-      setError("請輸入內容");
+      showError("請輸入內容");
       return;
     }
     setPending(true);
@@ -63,26 +63,26 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string } & Partial<EventCommentRow>;
       if (!res.ok) {
-        setError(data.error ?? `送出失敗 (${res.status})`);
+        showError(data.error ?? `送出失敗 (${res.status})`);
         return;
       }
       if (data.id && data.createdAt) {
         setComments((prev) => [...prev, data as EventCommentRow]);
       }
+      showSuccess("已發布留言");
       form.reset();
       void refreshList();
     } catch {
-      setError("網路錯誤");
+      showError("網路錯誤");
     } finally {
       setPending(false);
     }
   }
 
   async function saveEdit(id: string) {
-    setError(null);
     const content = editText.trim();
     if (!content) {
-      setError("內容不可為空");
+      showError("內容不可為空");
       return;
     }
     setPending(true);
@@ -95,13 +95,14 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `更新失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `更新失敗 (${res.status})`);
         return;
       }
       setEditingId(null);
+      showSuccess("已更新");
       void refreshList();
     } catch {
-      setError("網路錯誤");
+      showError("網路錯誤");
     } finally {
       setPending(false);
     }
@@ -109,7 +110,6 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
 
   async function remove(id: string) {
     if (!window.confirm("確定刪除此則留言？")) return;
-    setError(null);
     setPending(true);
     try {
       const res = await fetch(`/api/events/${eventId}/comments/${id}`, {
@@ -118,12 +118,13 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError((data as { error?: string }).error ?? `刪除失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `刪除失敗 (${res.status})`);
         return;
       }
+      showSuccess("已刪除");
       void refreshList();
     } catch {
-      setError("網路錯誤");
+      showError("網路錯誤");
     } finally {
       setPending(false);
     }
@@ -132,10 +133,6 @@ export function PlayerEventComments({ eventId, currentMemberId, initialComments 
   return (
     <section className="space-y-4">
       <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">公告與留言</h2>
-      {error ?
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-      : null}
-
       {comments.length === 0 ?
         <p className="text-sm text-slate-600 dark:text-slate-400">尚無公告或留言。</p>
       : (

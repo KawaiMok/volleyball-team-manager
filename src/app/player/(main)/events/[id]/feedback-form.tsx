@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -19,18 +20,17 @@ type Props = {
 /** 賽後／訓後回饋（註解：POST /api/events/[id]/feedback；結束後 24 小時內可更新）。 */
 export function PlayerFeedbackForm({ eventId, initial, readOnly }: Props) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const [rpe, setRpe] = useState(initial?.rpe ?? 5);
   const [fatigue, setFatigue] = useState<"LOW" | "MED" | "HIGH">(initial?.fatigue ?? "MED");
   const [painLevel, setPainLevel] = useState<"NONE" | "MILD" | "SEVERE">(initial?.painLevel ?? "NONE");
   const [painArea, setPainArea] = useState(initial?.painArea ?? "");
   const [note, setNote] = useState(initial?.note ?? "");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (readOnly) return;
-    setError(null);
     setPending(true);
     const res = await fetch(`/api/events/${eventId}/feedback`, {
       method: "POST",
@@ -47,9 +47,10 @@ export function PlayerFeedbackForm({ eventId, initial, readOnly }: Props) {
     const data = await res.json().catch(() => ({}));
     setPending(false);
     if (!res.ok) {
-      setError((data as { error?: string }).error ?? `失敗 (${res.status})`);
+      showError((data as { error?: string }).error ?? `失敗 (${res.status})`);
       return;
     }
+    showSuccess(initial ? "已更新身體回饋" : "已送出身體回饋");
     router.refresh();
   }
 
@@ -109,7 +110,6 @@ export function PlayerFeedbackForm({ eventId, initial, readOnly }: Props) {
           className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm"
         />
       </label>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {!readOnly ?
         <button
           type="submit"

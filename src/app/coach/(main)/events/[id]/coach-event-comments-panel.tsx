@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -20,8 +21,8 @@ function typeLabel(t: string) {
 /** 教練端：事件公告與留言列表、發佈與編修（註解：API `/api/events/[id]/comments`）。 */
 export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll, initialComments }: Props) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const [comments, setComments] = useState(initialComments);
-  const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [draftType, setDraftType] = useState<"ANNOUNCEMENT" | "COMMENT">("COMMENT");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -49,11 +50,10 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
     e.preventDefault();
     /** await 後 e.currentTarget 可能為 null，須先保存（註解：否則 reset() 拋錯誤判成網路錯誤）。 */
     const form = e.currentTarget;
-    setError(null);
     const fd = new FormData(form);
     const content = String(fd.get("content") ?? "").trim();
     if (!content) {
-      setError("請輸入內容");
+      showError("請輸入內容");
       return;
     }
     setPending(true);
@@ -67,17 +67,18 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string } & Partial<EventCommentRow>;
       if (!res.ok) {
-        setError(data.error ?? `送出失敗 (${res.status})`);
+        showError(data.error ?? `送出失敗 (${res.status})`);
         return;
       }
       /** 立即併入新列（註解：201 成功後不依賴二次 GET，避免 refresh 異常被當成發布失敗）。 */
       if (data.id && data.createdAt) {
         setComments((prev) => [...prev, data as EventCommentRow]);
       }
+      showSuccess(type === "ANNOUNCEMENT" ? "已發布公告" : "已發布留言");
       form.reset();
       void refreshList();
     } catch {
-      setError("網路錯誤");
+      showError("網路錯誤");
     } finally {
       setPending(false);
     }
@@ -89,10 +90,9 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
   }
 
   async function saveEdit(id: string) {
-    setError(null);
     const content = editText.trim();
     if (!content) {
-      setError("內容不可為空");
+      showError("內容不可為空");
       return;
     }
     setPending(true);
@@ -105,13 +105,14 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `更新失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `更新失敗 (${res.status})`);
         return;
       }
       setEditingId(null);
+      showSuccess("已更新");
       void refreshList();
     } catch {
-      setError("網路錯誤");
+      showError("網路錯誤");
     } finally {
       setPending(false);
     }
@@ -119,7 +120,6 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
 
   async function remove(id: string) {
     if (!window.confirm("確定刪除此則內容？")) return;
-    setError(null);
     setPending(true);
     try {
       const res = await fetch(`/api/events/${eventId}/comments/${id}`, {
@@ -128,12 +128,13 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError((data as { error?: string }).error ?? `刪除失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `刪除失敗 (${res.status})`);
         return;
       }
+      showSuccess("已刪除");
       void refreshList();
     } catch {
-      setError("網路錯誤");
+      showError("網路錯誤");
     } finally {
       setPending(false);
     }
@@ -141,10 +142,6 @@ export function CoachEventCommentsPanel({ eventId, currentMemberId, canManageAll
 
   return (
     <div className="space-y-4">
-      {error ?
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-      : null}
-
       {comments.length === 0 ?
         <p className="text-sm text-zinc-500 dark:text-zinc-400">尚無公告或留言。</p>
       : (

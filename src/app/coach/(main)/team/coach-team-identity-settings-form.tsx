@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,12 +15,11 @@ type Props = {
 /** 隊名、賽季、分組標籤（註解：PATCH `/api/team/settings` 整包更新分組清單）。 */
 export function CoachTeamIdentitySettingsForm({ initialName, initialSeason, initialGroupLines }: Props) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
     setPending(true);
     const fd = new FormData(e.currentTarget);
     const name = String(fd.get("name") ?? "").trim();
@@ -28,7 +28,7 @@ export function CoachTeamIdentitySettingsForm({ initialName, initialSeason, init
     const groupLabels = normalizeGroupConfigLabels(parseGroupConfigLines(linesText));
 
     if (!name) {
-      setError("隊名為必填");
+      showError("隊名為必填");
       setPending(false);
       return;
     }
@@ -47,22 +47,19 @@ export function CoachTeamIdentitySettingsForm({ initialName, initialSeason, init
       const data = await res.json().catch(() => ({}));
       setPending(false);
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `儲存失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `儲存失敗 (${res.status})`);
         return;
       }
+      showSuccess("已儲存隊伍資料");
       router.refresh();
     } catch {
       setPending(false);
-      setError("網路錯誤");
+      showError("網路錯誤");
     }
   }
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="space-y-4">
-      {error ?
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-      : null}
-
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="team-name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">

@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -57,13 +58,12 @@ function LinkRow({
 /** 教練端：戰術板與影片連結整理（註解：FileAsset LINK + category）。 */
 export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video }: Props) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
+  const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function onDelete(assetId: string) {
     if (!canEdit) return;
-    setError(null);
     setDeletingId(assetId);
     try {
       const res = await fetch(`/api/events/${eventId}/file-assets/${assetId}`, {
@@ -73,13 +73,14 @@ export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video
       const data = await res.json().catch(() => ({}));
       setDeletingId(null);
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `刪除失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `刪除失敗 (${res.status})`);
         return;
       }
+      showSuccess("已移除連結");
       router.refresh();
     } catch {
       setDeletingId(null);
-      setError("網路錯誤");
+      showError("網路錯誤");
     }
   }
 
@@ -87,7 +88,6 @@ export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video
     e.preventDefault();
     if (!canEdit) return;
     const form = e.currentTarget;
-    setError(null);
     setPending(true);
     const fd = new FormData(form);
     const category = String(fd.get("category") ?? "TACTICAL_BOARD");
@@ -103,23 +103,20 @@ export function CoachEventTacticalVideoPanel({ eventId, canEdit, tactical, video
       const data = await res.json().catch(() => ({}));
       setPending(false);
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? `新增失敗 (${res.status})`);
+        showError((data as { error?: string }).error ?? `新增失敗 (${res.status})`);
         return;
       }
       form.reset();
+      showSuccess("已新增連結");
       router.refresh();
     } catch {
       setPending(false);
-      setError("網路錯誤");
+      showError("網路錯誤");
     }
   }
 
   return (
     <div className="space-y-6">
-      {error ?
-        <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>
-      : null}
-
       <div className="grid gap-6 md:grid-cols-2">
         <div>
           <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">戰術板</h3>

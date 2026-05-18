@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -22,16 +23,15 @@ export function PlayerRsvpForm({
   disabledReason,
 }: Props) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const [rsvpStatus, setRsvpStatus] = useState<"YES" | "NO" | "MAYBE">(
     initialRsvp === "UNANSWERED" ? "YES" : initialRsvp,
   );
   const [reason, setReason] = useState(initialReason ?? "");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(null);
     setPending(true);
     const res = await fetch(`/api/events/${eventId}/rsvp`, {
       method: "PATCH",
@@ -45,9 +45,14 @@ export function PlayerRsvpForm({
     const data = await res.json().catch(() => ({}));
     setPending(false);
     if (!res.ok) {
-      setError((data as { error?: string }).error ?? `失敗 (${res.status})`);
+      showError((data as { error?: string }).error ?? `失敗 (${res.status})`);
       return;
     }
+    const rsvpLabel =
+      rsvpStatus === "YES" ? "已回覆參加"
+      : rsvpStatus === "NO" ? "已回覆不參加"
+      : "已回覆未定";
+    showSuccess(rsvpLabel);
     router.refresh();
   }
 
@@ -93,7 +98,6 @@ export function PlayerRsvpForm({
           placeholder="例如：可能晚到 15 分鐘"
         />
       </label>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
       <button
         type="submit"
         disabled={disabled || pending}

@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -12,8 +13,8 @@ type Props = {
 /** 發布事件（註解：草稿 → 已發布；已發布時僅顯示綠色圓點）。 */
 export function EventPublishButton({ eventId, isDraft }: Props) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   if (!isDraft) {
     return (
@@ -27,7 +28,6 @@ export function EventPublishButton({ eventId, isDraft }: Props) {
   }
 
   async function publish() {
-    setError(null);
     setPending(true);
     const res = await fetch(`/api/events/${eventId}/publish`, {
       method: "PATCH",
@@ -36,15 +36,15 @@ export function EventPublishButton({ eventId, isDraft }: Props) {
     const data = await res.json().catch(() => ({}));
     setPending(false);
     if (!res.ok) {
-      setError((data as { error?: string }).error ?? "發布失敗");
+      showError((data as { error?: string }).error ?? "發布失敗");
       return;
     }
+    showSuccess("已發布給球員");
     router.refresh();
   }
 
   return (
     <div className="flex flex-col items-start gap-2">
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
       <button
         type="button"
         onClick={() => void publish()}

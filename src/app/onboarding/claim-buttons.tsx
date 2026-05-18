@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -6,11 +7,10 @@ import { useState } from "react";
 /** ALLOW_BOOTSTRAP 時顯示：一鍵加入示範隊（註解：呼叫 POST /api/bootstrap/claim）。 */
 export function ClaimDemoTeamButtons() {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState<false | "COACH" | "PLAYER" | "COACH_PLAYER">(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function claim(role: "COACH" | "PLAYER" | "COACH_PLAYER") {
-    setError(null);
     setPending(role);
     try {
       const res = await fetch("/api/bootstrap/claim", {
@@ -24,10 +24,11 @@ export function ClaimDemoTeamButtons() {
         redirectTo?: string;
       };
       if (!res.ok) {
-        setError(data.error ?? `失敗 (${res.status})`);
+        showError(data.error ?? `失敗 (${res.status})`);
         setPending(false);
         return;
       }
+      showSuccess("已加入示範隊伍");
       const target =
         typeof data.redirectTo === "string" && data.redirectTo.startsWith("/") ?
           data.redirectTo
@@ -35,7 +36,7 @@ export function ClaimDemoTeamButtons() {
       router.refresh();
       window.location.assign(target);
     } catch {
-      setError("網路錯誤");
+      showError("網路錯誤");
       setPending(false);
     }
   }
@@ -47,9 +48,6 @@ export function ClaimDemoTeamButtons() {
         需環境變數 <code className="rounded bg-white dark:bg-zinc-900/80 px-1">ALLOW_BOOTSTRAP=1</code>。
         會將你目前的 Clerk 帳號加入「示範排球隊」並取得隊籍（與舊版 POST /api/bootstrap 需相同 Email 才能合併的方式不同）。
       </p>
-      {error ?
-        <p className="mt-2 text-sm text-red-700">{error}</p>
-      : null}
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"

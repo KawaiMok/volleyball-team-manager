@@ -1,4 +1,5 @@
 "use client";
+import { useToast } from "@/components/toast-provider";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -30,19 +31,18 @@ type Props = {
 /** 訓練計畫預覽 + AI 產生（註解：僅訓練事件；需伺服器設定 DEEPSEEK_API_KEY）。 */
 export function TrainingPlanPanel({ eventId, isTraining, initialPlan }: Props) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const [headcount, setHeadcount] = useState(12);
   const [duration, setDuration] = useState(90);
   const [skillFocus, setSkillFocus] = useState("");
   const [constraints, setConstraints] = useState("");
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   if (!isTraining) {
     return <p className="text-sm text-zinc-500 dark:text-zinc-400">非訓練事件，無訓練計畫。</p>;
   }
 
   async function generateAi() {
-    setError(null);
     setPending(true);
     const res = await fetch(`/api/events/${eventId}/training-plan/ai`, {
       method: "POST",
@@ -59,9 +59,10 @@ export function TrainingPlanPanel({ eventId, isTraining, initialPlan }: Props) {
     const data = await res.json().catch(() => ({}));
     setPending(false);
     if (!res.ok) {
-      setError((data as { error?: string }).error ?? `失敗 (${res.status})`);
+      showError((data as { error?: string }).error ?? `失敗 (${res.status})`);
       return;
     }
+    showSuccess("已產生訓練計畫");
     router.refresh();
   }
 
@@ -111,7 +112,6 @@ export function TrainingPlanPanel({ eventId, isTraining, initialPlan }: Props) {
             />
           </label>
         </div>
-        {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
         <button
           type="button"
           onClick={() => void generateAi()}
