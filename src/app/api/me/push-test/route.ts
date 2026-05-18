@@ -1,6 +1,7 @@
 import { isFcmConfigured } from "@/lib/push/fcm";
+import { buildPushPayload } from "@/lib/push/kinds";
 import { sendPushToUserDevices } from "@/lib/push/send";
-import { getOrSyncPrismaUserFromClerk } from "@/lib/session";
+import { getOrSyncPrismaUserFromClerk, getTeamMember } from "@/lib/session";
 import { NextResponse } from "next/server";
 
 /**
@@ -19,11 +20,14 @@ export async function POST() {
     );
   }
 
-  const result = await sendPushToUserDevices(user.id, {
-    title: "排球隊管理",
-    body: "測試推播：若你看到這則通知，設定已成功。",
-    data: { type: "push_test" },
-  });
+  const member = await getTeamMember();
+  const result = await sendPushToUserDevices(
+    user.id,
+    buildPushPayload({
+      kind: "push_test",
+      teamId: member?.teamId ?? "unknown",
+    }),
+  );
 
   return NextResponse.json(result);
 }

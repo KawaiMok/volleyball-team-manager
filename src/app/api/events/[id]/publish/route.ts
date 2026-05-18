@@ -31,9 +31,7 @@ export async function PATCH(_req: Request, ctx: Ctx) {
 
   const event = await prisma.event.findFirst({ where: { id, teamId: member.teamId } });
   if (event) {
-    void notifyTeamEventPublished(event.teamId, event.title).catch(() => {
-      /** 註解：推播失敗不影響發布 API 回應。 */
-    });
+    notifyTeamEventPublished(event.teamId, event.id, event.title);
   }
   return NextResponse.json(event);
 }

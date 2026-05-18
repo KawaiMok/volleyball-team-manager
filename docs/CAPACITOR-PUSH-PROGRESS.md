@@ -14,7 +14,8 @@
 | `POST` / `DELETE` `/api/me/push-token` | [x] | [`src/app/api/me/push-token/route.ts`](../src/app/api/me/push-token/route.ts)；以 `getOrSyncPrismaUserFromClerk` 驗證（無須已有隊籍） |
 | 推播發送 FCM（Android） | [x] | [`src/lib/push/fcm.ts`](../src/lib/push/fcm.ts)、[`send.ts`](../src/lib/push/send.ts)；iOS APNs 仍待做 |
 | 測試 API `POST /api/me/push-test` | [x] | 對目前帳號已註冊裝置發測試推播 |
-| 發布活動推播 | [x] | [`notify-team.ts`](../src/lib/push/notify-team.ts) ← 發布事件 API |
+| 多種推播種類 | [x] | 見 [`docs/PUSH-NOTIFICATIONS.md`](./PUSH-NOTIFICATIONS.md) |
+| 發布／更新／留言／RSVP 推播 | [x] | [`notify-events.ts`](../src/lib/push/notify-events.ts) |
 | 設定指南 | [x] | [`docs/PUSH-SETUP.md`](./PUSH-SETUP.md) |
 | Web 橋接（Capacitor 內註冊推播並上傳 token） | [x] | [`src/components/capacitor-push-bridge.tsx`](../src/components/capacitor-push-bridge.tsx)，已掛於 [`src/app/layout.tsx`](../src/app/layout.tsx) |
 | 依賴 | [x] | 主專案 `package.json`：`@capacitor/core`、`@capacitor/push-notifications` |
@@ -49,7 +50,7 @@
 | 13 | DB migration 上線 | [ ] | 正式環境執行 `db:deploy` |
 | 14 | API 驗證行為 | [ ] | 可自行用已登入 session `POST` 測試 |
 | 15 | 實作 `send.ts`（FCM + APNs） | [~] | Android FCM 已完成；iOS APNs 待做 |
-| 16 | 業務事件觸發推播 | [~] | 發布活動已接；留言等可再加 |
+| 16 | 業務事件觸發推播 | [x] | 發布、更新、公告／留言、RSVP |
 
 ---
 

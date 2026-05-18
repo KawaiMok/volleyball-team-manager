@@ -1,5 +1,6 @@
 import { EventStatus, RsvpStatus } from "@/generated/prisma/client";
 import { getDebugTeamMember } from "@/lib/debug-session";
+import { notifyRsvpUpdated } from "@/lib/push/notify-events";
 import { getPrisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -63,6 +64,20 @@ export async function PATCH(req: Request, ctx: Ctx) {
       rsvpReason: body.rsvpReason ?? undefined,
       rsvpAt: new Date(),
     },
+  });
+
+  const author = await prisma.user.findUnique({
+    where: { id: member.userId },
+    select: { name: true, email: true },
+  });
+  const playerName = author?.name?.trim() || author?.email || "隊員";
+  notifyRsvpUpdated({
+    teamId: member.teamId,
+    eventId,
+    eventTitle: event.title,
+    playerUserId: member.userId,
+    playerName,
+    rsvpStatus: body.rsvpStatus,
   });
 
   return NextResponse.json(row);

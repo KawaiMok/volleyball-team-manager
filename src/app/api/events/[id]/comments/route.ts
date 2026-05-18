@@ -5,6 +5,7 @@ import {
   canReadEventCommentsAsCoachSide,
   canReadEventCommentsAsPlayer,
 } from "@/lib/event-comment-access";
+import { notifyEventComment } from "@/lib/push/notify-events";
 import { getPrisma } from "@/lib/prisma";
 import { isPlayer } from "@/lib/rbac";
 import { NextResponse } from "next/server";
@@ -105,7 +106,7 @@ export async function POST(req: Request, ctx: Ctx) {
   const prisma = getPrisma();
   const event = await prisma.event.findFirst({
     where: { id: eventId, teamId: member.teamId },
-    select: { id: true, status: true },
+    select: { id: true, status: true, title: true },
   });
   if (!event) {
     return NextResponse.json({ error: "找不到事件" }, { status: 404 });
@@ -139,6 +140,19 @@ export async function POST(req: Request, ctx: Ctx) {
       content: body.content,
     },
     include: commentInclude,
+  });
+
+  const authorName =
+    row.author.user?.name?.trim() || row.author.user?.email || "成員";
+  notifyEventComment({
+    teamId: member.teamId,
+    eventId,
+    eventTitle: event.title,
+    authorUserId: member.userId,
+    authorName,
+    preview: body.content,
+    commentType: body.type,
+    fromCoachSide: canManageEventCommentsAsStaff(member),
   });
 
   return NextResponse.json(serializeComment(row), { status: 201 });

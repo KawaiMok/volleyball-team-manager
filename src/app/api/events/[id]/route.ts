@@ -4,6 +4,7 @@ import { getDebugTeamMember } from "@/lib/debug-session";
 import { isMemberParticipantRuleFullyValid, resolveParticipantMemberIds } from "@/lib/participant-rule";
 import type { ParticipantRule } from "@/lib/participant-rule-types";
 import { participantRuleSchema } from "@/lib/participant-rule-schema";
+import { notifyEventUpdated, shouldNotifyEventUpdated } from "@/lib/push/notify-events";
 import { getPrisma } from "@/lib/prisma";
 import { isCoachLike, isStaff } from "@/lib/rbac";
 import { NextResponse } from "next/server";
@@ -162,6 +163,10 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }
     return ev;
   });
+
+  if (shouldNotifyEventUpdated(existing.status)) {
+    notifyEventUpdated(existing.teamId, eventId, body.title);
+  }
 
   return NextResponse.json(updated);
 }
