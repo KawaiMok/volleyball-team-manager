@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { CoachMainToolbar } from "@/components/coach-main-toolbar";
+import { NativeAppShell } from "@/components/native-app-shell";
 import { ScrollToTopButton } from "@/components/scroll-to-top-button";
 import { getTeamMember, listActiveTeamsForSwitcher } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
@@ -31,9 +32,11 @@ export default async function CoachMainLayout({ children }: { children: React.Re
         teams={teamOptions}
         currentTeamId={member.teamId}
       />
-      <div className="mx-auto max-w-5xl px-4 py-8 pb-20">{children}</div>
-      {/** 註解：底部留白避免被「回頂端」鈕遮擋；長頁捲動提示 */}
-      <ScrollToTopButton />
+      <NativeAppShell surface="coach" canAccessCoach={false} canAccessPlayer>
+        <div className="mx-auto max-w-5xl px-4 py-8 pb-20">{children}</div>
+        {/** 註解：底部留白避免被「回頂端」鈕遮擋；長頁捲動提示 */}
+        <ScrollToTopButton />
+      </NativeAppShell>
     </div>
   );
 }

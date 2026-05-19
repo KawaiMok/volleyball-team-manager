@@ -1,5 +1,6 @@
 import { MemberStatus, TeamRole } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/prisma";
+import { recordUserNotification } from "@/lib/push/record-notification";
 import { sendPushToUserDevices } from "@/lib/push/send";
 import type { PushNotificationPayload } from "@/lib/push/types";
 
@@ -21,6 +22,11 @@ export async function notifyUserIds(
   const unique = [...new Set(userIds)].filter((id) => id !== options?.excludeUserId);
   let sent = 0;
   for (const userId of unique) {
+    try {
+      await recordUserNotification(userId, payload);
+    } catch {
+      /** 註解：紀錄失敗不阻擋 FCM。 */
+    }
     const result = await sendPushToUserDevices(userId, payload);
     sent += result.sent;
   }

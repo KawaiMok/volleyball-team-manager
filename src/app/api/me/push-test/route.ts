@@ -1,5 +1,6 @@
 import { isFcmConfigured } from "@/lib/push/fcm";
 import { buildPushPayload } from "@/lib/push/kinds";
+import { recordUserNotification } from "@/lib/push/record-notification";
 import { sendPushToUserDevices } from "@/lib/push/send";
 import { getOrSyncPrismaUserFromClerk, getTeamMember } from "@/lib/session";
 import { NextResponse } from "next/server";
@@ -21,13 +22,12 @@ export async function POST() {
   }
 
   const member = await getTeamMember();
-  const result = await sendPushToUserDevices(
-    user.id,
-    buildPushPayload({
-      kind: "push_test",
-      teamId: member?.teamId ?? "unknown",
-    }),
-  );
+  const payload = buildPushPayload({
+    kind: "push_test",
+    teamId: member?.teamId ?? "unknown",
+  });
+  await recordUserNotification(user.id, payload);
+  const result = await sendPushToUserDevices(user.id, payload);
 
   return NextResponse.json(result);
 }

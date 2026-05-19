@@ -85,6 +85,7 @@ export function CapacitorPushBridge() {
         const actionSub = await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
           const data = (action.notification.data ?? {}) as Record<string, string>;
           const path = resolvePathFromPushData(data);
+          window.dispatchEvent(new Event("notifications-updated"));
           if (path) navigateFromPush(path);
         });
 

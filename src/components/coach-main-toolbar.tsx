@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: "/coach/events", label: "事件" },
   { href: "/coach/calendar", label: "行事曆" },
   { href: "/coach/team", label: "隊伍" },
+  { href: "/coach/notifications", label: "通知" },
 ] as const;
 
 type Props = {

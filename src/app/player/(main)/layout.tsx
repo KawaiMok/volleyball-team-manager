@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 
 import { ActiveTeamSwitcher } from "@/components/active-team-switcher";
+import { NativeAppShell } from "@/components/native-app-shell";
 import { ToolbarUtilityDropdown } from "@/components/toolbar-utility-dropdown";
 import { getTeamMember, listActiveTeamsForSwitcher } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
@@ -85,13 +86,21 @@ export default async function PlayerMainLayout({ children }: { children: React.R
             >
               我的回饋
             </Link>
+            <Link
+              className="text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
+              href="/player/notifications"
+            >
+              通知
+            </Link>
             {/** 註解：與教練端一致—齒輪下拉內含端別與外觀；純球員僅見外觀。 */}
             <ToolbarUtilityDropdown surface="player" currentView="player" canAccessCoach={isCoachLike(member)} />
             <UserButton />
           </nav>
         </div>
       </header>
-      <div className="mx-auto max-w-lg px-4 py-8 sm:max-w-2xl">{children}</div>
+      <NativeAppShell surface="player" canAccessCoach={isCoachLike(member)} canAccessPlayer={false}>
+        <div className="mx-auto max-w-lg px-4 py-8 sm:max-w-2xl">{children}</div>
+      </NativeAppShell>
     </div>
   );
 }

@@ -89,8 +89,27 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  memberships  TeamMember[]
-  pushDevices  PushDevice[]
+  memberships      TeamMember[]
+  pushDevices      PushDevice[]
+  notifications    UserNotification[]
+}
+
+/** App 內通知紀錄（註解：與 FCM 推播同步寫入；供「通知」頁面瀏覽）。 */
+model UserNotification {
+  id        String    @id @default(cuid())
+  userId    String
+  teamId    String?
+  kind      String
+  title     String
+  body      String
+  path      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, readAt])
 }
 
 /** 使用者裝置推播 token（註解：以 token 全域唯一；換帳登入時由 API 改綁）。 */
