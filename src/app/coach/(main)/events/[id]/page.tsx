@@ -13,6 +13,7 @@ import { TrainingPlanPanel } from "@/app/coach/(main)/events/[id]/training-plan-
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { canManageEventCommentsAsStaff } from "@/lib/event-comment-access";
 import { inferParticipantRule } from "@/lib/infer-participant-rule";
+import { isEventEnded } from "@/lib/event-timing";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
 import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
 import {
@@ -181,6 +182,14 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     submittedAt: f.submittedAt,
   }));
 
+  const eventEnded = isEventEnded(event.endsAt);
+  const canEditEvent = event.status !== EventStatus.CANCELLED && !eventEnded;
+
+  const detailSections = COACH_EVENT_DETAIL_SECTIONS.filter((s) => {
+    if (!eventEnded) return true;
+    return s.id !== "coach-ev-edit" && s.id !== "coach-ev-training";
+  });
+
   const initialEventComments = commentRows.map((c) => ({
     id: c.id,
     type: c.type,
@@ -211,7 +220,10 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           </div>
           <EventPublishButton eventId={event.id} isDraft={event.status === EventStatus.DRAFT} />
         </div>
-        <CoachEventDetailSectionNav sections={[...COACH_EVENT_DETAIL_SECTIONS]} />
+        <CoachEventDetailSectionNav sections={[...detailSections]} />
+        {eventEnded ?
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">此場次已結束，僅可檢視點名、企位、留言與身體回饋。</p>
+        : null}
       </div>
 
       <section
@@ -255,7 +267,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </dl>
       </section>
 
-      {event.status !== EventStatus.CANCELLED ?
+      {canEditEvent ?
         <section
           id="coach-ev-edit"
           className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
@@ -286,14 +298,14 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
             />
           </div>
         </section>
-      : (
+      : event.status === EventStatus.CANCELLED ?
         <section
           id="coach-ev-edit"
           className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-4 shadow-sm"
         >
           <p className="text-sm text-zinc-600 dark:text-zinc-400">已取消的事件無法編輯。</p>
         </section>
-      )}
+      : null}
 
       <section
         id="coach-ev-attendance"
@@ -304,19 +316,21 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </div>
       </section>
 
-      <section
-        id="coach-ev-training"
-        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-      >
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">訓練計畫</h2>
-        <div className="mt-3">
-          <TrainingPlanPanel
-            eventId={event.id}
-            isTraining={event.type === EventType.TRAINING}
-            initialPlan={plan}
-          />
-        </div>
-      </section>
+      {!eventEnded ?
+        <section
+          id="coach-ev-training"
+          className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+        >
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">訓練計畫</h2>
+          <div className="mt-3">
+            <TrainingPlanPanel
+              eventId={event.id}
+              isTraining={event.type === EventType.TRAINING}
+              initialPlan={plan}
+            />
+          </div>
+        </section>
+      : null}
 
       <section
         id="coach-ev-court"

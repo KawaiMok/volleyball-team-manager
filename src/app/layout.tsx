@@ -8,6 +8,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { CapacitorPushBridge } from "@/components/capacitor-push-bridge";
 import { NavigationTransitionBar } from "@/components/navigation-transition-bar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ScrollToTopButton } from "@/components/scroll-to-top-button";
 import { ToastProvider } from "@/components/toast-provider";
 import { THEME_STORAGE_KEY } from "@/lib/theme-preference";
 
@@ -56,7 +57,10 @@ export default function RootLayout({
             <CapacitorPushBridge />
           </Suspense>
           <ThemeProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              {children}
+              <ScrollToTopButton />
+            </ToastProvider>
           </ThemeProvider>
         </body>
       </html>
