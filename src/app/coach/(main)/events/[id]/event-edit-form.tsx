@@ -7,11 +7,7 @@ import {
   validateParticipantRuleForSubmit,
 } from "@/app/coach/(main)/events/event-participant-rule-fields";
 import type { ParticipantRule } from "@/lib/participant-rule-types";
-import {
-  DATETIME_LOCAL_STEP_SECONDS,
-  isoToDatetimeLocal,
-  parseDatetimeLocalToIso,
-} from "@/lib/datetime-local";
+import { datetimeInputProps, isoToDatetimeLocal, parseDatetimeLocalToIso } from "@/lib/datetime-local";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -33,11 +29,6 @@ type Props = {
   squads: string[];
   roster: EventRosterRow[];
   initialParticipantRule: ParticipantRule;
-};
-
-const datetimeInputProps = {
-  type: "datetime-local" as const,
-  step: DATETIME_LOCAL_STEP_SECONDS,
 };
 
 /** 教練編輯事件（註解：PATCH /api/events/[id]，含 RSVP 截止與參與者規則）。 */

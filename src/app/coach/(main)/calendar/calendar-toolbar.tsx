@@ -1,7 +1,18 @@
-import Link from "next/link";
+"use client";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState, useTransition } from "react";
 
 import type { CalendarView } from "@/app/coach/(main)/calendar/calendar-utils";
-import { addDays, addMonths, parseYmd, startOfMonth, startOfWeekMonday, toYmd } from "@/app/coach/(main)/calendar/calendar-utils";
+import {
+  addDays,
+  addMonths,
+  parseYmd,
+  startOfMonth,
+  startOfWeekMonday,
+  toYmd,
+} from "@/app/coach/(main)/calendar/calendar-utils";
+import { InlineSpinner } from "@/components/inline-spinner";
 
 type Props = {
   view: CalendarView;
@@ -14,7 +25,7 @@ type Props = {
   monthLabel: string;
 };
 
-function href(p: {
+function buildHref(p: {
   view: CalendarView;
   dateYmd: string;
   type: string;
@@ -28,7 +39,18 @@ function href(p: {
   return `/coach/calendar?${q.toString()}`;
 }
 
-/** 週切換、視圖切換、篩選（註解：皆為 GET 連結，利於分享書籤）。 */
+const viewBtnBase =
+  "inline-flex min-h-[2.25rem] min-w-[3.25rem] items-center justify-center rounded-md px-3 py-1.5 text-sm";
+const viewBtnActive = `${viewBtnBase} bg-zinc-900 text-white`;
+const viewBtnIdle = `${viewBtnBase} border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-950`;
+
+const navBtnClass =
+  "inline-flex min-h-[2rem] min-w-[4.5rem] items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 px-2 py-1 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-950";
+
+const chipActive = "rounded-md px-2.5 py-1 text-sm font-medium";
+const chipIdle = "rounded-md px-2.5 py-1 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800";
+
+/** 週切換、視圖切換、篩選（註解：client 導覽＋按鈕轉圈，與球員行程工具列一致）。 */
 export function CalendarToolbar({
   view,
   dateYmd,
@@ -38,6 +60,12 @@ export function CalendarToolbar({
   weekLabel,
   monthLabel,
 }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+
   const anchor = parseYmd(dateYmd);
   const weekStart = startOfWeekMonday(anchor);
   const prevWeek = toYmd(addDays(weekStart, -7));
@@ -49,75 +77,106 @@ export function CalendarToolbar({
 
   const base = { type: typeFilter, squad: squadFilter };
 
+  const currentHref = `${pathname}?${searchParams.toString()}`;
+
+  useEffect(() => {
+    if (!isPending) setPendingHref(null);
+  }, [isPending, currentHref]);
+
+  const navigate = useCallback(
+    (target: string) => {
+      if (target === currentHref) return;
+      setPendingHref(target);
+      startTransition(() => {
+        router.push(target);
+      });
+    },
+    [currentHref, router, startTransition],
+  );
+
+  function ToolbarButton({
+    label,
+    target,
+    active,
+    activeClass,
+    idleClass,
+  }: {
+    label: string;
+    target: string;
+    active?: boolean;
+    activeClass?: string;
+    idleClass?: string;
+  }) {
+    const loading = isPending && pendingHref === target;
+    return (
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={() => navigate(target)}
+        className={active ? (activeClass ?? viewBtnActive) : (idleClass ?? viewBtnIdle)}
+        aria-busy={loading}
+        aria-current={active ? "page" : undefined}
+      >
+        {loading ? <InlineSpinner /> : label}
+      </button>
+    );
+  }
+
+  function NavButton({ label, target }: { label: string; target: string }) {
+    const loading = isPending && pendingHref === target;
+    return (
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={() => navigate(target)}
+        className={navBtnClass}
+        aria-busy={loading}
+      >
+        {loading ? <InlineSpinner /> : label}
+      </button>
+    );
+  }
+
   return (
     <div className="space-y-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">視圖</span>
-        {(
-          [
-            ["week", "週"],
-            ["list", "列表"],
-            ["month", "月"],
-          ] as const
-        ).map(([v, label]) => (
-          <Link
-            key={v}
-            href={href({ view: v, dateYmd, ...base })}
-            className={
-              view === v ?
-                "rounded-md bg-zinc-900 px-3 py-1.5 text-sm text-white"
-              : "rounded-md border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:bg-zinc-950"
-            }
-          >
-            {label}
-          </Link>
-        ))}
+        <ToolbarButton
+          label="週"
+          target={buildHref({ view: "week", dateYmd, ...base })}
+          active={view === "week"}
+        />
+        <ToolbarButton
+          label="列表"
+          target={buildHref({ view: "list", dateYmd, ...base })}
+          active={view === "list"}
+        />
+        <ToolbarButton
+          label="月"
+          target={buildHref({ view: "month", dateYmd, ...base })}
+          active={view === "month"}
+        />
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4">
+      <div className="flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
         <span className="text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">時間</span>
         {view === "month" ?
           <>
-            <Link
-              href={href({ view, dateYmd: prevMonth, ...base })}
-              className="rounded-md border border-zinc-200 dark:border-zinc-800 px-2 py-1 text-sm hover:bg-zinc-50 dark:bg-zinc-950"
-            >
-              ← 上月
-            </Link>
+            <NavButton label="← 上月" target={buildHref({ view, dateYmd: prevMonth, ...base })} />
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{monthLabel}</span>
-            <Link
-              href={href({ view, dateYmd: nextMonth, ...base })}
-              className="rounded-md border border-zinc-200 dark:border-zinc-800 px-2 py-1 text-sm hover:bg-zinc-50 dark:bg-zinc-950"
-            >
-              下月 →
-            </Link>
+            <NavButton label="下月 →" target={buildHref({ view, dateYmd: nextMonth, ...base })} />
           </>
         : (
           <>
-            <Link
-              href={href({ view, dateYmd: prevWeek, ...base })}
-              className="rounded-md border border-zinc-200 dark:border-zinc-800 px-2 py-1 text-sm hover:bg-zinc-50 dark:bg-zinc-950"
-            >
-              ← 上週
-            </Link>
+            <NavButton label="← 上週" target={buildHref({ view, dateYmd: prevWeek, ...base })} />
             <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{weekLabel}</span>
-            <Link
-              href={href({ view, dateYmd: nextWeek, ...base })}
-              className="rounded-md border border-zinc-200 dark:border-zinc-800 px-2 py-1 text-sm hover:bg-zinc-50 dark:bg-zinc-950"
-            >
-              下週 →
-            </Link>
-            <Link
-              href={href({ view, dateYmd: todayYmd, ...base })}
-              className="rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-1 text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-200"
-            >
-              本日／本週
-            </Link>
+            <NavButton label="下週 →" target={buildHref({ view, dateYmd: nextWeek, ...base })} />
+            <NavButton label="本日／本週" target={buildHref({ view, dateYmd: todayYmd, ...base })} />
           </>
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4">
+      <div className="flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
         <span className="text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">類型</span>
         {(
           [
@@ -127,45 +186,36 @@ export function CalendarToolbar({
             ["OTHER", "其他"],
           ] as const
         ).map(([val, label]) => (
-          <Link
+          <ToolbarButton
             key={val}
-            href={href({ view, dateYmd, type: val, squad: squadFilter })}
-            className={
-              typeFilter === val ?
-                "rounded-md bg-violet-100 px-2.5 py-1 text-sm font-medium text-violet-900"
-              : "rounded-md px-2.5 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800"
-            }
-          >
-            {label}
-          </Link>
+            label={label}
+            target={buildHref({ view, dateYmd, type: val, squad: squadFilter })}
+            active={typeFilter === val}
+            activeClass={`${chipActive} bg-violet-100 text-violet-900`}
+            idleClass={`${chipIdle} text-zinc-600 dark:text-zinc-400`}
+          />
         ))}
       </div>
 
       {squads.length > 0 ?
-        <div className="flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4">
+        <div className="flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
           <span className="text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">分組</span>
-          <Link
-            href={href({ view, dateYmd, type: typeFilter, squad: "" })}
-            className={
-              !squadFilter ?
-                "rounded-md bg-emerald-100 px-2.5 py-1 text-sm font-medium text-emerald-900"
-              : "rounded-md px-2.5 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800"
-            }
-          >
-            全部
-          </Link>
+          <ToolbarButton
+            label="全部"
+            target={buildHref({ view, dateYmd, type: typeFilter, squad: "" })}
+            active={!squadFilter}
+            activeClass={`${chipActive} bg-emerald-100 text-emerald-900`}
+            idleClass={`${chipIdle} text-zinc-600 dark:text-zinc-400`}
+          />
           {squads.map((s) => (
-            <Link
+            <ToolbarButton
               key={s}
-              href={href({ view, dateYmd, type: typeFilter, squad: s })}
-              className={
-                squadFilter === s ?
-                  "rounded-md bg-emerald-100 px-2.5 py-1 text-sm font-medium text-emerald-900"
-                : "rounded-md px-2.5 py-1 text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800"
-              }
-            >
-              {s}
-            </Link>
+              label={s}
+              target={buildHref({ view, dateYmd, type: typeFilter, squad: s })}
+              active={squadFilter === s}
+              activeClass={`${chipActive} bg-emerald-100 text-emerald-900`}
+              idleClass={`${chipIdle} text-zinc-600 dark:text-zinc-400`}
+            />
           ))}
         </div>
       : null}

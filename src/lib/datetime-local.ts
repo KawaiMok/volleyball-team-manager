@@ -1,6 +1,12 @@
 /** `datetime-local` 的 step（秒）：15 分鐘一格（註解：減少拖曳選分鐘時間）。 */
 export const DATETIME_LOCAL_STEP_SECONDS = 15 * 60;
 
+/** 事件表單時間欄位共用屬性（註解：建立／編輯一致）。 */
+export const datetimeInputProps = {
+  type: "datetime-local" as const,
+  step: DATETIME_LOCAL_STEP_SECONDS,
+};
+
 const LOCAL_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 
 /** ISO（UTC）→ `datetime-local` 字串（註解：依使用者裝置本機時區顯示於輸入框）。 */
