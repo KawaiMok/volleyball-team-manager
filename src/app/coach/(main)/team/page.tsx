@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CoachTeamIdentitySettingsForm } from "@/app/coach/(main)/team/coach-team-identity-settings-form";
 import { CoachTeamRolesEmailPanel } from "@/app/coach/(main)/team/coach-team-roles-email-panel";
+import { TeamAttendanceStats } from "@/app/coach/(main)/team/team-attendance-stats";
 import { TeamPageMembers } from "@/app/coach/(main)/team/team-page-members";
 import { mapTeamMemberToRosterRow } from "@/lib/team-roster-map";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
@@ -71,6 +72,8 @@ export default async function CoachTeamPage() {
           </div>
         </div>
       </section>
+
+      <TeamAttendanceStats key={`${teamSettingsKey}-attendance`} />
 
       <TeamPageMembers
         key={teamSettingsKey}
