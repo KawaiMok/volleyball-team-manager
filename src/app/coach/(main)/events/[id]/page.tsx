@@ -7,6 +7,7 @@ import { EventPublishButton } from "@/app/coach/(main)/events/[id]/event-detail-
 import { EventEditForm } from "@/app/coach/(main)/events/[id]/event-edit-form";
 import { CoachEventCommentsPanel } from "@/app/coach/(main)/events/[id]/coach-event-comments-panel";
 import { CoachEventTacticalVideoPanel } from "@/app/coach/(main)/events/[id]/event-tactical-video-panel";
+import { CoachPlayerReviewsPanel } from "@/app/coach/(main)/events/[id]/coach-player-reviews-panel";
 import { EventFeedbackSummarySection } from "@/app/coach/(main)/events/[id]/feedback-summary-section";
 import { CourtFormationEditor } from "@/app/coach/(main)/events/[id]/court-formation-editor";
 import { TrainingPlanPanel } from "@/app/coach/(main)/events/[id]/training-plan-panel";
@@ -14,6 +15,7 @@ import { getDebugTeamMember } from "@/lib/debug-session";
 import { canManageEventCommentsAsStaff } from "@/lib/event-comment-access";
 import { inferParticipantRule } from "@/lib/infer-participant-rule";
 import { isEventEnded } from "@/lib/event-timing";
+import { isPlayerReviewSubjectRole } from "@/lib/player-review-access";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
 import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
 import {
@@ -51,6 +53,7 @@ const COACH_EVENT_DETAIL_SECTIONS = [
   { id: "coach-ev-court", label: "企位" },
   { id: "coach-ev-media", label: "戰術影片" },
   { id: "coach-ev-comments", label: "公告留言" },
+  { id: "coach-ev-reviews", label: "球員評語" },
   { id: "coach-ev-feedback", label: "身體回饋" },
 ] as const;
 
@@ -107,7 +110,10 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
       }
     : null;
 
-  const [feedbackRows, mediaLinks, commentRows] = await Promise.all([
+  const eventEnded = isEventEnded(event.endsAt);
+  const canEditEvent = event.status !== EventStatus.CANCELLED && !eventEnded;
+
+  const [feedbackRows, mediaLinks, commentRows, playerReviewRows] = await Promise.all([
     prisma.feedback.findMany({
       where: { eventId: event.id },
       include: {
@@ -128,6 +134,14 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
       include: { author: { include: { user: { select: { name: true, email: true } } } } },
       orderBy: { createdAt: "asc" },
     }),
+    eventEnded && event.status === EventStatus.PUBLISHED ?
+      prisma.eventPlayerReview.findMany({
+        where: { eventId: event.id },
+        include: {
+          author: { include: { user: { select: { name: true, email: true } } } },
+        },
+      })
+    : Promise.resolve([]),
   ]);
 
   const participantMemberIds = event.participants.map((p) => p.memberId);
@@ -183,13 +197,76 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     submittedAt: f.submittedAt,
   }));
 
-  const eventEnded = isEventEnded(event.endsAt);
-  const canEditEvent = event.status !== EventStatus.CANCELLED && !eventEnded;
+  const playerReviewByMember = new Map(playerReviewRows.map((r) => [r.memberId, r]));
+  const coachPlayerReviewRows = event.attendance
+    .filter((a) => isPlayerReviewSubjectRole(a.member.role))
+    .map((a) => {
+      const review = playerReviewByMember.get(a.memberId);
+      return {
+        memberId: a.memberId,
+        displayName: a.member.user?.name ?? a.member.user?.email ?? a.memberId.slice(0, 8),
+        review:
+          review ?
+            {
+              id: review.id,
+              content: review.content,
+              authorName:
+                review.author.user?.name?.trim() ||
+                review.author.user?.email?.trim() ||
+                "教練",
+              updatedAt: review.updatedAt.toISOString(),
+            }
+          : null,
+      };
+    });
 
   const detailSections = COACH_EVENT_DETAIL_SECTIONS.filter((s) => {
-    if (!eventEnded) return true;
+    if (!eventEnded) {
+      return s.id !== "coach-ev-reviews";
+    }
     return s.id !== "coach-ev-edit" && s.id !== "coach-ev-training";
   });
+
+  /** 已結束場次：身體回饋、球員評語置頂（註解：段落導覽順序同步）。 */
+  const orderedDetailSections =
+    eventEnded ?
+      [
+        ...detailSections.filter((s) => s.id === "coach-ev-feedback" || s.id === "coach-ev-reviews"),
+        ...detailSections.filter((s) => s.id !== "coach-ev-feedback" && s.id !== "coach-ev-reviews"),
+      ]
+    : detailSections;
+
+  const playerReviewsSection =
+    eventEnded && event.status === EventStatus.PUBLISHED ?
+      <section
+        id="coach-ev-reviews"
+        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            球員評語
+          </h2>
+          <HintExclamationToggle>
+            事件結束後，可對每位球員寫下私評；僅教練與該球員本人可見，其他隊員無法看到。
+          </HintExclamationToggle>
+        </div>
+        <div className="mt-4">
+          <CoachPlayerReviewsPanel
+            eventId={event.id}
+            rows={coachPlayerReviewRows}
+            canEdit={event.status === EventStatus.PUBLISHED}
+          />
+        </div>
+      </section>
+    : null;
+
+  const feedbackSummarySection = (
+    <EventFeedbackSummarySection
+      eventEndsAt={event.endsAt}
+      entries={feedbackEntries}
+      anchorId="coach-ev-feedback"
+    />
+  );
 
   const initialEventComments = commentRows.map((c) => ({
     id: c.id,
@@ -221,11 +298,20 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           </div>
           <EventPublishButton eventId={event.id} isDraft={event.status === EventStatus.DRAFT} />
         </div>
-        <CoachEventDetailSectionNav sections={[...detailSections]} />
+        <CoachEventDetailSectionNav sections={[...orderedDetailSections]} />
         {eventEnded ?
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">此場次已結束，僅可檢視點名、企位、留言與身體回饋。</p>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            此場次已結束，可檢視點名、企位、留言、球員評語與身體回饋。
+          </p>
         : null}
       </div>
+
+      {eventEnded ?
+        <>
+          {feedbackSummarySection}
+          {playerReviewsSection}
+        </>
+      : null}
 
       <section
         id="coach-ev-when"
@@ -400,11 +486,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </div>
       </section>
 
-      <EventFeedbackSummarySection
-        eventEndsAt={event.endsAt}
-        entries={feedbackEntries}
-        anchorId="coach-ev-feedback"
-      />
+      {!eventEnded ? feedbackSummarySection : null}
     </div>
   );
 }

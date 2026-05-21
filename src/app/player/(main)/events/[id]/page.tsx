@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { CourtFormationReadonly } from "@/app/player/(main)/events/[id]/court-formation-readonly";
 import { PlayerEventTacticalVideoReadonly } from "@/app/player/(main)/events/[id]/event-tactical-video-readonly";
+import { PlayerCoachReviewSection } from "@/app/player/(main)/events/[id]/player-coach-review-section";
 import { PlayerEventComments } from "@/app/player/(main)/events/[id]/player-event-comments";
 import { EventStatus, EventType, FileAssetCategory, FileAssetKind } from "@/generated/prisma/client";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
@@ -89,11 +90,12 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
   const att = event.attendance[0];
   const rsvp = att?.rsvpStatus ?? "UNANSWERED";
   const now = new Date();
-  /** 有設定截止且已過期則鎖定 RSVP（註解：與 PATCH /api/events/[id]/rsvp 一致）。 */
+  const afterEnd = now.getTime() >= event.endsAt.getTime();
+  /** 有設定截止且已過期則鎖定出席意願（註解：與 PATCH /api/events/[id]/rsvp 一致）。 */
   const rsvpDeadlineAt = event.rsvpDeadlineAt;
   const rsvpLocked =
     rsvpDeadlineAt != null && now.getTime() > rsvpDeadlineAt.getTime();
-  const [feedback, mediaLinks, commentRows] = await Promise.all([
+  const [feedback, mediaLinks, commentRows, coachReview] = await Promise.all([
     prisma.feedback.findUnique({
       where: { eventId_memberId: { eventId: event.id, memberId: member.id } },
     }),
@@ -110,6 +112,12 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
       include: { author: { include: { user: { select: { name: true, email: true } } } } },
       orderBy: { createdAt: "asc" },
     }),
+    afterEnd ?
+      prisma.eventPlayerReview.findUnique({
+        where: { eventId_memberId: { eventId: event.id, memberId: member.id } },
+        include: { author: { include: { user: { select: { name: true, email: true } } } } },
+      })
+    : Promise.resolve(null),
   ]);
 
   const tacticalForPlayer = mediaLinks
@@ -131,7 +139,6 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
     authorName: c.author.user?.name?.trim() || c.author.user?.email || "成員",
   }));
 
-  const afterEnd = now.getTime() >= event.endsAt.getTime();
   /** 結束後可填寫；若已提交則 24 小時內可改（註解：與 API 一致）。 */
   const feedbackEditDeadline =
     feedback != null ? feedback.submittedAt.getTime() + 24 * 60 * 60 * 1000 : null;
@@ -139,6 +146,44 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
     afterEnd &&
     (feedback == null || (feedbackEditDeadline != null && now.getTime() <= feedbackEditDeadline));
   const feedbackReadOnly = afterEnd && feedback != null && !canEditFeedback;
+
+  const coachReviewBlock =
+    afterEnd && coachReview ?
+      <PlayerCoachReviewSection
+        content={coachReview.content}
+        authorName={
+          coachReview.author.user?.name?.trim() ||
+          coachReview.author.user?.email?.trim() ||
+          "教練"
+        }
+        updatedAt={coachReview.updatedAt}
+      />
+    : null;
+
+  const feedbackBlock = (
+    <section className="space-y-2">
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">身體回饋</h2>
+      {!afterEnd ?
+        <p className="text-sm text-slate-600 dark:text-slate-400">事件結束後可填寫身體回饋（RPE／疲勞／疼痛）。</p>
+      : canEditFeedback || feedbackReadOnly ?
+        <PlayerFeedbackForm
+          eventId={event.id}
+          readOnly={feedbackReadOnly}
+          initial={
+            feedback ?
+              {
+                rpe: feedback.rpe,
+                fatigue: feedback.fatigue,
+                painLevel: feedback.painLevel,
+                painArea: feedback.painArea,
+                note: feedback.note,
+              }
+            : undefined
+          }
+        />
+      : null}
+    </section>
+  );
 
   return (
     <div className="space-y-8">
@@ -178,6 +223,13 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
           </p>
         : null}
       </div>
+
+      {afterEnd ?
+        <>
+          {feedbackBlock}
+          {coachReviewBlock}
+        </>
+      : null}
 
       <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/80 p-4">
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">我的狀態</h2>
@@ -249,28 +301,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         initialComments={initialPlayerComments}
       />
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">身體回饋</h2>
-        {!afterEnd ?
-          <p className="text-sm text-slate-600 dark:text-slate-400">事件結束後可填寫身體回饋（RPE／疲勞／疼痛）。</p>
-        : canEditFeedback || feedbackReadOnly ?
-          <PlayerFeedbackForm
-            eventId={event.id}
-            readOnly={feedbackReadOnly}
-            initial={
-              feedback ?
-                {
-                  rpe: feedback.rpe,
-                  fatigue: feedback.fatigue,
-                  painLevel: feedback.painLevel,
-                  painArea: feedback.painArea,
-                  note: feedback.note,
-                }
-              : undefined
-            }
-          />
-        : null}
-      </section>
+      {!afterEnd ? feedbackBlock : null}
     </div>
   );
 }
