@@ -120,3 +120,23 @@ export function notifyRsvpUpdated(args: {
 export function shouldNotifyEventUpdated(previousStatus: EventStatus): boolean {
   return previousStatus === EventStatus.PUBLISHED;
 }
+
+/** 教練催 RSVP → 指定未回覆球員（註解：App 內通知 + FCM）。 */
+export function notifyRsvpReminder(args: {
+  teamId: string;
+  eventId: string;
+  eventTitle: string;
+  userIds: string[];
+}) {
+  if (args.userIds.length === 0) return;
+
+  dispatchPush(async () => {
+    const payload = buildPushPayload({
+      kind: "rsvp_reminder",
+      teamId: args.teamId,
+      eventId: args.eventId,
+      eventTitle: args.eventTitle,
+    });
+    return notifyUserIds(args.userIds, payload);
+  });
+}

@@ -93,6 +93,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     displayName: a.member.user?.name ?? a.member.user?.email ?? a.memberId.slice(0, 8),
     rsvpStatus: a.rsvpStatus,
     rsvpReason: a.rsvpReason,
+    rsvpAtIso: a.rsvpAt?.toISOString() ?? null,
     checkedIn: a.checkedIn,
   }));
 
@@ -311,8 +312,15 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         id="coach-ev-attendance"
         className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
       >
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          出席點名
+        </h2>
         <div className="mt-3">
-          <AttendanceTable eventId={event.id} rows={attendanceRows} />
+          <AttendanceTable
+            eventId={event.id}
+            rows={attendanceRows}
+            isPublished={event.status === EventStatus.PUBLISHED}
+          />
         </div>
       </section>
 

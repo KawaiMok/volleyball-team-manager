@@ -8,7 +8,8 @@ export type PushKind =
   | "event_updated"
   | "event_announcement"
   | "event_comment"
-  | "rsvp_updated";
+  | "rsvp_updated"
+  | "rsvp_reminder";
 
 export type PushPayloadInput = {
   kind: PushKind;
@@ -90,6 +91,12 @@ export function buildPushPayload(input: PushPayloadInput): PushNotificationPaylo
             `${input.authorName ?? "隊員"} 更新了「${input.eventTitle}」的出席意願`
           : "有隊員更新了出席意願",
         data: { ...data, rsvpStatus: input.rsvpLabel ?? "" },
+      };
+    case "rsvp_reminder":
+      return {
+        title: "請回覆出席意願",
+        body: input.eventTitle ? `教練提醒你回覆「${input.eventTitle}」的 RSVP` : "教練提醒你回覆活動出席意願",
+        data,
       };
   }
 }

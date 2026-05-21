@@ -13,6 +13,8 @@ export function pushDeepLinkPath(kind: PushKind, eventId?: string): string {
       return eventId ? `/player/events/${eventId}` : "/player";
     case "rsvp_updated":
       return eventId ? `/coach/events/${eventId}` : "/coach/events";
+    case "rsvp_reminder":
+      return eventId ? `/player/events/${eventId}` : "/player";
   }
 }
 
