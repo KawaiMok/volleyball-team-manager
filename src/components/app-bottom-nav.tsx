@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { MascotTabIcon, mascotActionForTabLabel } from "@/components/brand/mascot-tab-icons";
 import { useCapacitorNative } from "@/hooks/use-capacitor-native";
 import { setNavDirection } from "@/hooks/use-navigation-direction";
 import { hapticLight } from "@/lib/haptics";
@@ -13,57 +14,12 @@ type Surface = "coach" | "player";
 type TabDef = {
   href: string;
   label: string;
-  /** 是否為目前分頁（註解：支援子路徑前綴比對）。 */
   isActive: (pathname: string) => boolean;
 };
 
 type Props = {
   surface: Surface;
 };
-
-function IconCalendar({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <path d="M16 2v4M8 2v4M3 10h18" />
-    </svg>
-  );
-}
-
-function IconBell({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" />
-      <path d="M13.73 21a2 2 0 01-3.46 0" />
-    </svg>
-  );
-}
-
-function IconHome({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1V9.5z" />
-    </svg>
-  );
-}
-
-function IconList({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-    </svg>
-  );
-}
-
-function IconUsers({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-    </svg>
-  );
-}
 
 function playerTabs(): TabDef[] {
   return [
@@ -95,18 +51,8 @@ function coachTabs(): TabDef[] {
   ];
 }
 
-function tabIcon(tab: TabDef) {
-  const cls = "h-6 w-6";
-  if (tab.label === "通知") return <IconBell className={cls} />;
-  if (tab.label === "行程" || tab.label === "總覽") return <IconHome className={cls} />;
-  if (tab.label === "回饋" || tab.label === "事件") return <IconList className={cls} />;
-  if (tab.label === "行事曆") return <IconCalendar className={cls} />;
-  if (tab.label === "隊伍") return <IconUsers className={cls} />;
-  return <IconHome className={cls} />;
-}
-
 /**
- * App 底部選單（註解：僅 Capacitor 原生殼；端別切換改由 Toolbar 齒輪選單）。
+ * App 底部選單（註解：僅 Capacitor 原生殼；icon 為 mascot 動作版）。
  */
 export function AppBottomNav({ surface }: Props) {
   const native = useCapacitorNative();
@@ -163,11 +109,15 @@ export function AppBottomNav({ surface }: Props) {
                   }
                 }}
               >
-                <span className="relative">
-                  {tabIcon(tab)}
+                <span className={`relative transition-transform ${active ? "scale-110" : "scale-100"}`}>
+                  <MascotTabIcon
+                    action={mascotActionForTabLabel(tab.label)}
+                    size={26}
+                    active={active}
+                  />
                   {active ?
                     <span
-                      className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[var(--brand-primary)]"
+                      className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[var(--brand-primary)]"
                       aria-hidden
                     />
                   : null}
