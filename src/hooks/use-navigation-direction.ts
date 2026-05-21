@@ -23,7 +23,7 @@ export function getPathDepth(pathname: string) {
 }
 
 /** 主 Tab 路由（註解：同層 Tab 切換用 fade） */
-const COACH_TABS = ["/coach", "/coach/events", "/coach/calendar", "/coach/notifications"];
+const COACH_TABS = ["/coach", "/coach/events", "/coach/calendar", "/coach/team", "/coach/notifications"];
 const PLAYER_TABS = ["/player", "/player/feedback", "/player/notifications"];
 
 export function isTabSwitch(prev: string, curr: string) {

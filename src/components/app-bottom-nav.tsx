@@ -123,6 +123,11 @@ function coachTabs(canAccessPlayer: boolean): TabDef[] {
       isActive: (p) => p.startsWith("/coach/calendar"),
     },
     {
+      href: "/coach/team",
+      label: "隊伍",
+      isActive: (p) => p.startsWith("/coach/team"),
+    },
+    {
       href: "/coach/notifications",
       label: "通知",
       isActive: (p) => p.startsWith("/coach/notifications"),
