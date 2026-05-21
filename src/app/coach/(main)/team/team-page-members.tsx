@@ -59,6 +59,9 @@ export function TeamPageMembers({ initialRows, squads, currentMemberId, actorIsA
             </HintExclamationToggle>
           </div>
           <TeamMemberStatusLegend className="mt-2" />
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 md:hidden">
+            表格較寬時，可左右滑動查看「操作」欄
+          </p>
         </div>
         <TeamRosterSection
           squads={squads}

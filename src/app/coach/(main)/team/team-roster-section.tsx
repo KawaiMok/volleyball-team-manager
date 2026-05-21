@@ -9,6 +9,7 @@ import {
 } from "@/app/coach/(main)/team/team-member-edit-form";
 import { TeamMemberStatusIndicator } from "@/components/domain-status-indicators";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { HorizontalScrollHint } from "@/components/ui/horizontal-scroll-hint";
 
 /** 名單列（註解：由伺服端序列化後傳入，避免 client 直接拿 Date）。 */
 export type TeamRosterRow = {
@@ -96,8 +97,8 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
 
   return (
     <>
-      {/** 註解：手機加寬 min-w 避免「操作」欄擠到逐字換行；可橫向捲動。 */}
-      <div className="w-full overflow-x-auto">
+      {/** 註解：手機加寬 min-w；HorizontalScrollHint 提示右側還有「操作」欄。 */}
+      <HorizontalScrollHint hint="右滑查看操作">
         <table className="w-full min-w-[34rem] border-collapse text-left text-sm md:min-w-[40rem] md:text-[0.9375rem]">
           <thead className="border-b border-zinc-100 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 md:text-[11px]">
             <tr>
@@ -156,7 +157,7 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
         {rows.length === 0 ?
           <p className="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">尚無成員</p>
         : null}
-      </div>
+      </HorizontalScrollHint>
 
       {detail ?
         <BottomSheet
