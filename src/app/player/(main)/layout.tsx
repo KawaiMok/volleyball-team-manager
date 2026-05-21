@@ -27,14 +27,14 @@ export default async function PlayerMainLayout({ children }: { children: React.R
   ]);
 
   return (
-    <div className="min-h-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50">
+    <div className="min-h-full bg-[var(--app-page-bg)] text-[var(--app-text)]">
       <PlayerMainToolbar
         teamName={team?.name ?? "球隊"}
         teams={teamOptions}
         currentTeamId={member.teamId}
         canAccessCoach={isCoachLike(member)}
       />
-      <NativeAppShell surface="player" canAccessCoach={isCoachLike(member)} canAccessPlayer={false}>
+      <NativeAppShell surface="player">
         <div className="mx-auto max-w-lg px-4 py-8 sm:max-w-2xl">{children}</div>
       </NativeAppShell>
     </div>

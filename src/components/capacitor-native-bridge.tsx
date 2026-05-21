@@ -6,15 +6,19 @@ import { StatusBar, Style } from "@capacitor/status-bar";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { CIYOU } from "@/lib/ciyou-colors";
 import { setNavDirection } from "@/hooks/use-navigation-direction";
 
-/** 依 html.dark 同步 StatusBar 樣式 */
+/** 依 html class 同步 StatusBar（註解：含慈幼藍品牌底） */
 async function syncStatusBar() {
   if (!Capacitor.isNativePlatform()) return;
   try {
-    const dark = document.documentElement.classList.contains("dark");
+    const root = document.documentElement;
+    const ciyou = root.classList.contains("theme-ciyou");
+    const dark = !ciyou && root.classList.contains("dark");
     await StatusBar.setStyle({ style: dark ? Style.Dark : Style.Light });
-    await StatusBar.setBackgroundColor({ color: dark ? "#09090b" : "#ffffff" });
+    const bg = ciyou ? CIYOU.pageBg : dark ? "#09090b" : "#ffffff";
+    await StatusBar.setBackgroundColor({ color: bg });
   } catch {
     /** iOS 可能不支援 setBackgroundColor */
   }

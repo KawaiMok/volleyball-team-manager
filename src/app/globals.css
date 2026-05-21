@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-/** 暗色模式：由 `html.dark` 控制（註解：toolbar 可選系統／淺／深，見 `theme-preference`）。 */
+/** 暗色模式：由 `html.dark` 控制；慈幼藍：由 `html.theme-ciyou` 控制（註解：見 `theme-preference`）。 */
 @custom-variant dark (&:where(.dark, .dark *));
+@custom-variant theme-ciyou (&:where(.theme-ciyou, .theme-ciyou *));
 
 :root {
   --background: #ffffff;
@@ -11,6 +12,14 @@
   --brand-accent: #a6192e;
   --brand-primary-soft: #eff6ff;
   --surface-grouped: #f4f4f5;
+  /* 語意 surface（註解：教練 zinc / 球員 slate 預設，慈幼藍時覆寫） */
+  --app-page-bg: #fafafa;
+  --app-card-bg: #ffffff;
+  --app-border: #e4e4e7;
+  --app-text: #18181b;
+  --app-text-muted: #71717a;
+  --app-header-bg: rgba(255, 255, 255, 0.95);
+  --app-nav-bg: rgba(255, 255, 255, 0.95);
 }
 
 html.dark {
@@ -20,6 +29,31 @@ html.dark {
   --brand-accent: #ef5350;
   --brand-primary-soft: #172554;
   --surface-grouped: #18181b;
+  --app-page-bg: #09090b;
+  --app-card-bg: #18181b;
+  --app-border: #3f3f46;
+  --app-text: #fafafa;
+  --app-text-muted: #a1a1aa;
+  --app-header-bg: rgba(9, 9, 11, 0.95);
+  --app-nav-bg: rgba(9, 9, 11, 0.95);
+}
+
+/** 慈幼藍：logo / mascot 品牌色系（註解：淺藍底 + 皇家藍主色 + 圖騰紅點綴） */
+html.theme-ciyou {
+  color-scheme: light;
+  --background: #edf4fc;
+  --foreground: #0b2a52;
+  --brand-primary: #1565c4;
+  --brand-accent: #a6192e;
+  --brand-primary-soft: #d6e8f9;
+  --surface-grouped: #dce9f7;
+  --app-page-bg: #edf4fc;
+  --app-card-bg: #ffffff;
+  --app-border: #b6cfe8;
+  --app-text: #0b2a52;
+  --app-text-muted: #4a6d94;
+  --app-header-bg: rgba(248, 251, 255, 0.95);
+  --app-nav-bg: rgba(248, 251, 255, 0.95);
 }
 
 @theme inline {
@@ -132,4 +166,25 @@ body {
 
 .native-loading-bar {
   animation: native-loading-pulse 1s ease-in-out infinite;
+}
+
+/** 慈幼藍：統一覆寫仍用 zinc/slate class 的卡片（註解：漸進式語意化） */
+html.theme-ciyou .bg-white {
+  background-color: var(--app-card-bg);
+}
+html.theme-ciyou .border-zinc-200,
+html.theme-ciyou .border-slate-200,
+html.theme-ciyou .border-zinc-700,
+html.theme-ciyou .border-slate-700 {
+  border-color: var(--app-border);
+}
+html.theme-ciyou .text-zinc-900,
+html.theme-ciyou .text-slate-900 {
+  color: var(--app-text);
+}
+html.theme-ciyou .text-zinc-600,
+html.theme-ciyou .text-zinc-500,
+html.theme-ciyou .text-slate-600,
+html.theme-ciyou .text-slate-500 {
+  color: var(--app-text-muted);
 }

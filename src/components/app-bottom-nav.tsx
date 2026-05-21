@@ -19,10 +19,6 @@ type TabDef = {
 
 type Props = {
   surface: Surface;
-  /** 球員端是否顯示「教練」分頁（註解：教練兼球員／管理員）。 */
-  canAccessCoach: boolean;
-  /** 教練端是否顯示「球員」分頁（註解：教練端一律可預覽球員畫面）。 */
-  canAccessPlayer: boolean;
 };
 
 function IconCalendar({ className }: { className?: string }) {
@@ -69,16 +65,8 @@ function IconUsers({ className }: { className?: string }) {
   );
 }
 
-function IconSwitch({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
-    </svg>
-  );
-}
-
-function playerTabs(canAccessCoach: boolean): TabDef[] {
-  const tabs: TabDef[] = [
+function playerTabs(): TabDef[] {
+  return [
     {
       href: "/player",
       label: "行程",
@@ -95,70 +83,32 @@ function playerTabs(canAccessCoach: boolean): TabDef[] {
       isActive: (p) => p.startsWith("/player/notifications"),
     },
   ];
-  if (canAccessCoach) {
-    tabs.push({
-      href: "/coach",
-      label: "教練",
-      isActive: (p) => p.startsWith("/coach"),
-    });
-  }
-  return tabs;
 }
 
-function coachTabs(canAccessPlayer: boolean): TabDef[] {
-  const tabs: TabDef[] = [
-    {
-      href: "/coach",
-      label: "總覽",
-      isActive: (p) => p === "/coach",
-    },
-    {
-      href: "/coach/events",
-      label: "事件",
-      isActive: (p) => p.startsWith("/coach/events"),
-    },
-    {
-      href: "/coach/calendar",
-      label: "行事曆",
-      isActive: (p) => p.startsWith("/coach/calendar"),
-    },
-    {
-      href: "/coach/team",
-      label: "隊伍",
-      isActive: (p) => p.startsWith("/coach/team"),
-    },
-    {
-      href: "/coach/notifications",
-      label: "通知",
-      isActive: (p) => p.startsWith("/coach/notifications"),
-    },
+function coachTabs(): TabDef[] {
+  return [
+    { href: "/coach", label: "總覽", isActive: (p) => p === "/coach" },
+    { href: "/coach/events", label: "事件", isActive: (p) => p.startsWith("/coach/events") },
+    { href: "/coach/calendar", label: "行事曆", isActive: (p) => p.startsWith("/coach/calendar") },
+    { href: "/coach/team", label: "隊伍", isActive: (p) => p.startsWith("/coach/team") },
+    { href: "/coach/notifications", label: "通知", isActive: (p) => p.startsWith("/coach/notifications") },
   ];
-  if (canAccessPlayer) {
-    tabs.push({
-      href: "/player",
-      label: "球員",
-      isActive: (p) => p.startsWith("/player"),
-    });
-  }
-  return tabs;
 }
 
-function tabIcon(tab: TabDef, surface: Surface) {
+function tabIcon(tab: TabDef) {
   const cls = "h-6 w-6";
   if (tab.label === "通知") return <IconBell className={cls} />;
   if (tab.label === "行程" || tab.label === "總覽") return <IconHome className={cls} />;
-  if (tab.label === "回饋") return <IconList className={cls} />;
-  if (tab.label === "事件") return <IconList className={cls} />;
+  if (tab.label === "回饋" || tab.label === "事件") return <IconList className={cls} />;
   if (tab.label === "行事曆") return <IconCalendar className={cls} />;
-  if (tab.label === "教練" || tab.label === "球員") return <IconSwitch className={cls} />;
   if (tab.label === "隊伍") return <IconUsers className={cls} />;
   return <IconHome className={cls} />;
 }
 
 /**
- * App 底部選單（註解：僅 Capacitor 原生殼顯示；單手切換主要分頁與教練／球員端）。
+ * App 底部選單（註解：僅 Capacitor 原生殼；端別切換改由 Toolbar 齒輪選單）。
  */
-export function AppBottomNav({ surface, canAccessCoach, canAccessPlayer }: Props) {
+export function AppBottomNav({ surface }: Props) {
   const native = useCapacitorNative();
   const pathname = usePathname() ?? "";
   const [unread, setUnread] = useState(0);
@@ -183,21 +133,13 @@ export function AppBottomNav({ surface, canAccessCoach, canAccessPlayer }: Props
 
   if (!native) return null;
 
-  const tabs = surface === "player" ? playerTabs(canAccessCoach) : coachTabs(canAccessPlayer);
-
-  const bar =
-    surface === "coach" ?
-      "border-zinc-200 bg-white/95 dark:border-zinc-800 dark:bg-zinc-950/95"
-    : "border-slate-200 bg-white/95 dark:border-slate-700 dark:bg-slate-950/95";
-
-  const activeText =
-    surface === "coach" ? "text-zinc-900 dark:text-zinc-50" : "text-slate-900 dark:text-slate-50";
-  const idleText =
-    surface === "coach" ? "text-zinc-500 dark:text-zinc-400" : "text-slate-500 dark:text-slate-400";
+  const tabs = surface === "player" ? playerTabs() : coachTabs();
+  const activeText = "text-[var(--app-text)]";
+  const idleText = "text-[var(--app-text-muted)]";
 
   return (
     <nav
-      className={`fixed inset-x-0 bottom-0 z-50 border-t backdrop-blur-md ${bar}`}
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--app-border)] bg-[var(--app-nav-bg)] backdrop-blur-md"
       style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
       aria-label="App 主選單"
     >
@@ -222,7 +164,7 @@ export function AppBottomNav({ surface, canAccessCoach, canAccessPlayer }: Props
                 }}
               >
                 <span className="relative">
-                  {tabIcon(tab, surface)}
+                  {tabIcon(tab)}
                   {active ?
                     <span
                       className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[var(--brand-primary)]"
@@ -232,7 +174,7 @@ export function AppBottomNav({ surface, canAccessCoach, canAccessPlayer }: Props
                 </span>
                 <span>{tab.label}</span>
                 {isNotif && unread > 0 ?
-                  <span className="absolute right-1/4 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                  <span className="absolute right-1/4 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--brand-accent)] px-1 text-[10px] font-bold text-white">
                     {unread > 9 ? "9+" : unread}
                   </span>
                 : null}

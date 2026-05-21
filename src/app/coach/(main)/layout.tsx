@@ -25,13 +25,13 @@ export default async function CoachMainLayout({ children }: { children: React.Re
   ]);
 
   return (
-    <div className="min-h-full bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50">
+    <div className="min-h-full bg-[var(--app-page-bg)] text-[var(--app-text)]">
       <CoachMainToolbar
         teamName={team?.name ?? "球隊"}
         teams={teamOptions}
         currentTeamId={member.teamId}
       />
-      <NativeAppShell surface="coach" canAccessCoach={false} canAccessPlayer>
+      <NativeAppShell surface="coach">
         <div className="mx-auto max-w-5xl px-4 py-8">{children}</div>
       </NativeAppShell>
     </div>

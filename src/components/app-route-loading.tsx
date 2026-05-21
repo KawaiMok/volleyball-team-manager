@@ -13,10 +13,7 @@ export function AppRouteLoading({
 }) {
   const native = useCapacitorNative();
 
-  const bg =
-    variant === "coach" ? "bg-zinc-50 dark:bg-zinc-950"
-    : variant === "player" ? "bg-slate-50 dark:bg-slate-950"
-    : "bg-white dark:bg-zinc-900";
+  const bg = "bg-[var(--app-page-bg)]";
 
   if (native) {
     return (
@@ -41,7 +38,7 @@ export function AppRouteLoading({
     >
       <div className="flex w-full max-w-md flex-col items-center gap-5">
         <AppLogo variant="mascot" size={56} animated />
-        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">載入中…</p>
+        <p className="text-sm font-medium text-[var(--app-text-muted)]">載入中…</p>
         <div className="w-full space-y-2">
           <div className="h-2.5 w-full animate-pulse rounded-md bg-zinc-200/90 dark:bg-zinc-700/80" />
           <div className="h-2.5 w-4/5 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800" />

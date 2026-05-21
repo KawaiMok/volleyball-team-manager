@@ -11,7 +11,7 @@ import { NavigationTransitionBar } from "@/components/navigation-transition-bar"
 import { ThemeProvider } from "@/components/theme-provider";
 import { ScrollToTopButton } from "@/components/scroll-to-top-button";
 import { ToastProvider } from "@/components/toast-provider";
-import { THEME_STORAGE_KEY } from "@/lib/theme-preference";
+import { THEME_STORAGE_KEY, themeBootScript } from "@/lib/theme-preference";
 
 import "./globals.css";
 
@@ -51,7 +51,7 @@ export default function RootLayout({
           id="theme-boot"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var k=${JSON.stringify(THEME_STORAGE_KEY)};var r=document.documentElement;var s=localStorage.getItem(k);var m=window.matchMedia("(prefers-color-scheme: dark)");var d=s==="dark"||(s!=="light"&&(!s||s==="system")&&m.matches);r.classList.toggle("dark",d);r.style.colorScheme=d?"dark":"light";}catch(e){}})();`,
+            __html: themeBootScript(THEME_STORAGE_KEY),
           }}
         />
         <body className="flex min-h-full flex-col">

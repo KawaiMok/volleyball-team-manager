@@ -57,7 +57,7 @@ export function CoachMainToolbar({ teamName, teams, currentTeamId }: Props) {
   }
 
   const headerClass =
-    "sticky top-0 z-40 border-b border-zinc-200 bg-white/95 pt-[env(safe-area-inset-top,0px)] shadow-sm backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/95 supports-[backdrop-filter]:bg-white/90 dark:supports-[backdrop-filter]:bg-zinc-950/90";
+    "sticky top-0 z-40 border-b border-[var(--app-border)] bg-[var(--app-header-bg)] pt-[env(safe-area-inset-top,0px)] shadow-sm backdrop-blur-md";
 
   if (native) {
     return (

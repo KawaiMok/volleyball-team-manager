@@ -55,7 +55,7 @@ export function PlayerMainToolbar({ teamName, teams, currentTeamId, canAccessCoa
   }
 
   const headerClass =
-    "sticky top-0 z-40 border-b border-slate-200 bg-white/95 pt-[env(safe-area-inset-top,0px)] shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-950/95";
+    "sticky top-0 z-40 border-b border-[var(--app-border)] bg-[var(--app-header-bg)] pt-[env(safe-area-inset-top,0px)] shadow-sm backdrop-blur-md";
 
   if (native) {
     return (
