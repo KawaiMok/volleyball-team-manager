@@ -41,6 +41,12 @@ type Props = {
   /** 目前登入者是否為隊伍管理員（註解：非管理員不可變更「管理員」角色）。 */
   actorIsAdmin: boolean;
   initial: TeamMemberEditInitial;
+  /** 表單 id（註解：供 BottomSheet footer 以 form 屬性提交）。 */
+  formId?: string;
+  /** 按鈕改由父層 footer 渲染（註解：避免被原生底欄遮擋）。 */
+  externalActions?: boolean;
+  /** 儲存中狀態回報（註解：footer 按鈕 disabled 用）。 */
+  onPendingChange?: (pending: boolean) => void;
   /** 儲存成功後關閉對話框等（註解：由父層 `TeamRosterSection` 傳入）。 */
   onSaved?: () => void;
   onCancel?: () => void;
@@ -58,7 +64,18 @@ function deriveSquadState(squads: string[], squad: string | null) {
 }
 
 /** 單一隊員編輯／停用（註解：PATCH /api/team/members/[id]）。 */
-export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, initial, onSaved, onCancel }: Props) {
+export function TeamMemberEditForm({
+  memberId,
+  squads,
+  isSelf,
+  actorIsAdmin,
+  initial,
+  formId = "team-member-edit-form",
+  externalActions = false,
+  onPendingChange,
+  onSaved,
+  onCancel,
+}: Props) {
   const router = useRouter();
   const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
@@ -70,6 +87,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setPending(true);
+    onPendingChange?.(true);
 
     const fd = new FormData(e.currentTarget);
     const displayName = String(fd.get("displayName") ?? "");
@@ -83,6 +101,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
     if (isSelf && status === "INACTIVE") {
       showError("不可將自己的隊籍設為停用");
       setPending(false);
+      onPendingChange?.(false);
       return;
     }
 
@@ -94,6 +113,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
     if (squads.length > 0 && squadChoice === "__custom" && !squadCustom.trim()) {
       showError("已選「其他分組」時請填寫分組名稱");
       setPending(false);
+      onPendingChange?.(false);
       return;
     }
 
@@ -102,6 +122,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
     if (jerseyRaw !== "" && Number.isNaN(jerseyNumber)) {
       showError("背號請填數字或留空");
       setPending(false);
+      onPendingChange?.(false);
       return;
     }
 
@@ -123,6 +144,7 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
       });
       const data = await res.json().catch(() => ({}));
       setPending(false);
+      onPendingChange?.(false);
       if (!res.ok) {
         showError((data as { error?: string }).error ?? `更新失敗 (${res.status})`);
         return;
@@ -132,12 +154,13 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
       router.refresh();
     } catch {
       setPending(false);
+      onPendingChange?.(false);
       showError("網路錯誤");
     }
   }
 
   return (
-    <form onSubmit={(e) => void onSubmit(e)} className="space-y-4 text-left">
+    <form id={formId} onSubmit={(e) => void onSubmit(e)} className="space-y-4 text-left">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">顯示姓名</label>
@@ -268,25 +291,27 @@ export function TeamMemberEditForm({ memberId, squads, isSelf, actorIsAdmin, ini
           />
         </div>
       </div>
-      <div className="flex flex-wrap gap-3 border-t border-zinc-100 pt-4">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
-        >
-          {pending ? "儲存中…" : "儲存變更"}
-        </button>
-        {onCancel ?
+      {!externalActions ?
+        <div className="flex flex-wrap gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
           <button
-            type="button"
-            onClick={onCancel}
+            type="submit"
             disabled={pending}
-            className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:bg-zinc-950 disabled:opacity-60"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
           >
-            取消
+            {pending ? "儲存中…" : "儲存變更"}
           </button>
-        : null}
-      </div>
+          {onCancel ?
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={pending}
+              className="rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-950"
+            >
+              取消
+            </button>
+          : null}
+        </div>
+      : null}
     </form>
   );
 }

@@ -50,12 +50,19 @@ function roleLabel(r: string) {
   }
 }
 
+/** 編輯表單 id（註解：footer 按鈕以 form 屬性關聯）。 */
+const ROSTER_EDIT_FORM_ID = "roster-edit-form";
+
 /** 隊員表格 + 詳情唯讀彈窗 + 編輯對話框（註解：主表僅列必要欄，其餘於「詳情」查看）。 */
 export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin }: Props) {
   const [editing, setEditing] = useState<TeamRosterRow | null>(null);
   const [detail, setDetail] = useState<TeamRosterRow | null>(null);
+  const [editPending, setEditPending] = useState(false);
 
-  const closeEdit = useCallback(() => setEditing(null), []);
+  const closeEdit = useCallback(() => {
+    setEditPending(false);
+    setEditing(null);
+  }, []);
   const closeDetail = useCallback(() => setDetail(null), []);
   const closeAll = useCallback(() => {
     setEditing(null);
@@ -89,16 +96,16 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
 
   return (
     <>
-      {/** 註解：`w-full` ＋表身 `w-full` 讓桌機列滿寬；手機仍保留 `min-w` 避免擠爆。 */}
+      {/** 註解：手機加寬 min-w 避免「操作」欄擠到逐字換行；可橫向捲動。 */}
       <div className="w-full overflow-x-auto">
-        <table className="w-full min-w-[20rem] border-collapse text-left text-sm md:text-[0.9375rem]">
+        <table className="w-full min-w-[34rem] border-collapse text-left text-sm md:min-w-[40rem] md:text-[0.9375rem]">
           <thead className="border-b border-zinc-100 bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 md:text-[11px]">
             <tr>
-              <th className="px-3 py-2.5 text-left font-medium sm:px-4 sm:py-3 md:min-w-[12rem] md:px-5 md:py-3.5">姓名</th>
-              <th className="px-3 py-2.5 text-left font-medium sm:px-4 sm:py-3 md:whitespace-nowrap md:px-4 md:py-3.5">角色</th>
-              <th className="px-3 py-2.5 text-center font-medium sm:px-4 sm:py-3 md:w-[4.5rem] md:px-3 md:py-3.5">背號</th>
-              <th className="px-3 py-2.5 text-center font-medium sm:px-4 sm:py-3 md:w-[6.5rem] md:py-3.5">狀態</th>
-              <th className="px-3 py-2.5 text-right font-medium sm:px-4 sm:py-3 md:min-w-[10rem] md:pl-2 md:pr-5 md:py-3.5">操作</th>
+              <th className="min-w-[5.5rem] px-3 py-2.5 text-left font-medium sm:px-4 sm:py-3 md:min-w-[12rem] md:px-5 md:py-3.5">姓名</th>
+              <th className="min-w-[4.5rem] whitespace-nowrap px-3 py-2.5 text-left font-medium sm:px-4 sm:py-3 md:px-4 md:py-3.5">角色</th>
+              <th className="w-[3.25rem] whitespace-nowrap px-2 py-2.5 text-center font-medium sm:px-3 sm:py-3 md:w-[4.5rem] md:py-3.5">背號</th>
+              <th className="w-[3rem] whitespace-nowrap px-2 py-2.5 text-center font-medium sm:px-3 sm:py-3 md:w-[4.5rem] md:py-3.5">狀態</th>
+              <th className="min-w-[7.5rem] whitespace-nowrap px-3 py-2.5 text-right font-medium sm:px-4 sm:py-3 md:min-w-[10rem] md:pl-2 md:pr-5 md:py-3.5">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -112,20 +119,20 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
                 }
               >
                 <td className="px-3 py-2.5 font-medium text-zinc-900 dark:text-zinc-50 sm:px-4 sm:py-3 md:px-5 md:py-3.5">{r.displayName ?? "—"}</td>
-                <td className="px-3 py-2.5 text-zinc-800 dark:text-zinc-200 sm:px-4 sm:py-3 md:px-4 md:py-3.5">{roleLabel(r.role)}</td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-center tabular-nums text-zinc-800 dark:text-zinc-200 sm:px-4 sm:py-3 md:px-3 md:py-3.5">{r.jerseyNumber ?? "—"}</td>
-                <td className="whitespace-nowrap px-3 py-2.5 text-center sm:px-4 sm:py-3 md:py-3.5">
+                <td className="whitespace-nowrap px-3 py-2.5 text-zinc-800 dark:text-zinc-200 sm:px-4 sm:py-3 md:px-4 md:py-3.5">{roleLabel(r.role)}</td>
+                <td className="whitespace-nowrap px-2 py-2.5 text-center tabular-nums text-zinc-800 dark:text-zinc-200 sm:px-3 sm:py-3 md:px-3 md:py-3.5">{r.jerseyNumber ?? "—"}</td>
+                <td className="whitespace-nowrap px-2 py-2.5 text-center sm:px-3 sm:py-3 md:py-3.5">
                   <TeamMemberStatusIndicator status={r.status} />
                 </td>
-                <td className="px-3 py-2.5 text-right sm:px-4 sm:py-3 md:pl-2 md:pr-5 md:py-3.5">
-                  <div className="inline-flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+                <td className="whitespace-nowrap px-3 py-2.5 text-right sm:px-4 sm:py-3 md:pl-2 md:pr-5 md:py-3.5">
+                  <div className="inline-flex flex-row items-center justify-end gap-2 sm:gap-3">
                     <button
                       type="button"
                       onClick={() => {
                         setEditing(null);
                         setDetail(r);
                       }}
-                      className="rounded-md px-1 py-0.5 text-blue-600 hover:bg-blue-50 hover:underline dark:text-blue-400 dark:hover:bg-blue-950/40"
+                      className="shrink-0 whitespace-nowrap rounded-md px-1.5 py-0.5 text-blue-600 hover:bg-blue-50 hover:underline dark:text-blue-400 dark:hover:bg-blue-950/40"
                     >
                       詳情
                     </button>
@@ -133,9 +140,10 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
                       type="button"
                       onClick={() => {
                         setDetail(null);
+                        setEditPending(false);
                         setEditing(r);
                       }}
-                      className="rounded-md px-1 py-0.5 text-blue-600 hover:bg-blue-50 hover:underline dark:text-blue-400 dark:hover:bg-blue-950/40"
+                      className="shrink-0 whitespace-nowrap rounded-md px-1.5 py-0.5 text-blue-600 hover:bg-blue-50 hover:underline dark:text-blue-400 dark:hover:bg-blue-950/40"
                     >
                       編輯
                     </button>
@@ -242,6 +250,26 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
           subtitle={editing.email ?? editing.id}
           titleId="roster-edit-title"
           tall
+          footer={
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={closeEdit}
+                disabled={editPending}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                取消
+              </button>
+              <button
+                type="submit"
+                form={ROSTER_EDIT_FORM_ID}
+                disabled={editPending}
+                className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                {editPending ? "儲存中…" : "儲存變更"}
+              </button>
+            </div>
+          }
         >
           <TeamMemberEditForm
             key={`${editing.id}-${editing.updatedAt}`}
@@ -250,6 +278,9 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
             isSelf={editing.id === currentMemberId}
             actorIsAdmin={actorIsAdmin}
             initial={initial}
+            formId={ROSTER_EDIT_FORM_ID}
+            externalActions
+            onPendingChange={setEditPending}
             onSaved={closeEdit}
             onCancel={closeEdit}
           />

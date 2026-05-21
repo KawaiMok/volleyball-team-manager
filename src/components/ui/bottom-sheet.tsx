@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect } from "react";
 
+import { useCapacitorNative } from "@/hooks/use-capacitor-native";
+
 type BottomSheetProps = {
   open: boolean;
   onClose: () => void;
@@ -27,6 +29,8 @@ export function BottomSheet({
   footer,
   tall = false,
 }: BottomSheetProps) {
+  const native = useCapacitorNative();
+
   const handleKey = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -47,11 +51,24 @@ export function BottomSheet({
 
   if (!open) return null;
 
-  const maxH = tall ? "min(92vh,880px)" : "min(88vh,640px)";
+  const maxH =
+    tall ?
+      native ?
+        "min(calc(92vh - 4.5rem - env(safe-area-inset-bottom)), 820px)"
+      : "min(92vh,880px)"
+    : native ?
+      "min(calc(88vh - 4.5rem - env(safe-area-inset-bottom)), 600px)"
+    : "min(88vh,640px)";
+
+  /** 原生殼 bottom tab 高度（註解：與 NativeAppContentPad 對齊，避免 footer 被擋）。 */
+  const nativeTabLift =
+    native ?
+      "mb-[calc(4.25rem+env(safe-area-inset-bottom))] max-sm:rounded-b-xl sm:mb-0"
+    : "";
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4"
+      className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
@@ -63,7 +80,7 @@ export function BottomSheet({
         onClick={onClose}
       />
       <div
-        className={`relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:rounded-2xl bottom-sheet-enter`}
+        className={`relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:rounded-2xl bottom-sheet-enter ${nativeTabLift}`}
         style={{ maxHeight: maxH }}
       >
         {/* 拖曳把手（註解：手機 sheet 視覺提示） */}
@@ -90,7 +107,11 @@ export function BottomSheet({
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer ?
-          <div className="shrink-0 border-t border-zinc-100 px-5 py-4 dark:border-zinc-800">{footer}</div>
+          <div
+            className="shrink-0 border-t border-zinc-100 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] dark:border-zinc-800 sm:pb-4"
+          >
+            {footer}
+          </div>
         : null}
       </div>
     </div>
