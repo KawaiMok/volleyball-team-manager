@@ -91,7 +91,7 @@ export function EventParticipantRuleFields({ squads, roster, value, onChange, di
     <fieldset disabled={disabled} className="space-y-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 p-4">
       <legend className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">參與對象</legend>
       <p className="text-xs text-zinc-600 dark:text-zinc-400">
-        決定哪些在籍隊員會收到 RSVP／出席；儲存後會同步名單（移除者將刪除該場回饋紀錄）。
+        決定哪些在籍隊員會收到出席意願通知；儲存後會同步名單（移除者將刪除該場回饋紀錄）。
       </p>
 
       <div className="space-y-2">

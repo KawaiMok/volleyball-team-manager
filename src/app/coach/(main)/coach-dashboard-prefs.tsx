@@ -76,9 +76,9 @@ export function useCoachDashboardPrefs(): Ctx {
 }
 
 const WIDGET_LABELS: Record<CoachDashboardWidgetId, string> = {
-  stats: "統計卡（草稿／7 天場次／待 RSVP）",
+  stats: "統計卡（草稿／7 天場次／待回覆出席意願）",
   todayTraining: "今日訓練 · 身體回饋",
-  rsvp: "RSVP 待追蹤列表",
+  rsvp: "出席意願待追蹤列表",
   upcoming: "未來 7 天行程",
   trends: "近 30 天 RPE 趨勢圖",
 };

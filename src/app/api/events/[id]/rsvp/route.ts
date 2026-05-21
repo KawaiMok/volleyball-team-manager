@@ -54,7 +54,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
     event.rsvpDeadlineAt != null &&
     now.getTime() > event.rsvpDeadlineAt.getTime()
   ) {
-    return NextResponse.json({ error: "已超過 RSVP 截止時間" }, { status: 403 });
+    return NextResponse.json({ error: "已超過出席意願截止時間" }, { status: 403 });
   }
 
   const row = await prisma.attendance.update({

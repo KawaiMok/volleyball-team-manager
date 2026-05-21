@@ -76,7 +76,7 @@ export function CoachTeamRolesEmailPanel({ initialNotifications }: Props) {
           </div>
           <div className="flex gap-2 rounded-md bg-zinc-50 dark:bg-zinc-950 px-3 py-2">
             <dt className="w-20 shrink-0 font-medium text-zinc-900 dark:text-zinc-50">球員</dt>
-            <dd>球員端行程、RSVP、訓練內容與身體回饋。</dd>
+            <dd>球員端行程、出席意願、訓練內容與身體回饋。</dd>
           </div>
         </dl>
       </div>
@@ -95,7 +95,7 @@ export function CoachTeamRolesEmailPanel({ initialNotifications }: Props) {
                 className="mt-1 h-4 w-4 rounded border-zinc-300 dark:border-zinc-600"
               />
               <label htmlFor="notif-rsvp-players" className="text-sm text-zinc-800 dark:text-zinc-200">
-                <span className="font-medium">RSVP 截止前提醒球員</span>
+                <span className="font-medium">出席意願截止前提醒球員</span>
                 <span className="mt-0.5 block text-xs font-normal text-zinc-500 dark:text-zinc-400">（預留：依事件截止寄送）</span>
               </label>
             </li>

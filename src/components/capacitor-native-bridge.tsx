@@ -4,10 +4,12 @@ import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { CIYOU } from "@/lib/ciyou-colors";
 import { setNavDirection } from "@/hooks/use-navigation-direction";
+import { hapticLight } from "@/lib/haptics";
+import { useToast } from "@/components/toast-provider";
 
 /** 依 html class 同步 StatusBar（註解：含慈幼藍品牌底） */
 async function syncStatusBar() {
@@ -24,11 +26,16 @@ async function syncStatusBar() {
   }
 }
 
+/** 兩次返回鍵間隔（註解：Android 常見「再按一次退出」）。 */
+const EXIT_CONFIRM_MS = 2000;
+
 /**
  * Capacitor 原生橋接（註解：StatusBar、Android 返回鍵、主題同步）。
  */
 export function CapacitorNativeBridge() {
   const router = useRouter();
+  const { showHint } = useToast();
+  const lastExitPromptAtRef = useRef(0);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -42,18 +49,29 @@ export function CapacitorNativeBridge() {
 
     const backSub = App.addListener("backButton", ({ canGoBack }) => {
       if (canGoBack) {
+        lastExitPromptAtRef.current = 0;
         setNavDirection("back");
         router.back();
-      } else {
-        void App.minimizeApp();
+        return;
       }
+
+      const now = Date.now();
+      if (now - lastExitPromptAtRef.current < EXIT_CONFIRM_MS) {
+        lastExitPromptAtRef.current = 0;
+        void App.minimizeApp();
+        return;
+      }
+
+      lastExitPromptAtRef.current = now;
+      void hapticLight();
+      showHint("再按一次返回鍵退出 App");
     });
 
     return () => {
       observer.disconnect();
       void backSub.then((h) => h.remove());
     };
-  }, [router]);
+  }, [router, showHint]);
 
   return null;
 }

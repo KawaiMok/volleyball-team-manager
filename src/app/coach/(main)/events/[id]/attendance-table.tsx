@@ -39,6 +39,8 @@ export function AttendanceTable({ eventId, rows, isPublished }: Props) {
   );
   const [pending, setPending] = useState(false);
   const [remindPending, setRemindPending] = useState(false);
+  /** 單人催回覆進行中的 memberId（註解：詳情 popup 用）。 */
+  const [remindOnePendingId, setRemindOnePendingId] = useState<string | null>(null);
   const [detailRow, setDetailRow] = useState<Row | null>(null);
 
   const unansweredCount = useMemo(
@@ -93,6 +95,33 @@ export function AttendanceTable({ eventId, rows, isPublished }: Props) {
     showSuccess(`已推播催回覆給 ${reminded} 位球員`);
   }
 
+  /** 對單一未回覆隊員催 RSVP（註解：詳情 popup 內使用）。 */
+  async function remindOne(row: Row) {
+    if (row.rsvpStatus !== "UNANSWERED") {
+      showError("此隊員已回覆出席意願");
+      return;
+    }
+    setRemindOnePendingId(row.memberId);
+    const res = await fetch(`/api/events/${eventId}/rsvp-remind`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId: row.memberId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setRemindOnePendingId(null);
+    if (!res.ok) {
+      showError((data as { error?: string }).error ?? "催回覆失敗");
+      return;
+    }
+    const name = (data as { displayName?: string }).displayName ?? row.displayName;
+    showSuccess(`已推播催回覆給 ${name}`);
+  }
+
+  const detailCanRemind =
+    isPublished && detailRow !== null && detailRow.rsvpStatus === "UNANSWERED";
+  const detailRemindPending = detailRow !== null && remindOnePendingId === detailRow.memberId;
+
   function markAllPresent() {
     const next = { ...local };
     for (const r of rows) next[r.memberId] = true;
@@ -131,7 +160,7 @@ export function AttendanceTable({ eventId, rows, isPublished }: Props) {
           onClick={markYesPresent}
           className="rounded border border-zinc-300 bg-white px-3 py-1.5 text-xs hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:hover:bg-zinc-950"
         >
-          RSVP「出席」視為實到
+          出席意願「參加」視為實到
         </button>
         {isPublished ?
           <button
@@ -140,7 +169,7 @@ export function AttendanceTable({ eventId, rows, isPublished }: Props) {
             disabled={remindPending || unansweredCount === 0}
             className="rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-950/60"
           >
-            {remindPending ? "推播中…" : "催回覆 RSVP"}
+            {remindPending ? "推播中…" : "催回覆出席意願"}
           </button>
         : null}
         <button
@@ -158,7 +187,7 @@ export function AttendanceTable({ eventId, rows, isPublished }: Props) {
           <thead className="border-b border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
             <tr>
               <th className="px-3 py-2 font-medium text-zinc-600 dark:text-zinc-400">姓名</th>
-              <th className="px-3 py-2 font-medium text-zinc-600 dark:text-zinc-400">RSVP</th>
+              <th className="px-3 py-2 font-medium text-zinc-600 dark:text-zinc-400">出席意願</th>
               <th className="px-3 py-2 font-medium text-zinc-600 dark:text-zinc-400">實到</th>
               <th className="px-3 py-2 font-medium text-zinc-600 dark:text-zinc-400">
                 <span className="sr-only">詳情</span>
@@ -204,13 +233,35 @@ export function AttendanceTable({ eventId, rows, isPublished }: Props) {
       <BottomSheet
         open={detailRow !== null}
         onClose={() => setDetailRow(null)}
-        title={detailRow?.displayName ?? "RSVP 詳情"}
+        title={detailRow?.displayName ?? "出席意願詳情"}
         subtitle="出席意願與備註"
+        footer={
+          detailCanRemind ?
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setDetailRow(null)}
+                disabled={detailRemindPending}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              >
+                關閉
+              </button>
+              <button
+                type="button"
+                onClick={() => detailRow && void remindOne(detailRow)}
+                disabled={detailRemindPending}
+                className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-900 hover:bg-amber-100 disabled:opacity-60 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200 dark:hover:bg-amber-950/60"
+              >
+                {detailRemindPending ? "推播中…" : "催回覆出席意願"}
+              </button>
+            </div>
+          : undefined
+        }
       >
         {detailRow ?
           <dl className="grid gap-3 text-sm">
             <div>
-              <dt className="text-zinc-500 dark:text-zinc-400">RSVP</dt>
+              <dt className="text-zinc-500 dark:text-zinc-400">出席意願</dt>
               <dd className="mt-1 flex items-center gap-2 font-medium text-zinc-900 dark:text-zinc-50">
                 <RsvpStatusIndicator status={detailRow.rsvpStatus} />
                 {rsvpStatusLabelZh(detailRow.rsvpStatus)}

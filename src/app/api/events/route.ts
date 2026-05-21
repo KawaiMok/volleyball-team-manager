@@ -107,7 +107,7 @@ export async function POST(req: Request) {
 
   const rsvpDeadlineAt = body.rsvpDeadlineAt ? new Date(body.rsvpDeadlineAt) : null;
   if (rsvpDeadlineAt != null && Number.isNaN(rsvpDeadlineAt.getTime())) {
-    return NextResponse.json({ error: "RSVP 截止時間格式無效" }, { status: 400 });
+    return NextResponse.json({ error: "出席意願截止時間格式無效" }, { status: 400 });
   }
   if (
     rsvpDeadlineAt != null &&
@@ -115,7 +115,7 @@ export async function POST(req: Request) {
     rsvpDeadlineAt.getTime() > startsAt.getTime()
   ) {
     return NextResponse.json(
-      { error: "RSVP 截止時間須早於或等於事件開始時間" },
+      { error: "出席意願截止時間須早於或等於事件開始時間" },
       { status: 400 },
     );
   }

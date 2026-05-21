@@ -88,7 +88,7 @@ export function PlayerScheduleWeekGrid({
                         <span className="font-medium">{ev.title}</span>
                         {needRsvp(ev, now) ?
                           <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900">
-                            待 RSVP
+                            待回覆
                           </span>
                         : null}
                       </span>
@@ -151,7 +151,7 @@ export function PlayerScheduleWeekGridDesktop({
                   <span className="mt-0.5 flex items-center justify-between gap-1 tabular-nums opacity-90">
                     {formatTimeZh(ev.startsAt, { hour: "2-digit", minute: "2-digit" })}
                     {needRsvp(ev, now) ?
-                      <span className="rounded bg-amber-100 px-1 text-[9px] text-amber-900">RSVP</span>
+                      <span className="rounded bg-amber-100 px-1 text-[9px] text-amber-900">待回覆</span>
                     : null}
                   </span>
                 </Link>
@@ -218,7 +218,7 @@ export function PlayerScheduleMonthGrid({
                       href={`/player/events/${ev.id}`}
                       className={`block truncate rounded px-0.5 py-0.5 text-[10px] leading-tight sm:text-xs ${cardClass()}`}
                       title={
-                        needRsvp(ev, now) ? `${ev.title}（待 RSVP）` : ev.title
+                        needRsvp(ev, now) ? `${ev.title}（待回覆出席意願）` : ev.title
                       }
                     >
                       {formatTimeZh(ev.startsAt, { hour: "2-digit", minute: "2-digit" })}{" "}

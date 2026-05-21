@@ -192,7 +192,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
 
       <div>
         <label htmlFor={`edit-rsvp-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          RSVP 截止（選填）
+          出席意願截止（選填）
         </label>
         <input
           id={`edit-rsvp-${eventId}`}

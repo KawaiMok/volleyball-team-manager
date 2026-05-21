@@ -167,7 +167,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         : null}
         {rsvpDeadlineAt ?
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-            RSVP 截止：
+            出席意願截止：
             {formatDateTimeZh(rsvpDeadlineAt, {
               month: "numeric",
               day: "numeric",
@@ -183,7 +183,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">我的狀態</h2>
         <dl className="mt-2 grid gap-1 text-sm text-slate-700 dark:text-slate-300">
           <div>
-            <dt className="inline text-slate-500 dark:text-slate-400">RSVP：</dt>
+            <dt className="inline text-slate-500 dark:text-slate-400">出席意願：</dt>
             <dd className="inline">
               {rsvp === "UNANSWERED" ? "尚未回覆" : rsvp === "YES" ? "會到" : rsvp === "NO" ? "不到" : "不一定"}
             </dd>

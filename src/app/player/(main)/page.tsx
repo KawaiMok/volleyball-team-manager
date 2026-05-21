@@ -76,7 +76,7 @@ function EventListItem({ ev }: { ev: EventRow }) {
       badge={
         needRsvp ?
           <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
-            待 RSVP
+            待回覆
           </span>
         : undefined
       }

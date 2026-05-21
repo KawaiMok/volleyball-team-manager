@@ -58,7 +58,7 @@ export function PlayerRsvpForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">出席意願（RSVP）</h3>
+      <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">出席意願</h3>
       <fieldset disabled={disabled || pending} className="flex flex-wrap gap-4">
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -103,13 +103,13 @@ export function PlayerRsvpForm({
         disabled={disabled || pending}
         className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
       >
-        {pending ? "送出中…" : "更新 RSVP"}
+        {pending ? "送出中…" : "更新出席意願"}
       </button>
       {disabled ?
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {disabledReason === "deadline" ?
-            "已超過 RSVP 截止時間，無法再變更出席意願；若有異動請洽教練／隊務。"
-          : "目前已鎖定 RSVP（逾時或已由隊務處理時請洽教練）。"}
+            "已超過出席意願截止時間，無法再變更；若有異動請洽教練／隊務。"
+          : "目前已鎖定出席意願（逾時或已由隊務處理時請洽教練）。"}
         </p>
       : null}
     </form>

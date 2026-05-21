@@ -61,9 +61,9 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <CapacitorPushBridge />
           </Suspense>
-          <CapacitorNativeBridge />
           <ThemeProvider>
             <ToastProvider>
+              <CapacitorNativeBridge />
               {children}
               <ScrollToTopButton />
             </ToastProvider>

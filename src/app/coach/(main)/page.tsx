@@ -146,7 +146,7 @@ export default async function CoachDashboardPage() {
               <h1 className="text-2xl font-semibold tracking-tight">總覽</h1>
               <HintExclamationToggle>
                 <span>
-                  未來 7 天行程、RSVP 待追蹤與草稿狀態。前往{" "}
+                  未來 7 天行程、出席意願待追蹤與草稿狀態。前往{" "}
                   <Link href="/coach/calendar" className="font-medium text-blue-600 hover:underline">
                     行事曆
                   </Link>
@@ -179,7 +179,7 @@ export default async function CoachDashboardPage() {
           <p className="mt-1 text-3xl font-semibold tabular-nums">{upcoming.length}</p>
         </div>
         <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 shadow-sm">
-          <p className="text-sm text-amber-900/80">待 RSVP 場次</p>
+          <p className="text-sm text-amber-900/80">待回覆出席意願場次</p>
           <p className="mt-1 text-3xl font-semibold tabular-nums text-amber-950">{totalUnansweredSlots}</p>
           <p className="mt-1 text-xs text-amber-900/70">已發布且尚有球員未回覆</p>
         </div>
@@ -198,7 +198,7 @@ export default async function CoachDashboardPage() {
 
         <CoachDashboardSection id="rsvp">
           <section>
-            <h2 className="mb-3 text-lg font-medium">RSVP 待追蹤</h2>
+            <h2 className="mb-3 text-lg font-medium">出席意願待追蹤</h2>
             {needsRsvpFollowUp.length > 0 ?
               <ul className="divide-y divide-amber-200 overflow-hidden rounded-lg border border-amber-200 bg-amber-50/50">
                 {needsRsvpFollowUp.map((ev) => {
@@ -234,7 +234,7 @@ export default async function CoachDashboardPage() {
                   );
                 })}
               </ul>
-            : <p className="text-sm text-zinc-500 dark:text-zinc-400">目前無待追蹤場次（未來 7 天內已發布且尚有未回覆 RSVP 者會出現在此）。</p>}
+            : <p className="text-sm text-zinc-500 dark:text-zinc-400">目前無待追蹤場次（未來 7 天內已發布且尚有未回覆出席意願者會出現在此）。</p>}
           </section>
         </CoachDashboardSection>
 
@@ -270,11 +270,11 @@ export default async function CoachDashboardPage() {
                       </div>
                       {showRsvp ?
                         <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                          RSVP：{u === 0 ? "全員已回覆" : `未回覆 ${u} 人`}
+                          出席意願：{u === 0 ? "全員已回覆" : `未回覆 ${u} 人`}
                           {total > 0 ? `（共 ${total} 位參與者）` : ""}
                         </p>
                       : ev.status === EventStatus.DRAFT ?
-                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">發布後球員才可 RSVP</p>
+                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">發布後球員才可回覆出席意願</p>
                       : null}
                     </div>
                     <time className="shrink-0 text-sm tabular-nums text-zinc-600 dark:text-zinc-400">

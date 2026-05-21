@@ -83,7 +83,7 @@ export function buildPushPayload(input: PushPayloadInput): PushNotificationPaylo
       };
     case "rsvp_updated":
       return {
-        title: "RSVP 更新",
+        title: "出席意願更新",
         body:
           input.rsvpLabel && input.eventTitle ?
             `${input.authorName ?? "隊員"} 對「${input.eventTitle}」回覆：${input.rsvpLabel}`
@@ -95,7 +95,7 @@ export function buildPushPayload(input: PushPayloadInput): PushNotificationPaylo
     case "rsvp_reminder":
       return {
         title: "請回覆出席意願",
-        body: input.eventTitle ? `教練提醒你回覆「${input.eventTitle}」的 RSVP` : "教練提醒你回覆活動出席意願",
+        body: input.eventTitle ? `教練提醒你回覆「${input.eventTitle}」的出席意願` : "教練提醒你回覆活動出席意願",
         data,
       };
   }

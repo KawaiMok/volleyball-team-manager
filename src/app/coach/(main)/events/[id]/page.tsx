@@ -259,7 +259,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           : null}
           {event.rsvpDeadlineAt ?
             <div>
-              <dt className="text-zinc-500 dark:text-zinc-400">RSVP 截止</dt>
+              <dt className="text-zinc-500 dark:text-zinc-400">出席意願截止</dt>
               <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
                 {formatDateTimeZh(event.rsvpDeadlineAt)}
               </dd>
@@ -276,7 +276,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">編輯事件</h2>
             <HintExclamationToggle>
-              可調整標題、時間、場館、RSVP 截止與參與對象；變更參與者時將同步名單與出席列。
+              可調整標題、時間、場館、出席意願截止與參與對象；變更參與者時將同步名單與出席列。
             </HintExclamationToggle>
           </div>
           <div className="mt-4">

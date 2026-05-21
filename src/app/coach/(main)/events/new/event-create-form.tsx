@@ -134,7 +134,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
 
       <div>
         <label htmlFor="rsvpDeadlineAt" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          RSVP 截止（選填）
+          出席意願截止（選填）
         </label>
         <input
           id="rsvpDeadlineAt"
@@ -143,7 +143,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
           className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          須早於或等於「開始」時間；未填則球員可隨時更新 RSVP（至事件結束前皆無強制截止）。
+          須早於或等於「開始」時間；未填則球員可隨時更新出席意願（至事件結束前皆無強制截止）。
         </p>
       </div>
 

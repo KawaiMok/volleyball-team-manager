@@ -53,7 +53,7 @@ export default async function Home() {
           <AppLogo variant="badge" size={36} />
           <span className="mt-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">球員端</span>
           <span className="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            我的行程、RSVP、場次與身體回饋等參與者視角。
+            我的行程、出席意願、場次與身體回饋等參與者視角。
           </span>
           <span className="mt-4 text-sm font-medium text-[var(--brand-primary)] group-hover:underline">
             {signedIn ? "進入球員端 →" : "登入球員端 →"}
