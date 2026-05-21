@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 96" fill="none" aria-hidden="true">
+  <!-- ìº’	ei« + +Ú + É + øM½;ãloading / hero (	 -->
+  <!-- æs -->
+  <ellipse cx="28" cy="90" rx="7" ry="4" fill="#1e40af"/>
+  <!-- ós -->
+  <ellipse cx="52" cy="90" rx="7" ry="4" fill="#1e40af"/>
+  <!-- æK -->
+  <ellipse cx="14" cy="58" rx="5" ry="7" fill="#3b82f6" transform="rotate(-20 14 58)"/>
+  <!-- óK -->
+  <ellipse cx="66" cy="58" rx="5" ry="7" fill="#3b82f6" transform="rotate(20 66 58)"/>
+  <!-- ’«Ô -->
+  <circle cx="40" cy="50" r="28" fill="#ffffff" stroke="#1e40af" stroke-width="3"/>
+  <!-- ’+Ú -->
+  <path d="M40 24 C28 32 22 42 22 50 C22 58 28 68 40 76" stroke="#1e40af" stroke-width="2.5" fill="none"/>
+  <path d="M40 24 C52 32 58 42 58 50 C58 58 52 68 40 76" stroke="#1e40af" stroke-width="2.5" fill="none"/>
+  <path d="M16 50 H64" stroke="#1e40af" stroke-width="2.5" fill="none"/>
+  <!-- É -->
+  <circle cx="32" cy="46" r="2.5" fill="#1e40af"/>
+  <circle cx="48" cy="46" r="2.5" fill="#1e40af"/>
+  <path d="M32 56 Q40 62 48 56" stroke="#1e40af" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- øM½ -->
+  <circle cx="40" cy="52" r="10" fill="#1e40af"/>
+  <path d="M40 46 L43 51 L40 56 L37 51 Z" fill="#ffffff" stroke="#dc2626" stroke-width="1" stroke-linejoin="round"/>
+  <path d="M40 56 L35 59 L37 61 L40 58 L43 61 L45 59 Z" fill="#ffffff" stroke="#dc2626" stroke-width="1" stroke-linejoin="round"/>
+</svg>

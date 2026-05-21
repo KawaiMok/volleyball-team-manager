@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import type { FatigueLevel, PainLevel } from "@/generated/prisma/client";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { formatDateTimeZh } from "@/lib/format-datetime";
 
 function fatigueLabel(f: FatigueLevel) {
@@ -67,24 +68,6 @@ export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId }: 
   }
 
   const closeDetail = useCallback(() => setDetail(null), []);
-
-  useEffect(() => {
-    if (!detail) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeDetail();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [detail, closeDetail]);
-
-  useEffect(() => {
-    if (!detail) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [detail]);
 
   return (
     <section
@@ -167,91 +150,68 @@ export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId }: 
       )}
 
       {detail ?
-        <div
-          className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="feedback-detail-title"
+        <BottomSheet
+          open
+          onClose={closeDetail}
+          title="身體回饋詳情"
+          subtitle={detail.displayName}
+          titleId="feedback-detail-title"
+          footer={
+            <button
+              type="button"
+              onClick={closeDetail}
+              className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 sm:w-auto"
+            >
+              關閉
+            </button>
+          }
         >
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
-            aria-label="關閉"
-            onClick={closeDetail}
-          />
-          <div className="relative z-10 flex max-h-[min(85vh,32rem)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900 sm:rounded-2xl">
-            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
-              <div className="min-w-0">
-                <h3 id="feedback-detail-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-                  身體回饋詳情
-                </h3>
-                <p className="mt-0.5 truncate text-sm text-zinc-600 dark:text-zinc-400">{detail.displayName}</p>
-              </div>
-              <button
-                type="button"
-                onClick={closeDetail}
-                className="rounded-md p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                aria-label="關閉"
-              >
-                <span className="text-xl leading-none">×</span>
-              </button>
+          <dl className="space-y-3 text-sm text-zinc-800 dark:text-zinc-200">
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                RPE
+              </dt>
+              <dd className="tabular-nums font-medium">{detail.rpe}／10</dd>
             </div>
-            <dl className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4 text-sm text-zinc-800 dark:text-zinc-200">
-              <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  RPE
-                </dt>
-                <dd className="tabular-nums font-medium">{detail.rpe}／10</dd>
-              </div>
-              <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  疲勞
-                </dt>
-                <dd>{fatigueLabel(detail.fatigue)}</dd>
-              </div>
-              <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  疼痛
-                </dt>
-                <dd>{painLabel(detail.painLevel)}</dd>
-              </div>
-              <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  疼痛部位
-                </dt>
-                <dd>{detail.painArea?.trim() ? detail.painArea : "—"}</dd>
-              </div>
-              <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  備註
-                </dt>
-                <dd className="whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-300">
-                  {detail.note?.trim() ? detail.note : "—"}
-                </dd>
-              </div>
-              <div className="flex flex-col gap-0.5 border-t border-zinc-100 pt-3 dark:border-zinc-800 sm:flex-row sm:gap-3">
-                <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  送出時間
-                </dt>
-                <dd className="text-xs text-zinc-600 dark:text-zinc-400">
-                  {formatDateTimeZh(new Date(detail.submittedAt), {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                </dd>
-              </div>
-            </dl>
-            <div className="shrink-0 border-t border-zinc-100 px-5 py-4 dark:border-zinc-800">
-              <button
-                type="button"
-                onClick={closeDetail}
-                className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 sm:w-auto"
-              >
-                關閉
-              </button>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                疲勞
+              </dt>
+              <dd>{fatigueLabel(detail.fatigue)}</dd>
             </div>
-          </div>
-        </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                疼痛
+              </dt>
+              <dd>{painLabel(detail.painLevel)}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                疼痛部位
+              </dt>
+              <dd>{detail.painArea?.trim() ? detail.painArea : "—"}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                備註
+              </dt>
+              <dd className="whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-300">
+                {detail.note?.trim() ? detail.note : "—"}
+              </dd>
+            </div>
+            <div className="flex flex-col gap-0.5 border-t border-zinc-100 pt-3 dark:border-zinc-800 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                送出時間
+              </dt>
+              <dd className="text-xs text-zinc-600 dark:text-zinc-400">
+                {formatDateTimeZh(new Date(detail.submittedAt), {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </dd>
+            </div>
+          </dl>
+        </BottomSheet>
       : null}
     </section>
   );

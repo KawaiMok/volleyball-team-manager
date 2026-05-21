@@ -6,16 +6,27 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* 慧青體育會品牌色（註解：來源 public/logo/*.jpg） */
+  --brand-primary: #1565c4;
+  --brand-accent: #a6192e;
+  --brand-primary-soft: #eff6ff;
+  --surface-grouped: #f4f4f5;
 }
 
 html.dark {
   --background: #09090b;
   --foreground: #fafafa;
+  --brand-primary: #42a5f5;
+  --brand-accent: #ef5350;
+  --brand-primary-soft: #172554;
+  --surface-grouped: #18181b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-accent: var(--brand-accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -27,7 +38,10 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overscroll-behavior-y: contain;
 }
 
 /* 導航轉場頂條（註解：見 `navigation-transition-bar.tsx`） */
@@ -44,6 +58,51 @@ body {
   animation: navigation-bar-slide 0.65s ease-in-out infinite;
 }
 
+.navigation-bar-brand {
+  background: color-mix(in srgb, var(--brand-primary) 25%, transparent);
+}
+
+.navigation-bar-brand .navigation-bar-indeterminate {
+  background: var(--brand-primary);
+}
+
+/* mascot 彈跳（註解：loading 用） */
+@keyframes logo-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.logo-bounce {
+  animation: logo-bounce 0.9s ease-in-out infinite;
+}
+
+/* bottom sheet 滑入 */
+@keyframes bottom-sheet-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bottom-sheet-enter {
+  animation: bottom-sheet-slide-up 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (min-width: 640px) {
+  .bottom-sheet-enter {
+    animation: none;
+  }
+}
+
 /* 底部 toast 進場（註解：見 `toast-provider.tsx`） */
 @keyframes toast-pop-in {
   from {
@@ -58,4 +117,19 @@ body {
 
 .toast-pop {
   animation: toast-pop-in 0.28s ease-out;
+}
+
+/* 原生 loading 頂部 pulse 條 */
+@keyframes native-loading-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.native-loading-bar {
+  animation: native-loading-pulse 1s ease-in-out infinite;
 }

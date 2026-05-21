@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { ActiveTeamSwitcher } from "@/components/active-team-switcher";
+import { AppLogo } from "@/components/brand/app-logo";
 import { getTeamMember, listActiveTeamsForSwitcher } from "@/lib/session";
 
 /**
@@ -18,9 +19,10 @@ export default async function Home() {
 
   return (
     <main className="mx-auto flex min-h-full max-w-3xl flex-col gap-8 px-4 py-12 sm:px-6 lg:py-16">
-      <div className="text-center">
+      <div className="flex flex-col items-center text-center">
+        <AppLogo variant="mascot" size={96} className="mb-4" />
         <h1 className="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">排球隊管理</h1>
-        <p className="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
           {signedIn ?
             <>已登入。請選擇要使用的介面。</>
           : <>
@@ -33,31 +35,27 @@ export default async function Home() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Link
           href={coachHref}
-          className="group flex flex-col rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition hover:border-zinc-400 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-zinc-500"
+          className="group flex flex-col rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition active:scale-[0.98] hover:border-[var(--brand-primary)] hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900"
         >
-          <span className="text-2xl" aria-hidden>
-            📋
-          </span>
+          <AppLogo variant="badge" size={36} />
           <span className="mt-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">教練端</span>
           <span className="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
             總覽、行事曆、事件、隊伍與點名等管理功能。
           </span>
-          <span className="mt-4 text-sm font-medium text-blue-600 group-hover:underline dark:text-blue-400">
+          <span className="mt-4 text-sm font-medium text-[var(--brand-primary)] group-hover:underline">
             {signedIn ? "進入教練端 →" : "登入教練端 →"}
           </span>
         </Link>
         <Link
           href={playerHref}
-          className="group flex flex-col rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition hover:border-violet-300 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-violet-600"
+          className="group flex flex-col rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition active:scale-[0.98] hover:border-[var(--brand-primary)] hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900"
         >
-          <span className="text-2xl" aria-hidden>
-            🏐
-          </span>
+          <AppLogo variant="badge" size={36} />
           <span className="mt-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">球員端</span>
           <span className="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
             我的行程、RSVP、場次與身體回饋等參與者視角。
           </span>
-          <span className="mt-4 text-sm font-medium text-blue-600 group-hover:underline dark:text-blue-400">
+          <span className="mt-4 text-sm font-medium text-[var(--brand-primary)] group-hover:underline">
             {signedIn ? "進入球員端 →" : "登入球員端 →"}
           </span>
         </Link>

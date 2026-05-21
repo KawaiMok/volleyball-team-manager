@@ -32,7 +32,7 @@ export default async function CoachMainLayout({ children }: { children: React.Re
         currentTeamId={member.teamId}
       />
       <NativeAppShell surface="coach" canAccessCoach={false} canAccessPlayer>
-        <div className="mx-auto max-w-5xl px-4 py-8 pb-20">{children}</div>
+        <div className="mx-auto max-w-5xl px-4 py-8">{children}</div>
       </NativeAppShell>
     </div>
   );

@@ -2,10 +2,15 @@
 
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { ActiveTeamSwitcher } from "@/components/active-team-switcher";
+import { AppLogo } from "@/components/brand/app-logo";
+import { NativeBackButton } from "@/components/native-back-button";
 import { ToolbarUtilityDropdown } from "@/components/toolbar-utility-dropdown";
+import { useCapacitorNative } from "@/hooks/use-capacitor-native";
+import { isEventDetailPath } from "@/hooks/use-navigation-direction";
 
 type TeamOption = { id: string; name: string };
 
@@ -22,8 +27,11 @@ type Props = {
   canAccessCoach: boolean;
 };
 
-/** 球員端頂部列：單行 + 漢堡選單（註解：與教練端相同模式，避免連結換成兩行）。 */
+/** 球員端頂部列：Web 漢堡選單；Capacitor 精簡為 logo + 標題 + 返回。 */
 export function PlayerMainToolbar({ teamName, teams, currentTeamId, canAccessCoach }: Props) {
+  const native = useCapacitorNative();
+  const pathname = usePathname() ?? "";
+  const showBack = native && isEventDetailPath(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -35,11 +43,8 @@ export function PlayerMainToolbar({ teamName, teams, currentTeamId, canAccessCoa
   }, []);
 
   useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (!menuOpen) return;
+    document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
@@ -49,11 +54,39 @@ export function PlayerMainToolbar({ teamName, teams, currentTeamId, canAccessCoa
     setMenuOpen(false);
   }
 
+  const headerClass =
+    "sticky top-0 z-40 border-b border-slate-200 bg-white/95 pt-[env(safe-area-inset-top,0px)] shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-950/95";
+
+  if (native) {
+    return (
+      <header className={headerClass}>
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-2 px-4 py-2.5 sm:max-w-2xl">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            {showBack ?
+              <NativeBackButton />
+            : (
+              <AppLogo variant="badge" size={32} className="shrink-0" />
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{teamName}</p>
+              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">球員端</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <ToolbarUtilityDropdown surface="player" currentView="player" canAccessCoach={canAccessCoach} />
+            <UserButton />
+          </div>
+        </div>
+      </header>
+    );
+  }
+
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur-md dark:border-slate-700 dark:bg-slate-950/95 dark:backdrop-blur-md">
+    <header className={headerClass}>
       <div className="relative mx-auto max-w-lg sm:max-w-2xl">
         <div className="flex items-center justify-between gap-2 px-4 py-2.5 sm:py-3">
           <div className="flex min-w-0 flex-1 items-center gap-2">
+            <AppLogo variant="badge" size={28} className="shrink-0" />
             {teams.length > 1 ?
               <>
                 <ActiveTeamSwitcher teams={teams} currentTeamId={currentTeamId} variant="player" />
@@ -72,11 +105,7 @@ export function PlayerMainToolbar({ teamName, teams, currentTeamId, canAccessCoa
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5">
-            <ToolbarUtilityDropdown
-              surface="player"
-              currentView="player"
-              canAccessCoach={canAccessCoach}
-            />
+            <ToolbarUtilityDropdown surface="player" currentView="player" canAccessCoach={canAccessCoach} />
             <UserButton />
             <button
               type="button"

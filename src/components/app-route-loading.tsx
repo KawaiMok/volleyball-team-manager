@@ -1,32 +1,50 @@
+"use client";
+
+import { AppLogo } from "@/components/brand/app-logo";
+import { useCapacitorNative } from "@/hooks/use-capacitor-native";
+
 /**
- * 路由載入中畫面（註解：供各層 `loading.tsx` 使用，與教練端／球員端色調一致）。
+ * 路由載入中畫面（註解：Web 用 skeleton；Capacitor 用頂部 pulse + mascot，不整屏替換）。
  */
 export function AppRouteLoading({
   variant = "neutral",
 }: {
   variant?: "neutral" | "coach" | "player";
 }) {
+  const native = useCapacitorNative();
+
   const bg =
     variant === "coach" ? "bg-zinc-50 dark:bg-zinc-950"
     : variant === "player" ? "bg-slate-50 dark:bg-slate-950"
     : "bg-white dark:bg-zinc-900";
 
+  if (native) {
+    return (
+      <div className={`relative min-h-[40vh] w-full ${bg}`} role="status" aria-busy aria-live="polite">
+        <div
+          className="native-loading-bar pointer-events-none fixed inset-x-0 top-[env(safe-area-inset-top,0px)] z-[199] h-0.5 bg-[var(--brand-primary)]"
+          aria-hidden
+        />
+        <div className="flex justify-center pt-16">
+          <AppLogo variant="mascot" size={72} animated />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`flex min-h-[70vh] w-full flex-col items-center justify-center px-6 py-16 ${bg}`}
+      className={`flex min-h-[50vh] w-full flex-col items-center justify-center px-6 py-12 ${bg}`}
       role="status"
       aria-busy
       aria-live="polite"
     >
-      <div className="flex w-full max-w-md flex-col items-center gap-6">
-        <div className="relative h-12 w-12">
-          <span className="absolute inset-0 animate-spin rounded-full border-2 border-zinc-200 dark:border-zinc-700 border-t-zinc-800 dark:border-t-zinc-200" />
-        </div>
+      <div className="flex w-full max-w-md flex-col items-center gap-5">
+        <AppLogo variant="mascot" size={56} animated />
         <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">載入中…</p>
-        <div className="w-full space-y-3">
-          <div className="h-3 w-full animate-pulse rounded-md bg-zinc-200/90 dark:bg-zinc-700/80" />
-          <div className="h-3 w-4/5 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800" />
-          <div className="h-3 w-3/5 animate-pulse rounded-md bg-zinc-100/90 dark:bg-zinc-800/80" />
+        <div className="w-full space-y-2">
+          <div className="h-2.5 w-full animate-pulse rounded-md bg-zinc-200/90 dark:bg-zinc-700/80" />
+          <div className="h-2.5 w-4/5 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800" />
         </div>
       </div>
     </div>

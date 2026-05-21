@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import {
   addDays,
   endOfMonthExclusive,
@@ -15,6 +13,12 @@ import {
 } from "@/app/player/(main)/player-schedule-views";
 import { PlayerScheduleToolbar } from "@/app/player/(main)/player-schedule-toolbar";
 import { parsePlayerScheduleView } from "@/app/player/(main)/player-schedule-view";
+import {
+  InsetGroupedEmpty,
+  InsetGroupedList,
+  InsetGroupedRow,
+  InsetGroupedSection,
+} from "@/components/ui/inset-grouped-list";
 import { getTeamMember } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
 import { EventStatus, EventType } from "@/generated/prisma/client";
@@ -41,7 +45,7 @@ type EventRow = {
   attendance: { rsvpStatus: string }[];
 };
 
-/** 單列行程連結（註解：即將到來與歷史共用；逾 RSVP 截止仍「未回覆」者不標「待 RSVP」）。 */
+/** 單列行程（註解：InsetGroupedRow；逾 RSVP 截止仍「未回覆」者不標「待 RSVP」）。 */
 function EventListItem({ ev }: { ev: EventRow }) {
   const att = ev.attendance[0];
   const rsvp = att?.rsvpStatus ?? "UNANSWERED";
@@ -49,33 +53,34 @@ function EventListItem({ ev }: { ev: EventRow }) {
   const deadlinePassed =
     ev.rsvpDeadlineAt != null && now.getTime() > ev.rsvpDeadlineAt.getTime();
   const needRsvp = rsvp === "UNANSWERED" && !deadlinePassed;
+
+  const subtitle = (
+    <>
+      {typeLabel(ev.type)} ·{" "}
+      {formatDateTimeZh(ev.startsAt, {
+        weekday: "short",
+        month: "numeric",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
+      {ev.locationName ? ` · ${ev.locationName}` : ""}
+    </>
+  );
+
   return (
-    <li>
-      <Link
-        href={`/player/events/${ev.id}`}
-        className="flex flex-col gap-1 px-4 py-4 transition hover:bg-slate-50 dark:bg-slate-950"
-      >
-        <div className="flex items-start justify-between gap-2">
-          <span className="font-medium text-slate-900 dark:text-slate-50">{ev.title}</span>
-          {needRsvp ?
-            <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
-              待 RSVP
-            </span>
-          : null}
-        </div>
-        <span className="text-xs text-slate-500 dark:text-slate-400">
-          {typeLabel(ev.type)} ·{" "}
-          {formatDateTimeZh(ev.startsAt, {
-            weekday: "short",
-            month: "numeric",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </span>
-        {ev.locationName ? <span className="text-xs text-slate-500 dark:text-slate-400">{ev.locationName}</span> : null}
-      </Link>
-    </li>
+    <InsetGroupedRow
+      href={`/player/events/${ev.id}`}
+      title={ev.title}
+      subtitle={subtitle}
+      badge={
+        needRsvp ?
+          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+            待 RSVP
+          </span>
+        : undefined
+      }
+    />
   );
 }
 
@@ -195,23 +200,19 @@ export default async function PlayerSchedulePage({ searchParams }: PageProps) {
         </>
       : (
         <>
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">今日起</h2>
-            <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 shadow-sm">
+          <InsetGroupedList>
+            <InsetGroupedSection header="即將到來">
               {upcoming.length === 0 ?
-                <li className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">目前沒有即將到來的行程</li>
+                <InsetGroupedEmpty>目前沒有即將到來的行程</InsetGroupedEmpty>
               : upcoming.map((ev) => <EventListItem key={ev.id} ev={ev} />)}
-            </ul>
-          </section>
+            </InsetGroupedSection>
 
-          <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">更早的行程</h2>
-            <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 shadow-sm">
+            <InsetGroupedSection header="更早的行程">
               {past.length === 0 ?
-                <li className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">尚無更早的紀錄</li>
+                <InsetGroupedEmpty>尚無更早的紀錄</InsetGroupedEmpty>
               : past.map((ev) => <EventListItem key={ev.id} ev={ev} />)}
-            </ul>
-          </section>
+            </InsetGroupedSection>
+          </InsetGroupedList>
         </>
       )}
     </div>

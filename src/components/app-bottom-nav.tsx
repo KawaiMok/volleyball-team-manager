@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { useCapacitorNative } from "@/hooks/use-capacitor-native";
+import { setNavDirection } from "@/hooks/use-navigation-direction";
+import { hapticLight } from "@/lib/haptics";
 
 type Surface = "coach" | "player";
 
@@ -207,8 +209,22 @@ export function AppBottomNav({ surface, canAccessCoach, canAccessPlayer }: Props
                   active ? activeText : idleText
                 }`}
                 aria-current={active ? "page" : undefined}
+                onClick={() => {
+                  if (!active) {
+                    setNavDirection("forward");
+                    void hapticLight();
+                  }
+                }}
               >
-                {tabIcon(tab, surface)}
+                <span className="relative">
+                  {tabIcon(tab, surface)}
+                  {active ?
+                    <span
+                      className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[var(--brand-primary)]"
+                      aria-hidden
+                    />
+                  : null}
+                </span>
                 <span>{tab.label}</span>
                 {isNotif && unread > 0 ?
                   <span className="absolute right-1/4 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">

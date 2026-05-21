@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 
 import { ClerkProvider } from "@clerk/nextjs";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { CapacitorNativeBridge } from "@/components/capacitor-native-bridge";
 import { CapacitorPushBridge } from "@/components/capacitor-push-bridge";
 import { NavigationTransitionBar } from "@/components/navigation-transition-bar";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -27,6 +28,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "排球隊管理",
   description: "Volleyball team manager — MVP",
+};
+
+export const viewport: Viewport = {
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -56,6 +61,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <CapacitorPushBridge />
           </Suspense>
+          <CapacitorNativeBridge />
           <ThemeProvider>
             <ToastProvider>
               {children}

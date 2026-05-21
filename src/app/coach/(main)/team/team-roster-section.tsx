@@ -8,6 +8,7 @@ import {
   type TeamMemberEditInitial,
 } from "@/app/coach/(main)/team/team-member-edit-form";
 import { TeamMemberStatusIndicator } from "@/components/domain-status-indicators";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 
 /** 名單列（註解：由伺服端序列化後傳入，避免 client 直接拿 Date）。 */
 export type TeamRosterRow = {
@@ -71,15 +72,6 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [modalOpen, closeAll]);
-
-  useEffect(() => {
-    if (!modalOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [modalOpen]);
 
   const initial: TeamMemberEditInitial | null =
     editing ?
@@ -159,89 +151,14 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
       </div>
 
       {detail ?
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="roster-detail-title"
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
-            aria-label="關閉詳情"
-            onClick={closeDetail}
-          />
-          <div className="relative z-10 flex max-h-[min(88vh,640px)] w-full max-w-md flex-col rounded-t-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-h-[min(85vh,560px)] sm:rounded-2xl">
-            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
-              <div className="min-w-0">
-                <h3 id="roster-detail-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  隊員詳情
-                </h3>
-                <p className="mt-1 truncate text-sm font-medium text-zinc-900 dark:text-zinc-50">{detail.displayName ?? "—"}</p>
-              </div>
-              <button
-                type="button"
-                onClick={closeDetail}
-                className="rounded-md p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                aria-label="關閉"
-              >
-                <span className="text-xl leading-none">×</span>
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 text-sm">
-              <dl className="space-y-3 text-zinc-800 dark:text-zinc-200">
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                  <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">角色</dt>
-                  <dd>{roleLabel(detail.role)}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
-                  <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">狀態</dt>
-                  <dd>
-                    <TeamMemberStatusIndicator status={detail.status} />
-                  </dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                  <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Email</dt>
-                  <dd className="min-w-0 break-all">{detail.email ?? "—"}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                  <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">電話</dt>
-                  <dd className="tabular-nums">{detail.phone ?? "—"}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                  <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">位置</dt>
-                  <dd>{detail.position ?? "—"}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                  <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">分組</dt>
-                  <dd>{detail.squad ?? "—"}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                  <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">背號</dt>
-                  <dd className="tabular-nums">{detail.jerseyNumber ?? "—"}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                  <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Clerk</dt>
-                  <dd>{detail.clerkLinked ? "已與登入帳號連結" : "待對方首次登入合併"}</dd>
-                </div>
-                <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-                  <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">備註</dt>
-                  <dd className="whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-300">
-                    {detail.notes?.trim() ? detail.notes : "—"}
-                  </dd>
-                </div>
-                <div className="flex flex-col gap-0.5 border-t border-zinc-100 pt-3 dark:border-zinc-800 sm:flex-row sm:gap-3">
-                  <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">更新時間</dt>
-                  <dd className="text-xs text-zinc-600 dark:text-zinc-400">
-                    {formatDateTimeZh(new Date(detail.updatedAt), {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </dd>
-                </div>
-              </dl>
-            </div>
-            <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-zinc-100 px-5 py-4 dark:border-zinc-800 sm:flex-row sm:justify-end">
+        <BottomSheet
+          open
+          onClose={closeDetail}
+          title="隊員詳情"
+          subtitle={detail.displayName ?? "—"}
+          titleId="roster-detail-title"
+          footer={
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={closeDetail}
@@ -261,54 +178,82 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
                 編輯此隊員
               </button>
             </div>
-          </div>
-        </div>
+          }
+        >
+          <dl className="space-y-3 text-sm text-zinc-800 dark:text-zinc-200">
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">角色</dt>
+              <dd>{roleLabel(detail.role)}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">狀態</dt>
+              <dd>
+                <TeamMemberStatusIndicator status={detail.status} />
+              </dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Email</dt>
+              <dd className="min-w-0 break-all">{detail.email ?? "—"}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">電話</dt>
+              <dd className="tabular-nums">{detail.phone ?? "—"}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">位置</dt>
+              <dd>{detail.position ?? "—"}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">分組</dt>
+              <dd>{detail.squad ?? "—"}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">背號</dt>
+              <dd className="tabular-nums">{detail.jerseyNumber ?? "—"}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Clerk</dt>
+              <dd>{detail.clerkLinked ? "已與登入帳號連結" : "待對方首次登入合併"}</dd>
+            </div>
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">備註</dt>
+              <dd className="whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-300">
+                {detail.notes?.trim() ? detail.notes : "—"}
+              </dd>
+            </div>
+            <div className="flex flex-col gap-0.5 border-t border-zinc-100 pt-3 dark:border-zinc-800 sm:flex-row sm:gap-3">
+              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">更新時間</dt>
+              <dd className="text-xs text-zinc-600 dark:text-zinc-400">
+                {formatDateTimeZh(new Date(detail.updatedAt), {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </dd>
+            </div>
+          </dl>
+        </BottomSheet>
       : null}
 
       {editing && initial ?
-        <div
-          className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="roster-edit-title"
+        <BottomSheet
+          open
+          onClose={closeEdit}
+          title="編輯隊員"
+          subtitle={editing.email ?? editing.id}
+          titleId="roster-edit-title"
+          tall
         >
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
-            aria-label="關閉編輯"
-            onClick={closeEdit}
+          <TeamMemberEditForm
+            key={`${editing.id}-${editing.updatedAt}`}
+            memberId={editing.id}
+            squads={squads}
+            isSelf={editing.id === currentMemberId}
+            actorIsAdmin={actorIsAdmin}
+            initial={initial}
+            onSaved={closeEdit}
+            onCancel={closeEdit}
           />
-          <div className="relative z-10 flex max-h-[min(92vh,880px)] w-full max-w-lg flex-col rounded-t-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl sm:max-h-[85vh] sm:rounded-2xl">
-            <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4">
-              <div className="min-w-0">
-                <h3 id="roster-edit-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                  編輯隊員
-                </h3>
-                <p className="mt-1 truncate text-sm text-zinc-600 dark:text-zinc-400">{editing.email ?? editing.id}</p>
-              </div>
-              <button
-                type="button"
-                onClick={closeEdit}
-                className="rounded-md p-2 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:bg-zinc-800 hover:text-zinc-800 dark:text-zinc-200"
-                aria-label="關閉"
-              >
-                <span className="text-xl leading-none">×</span>
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-              <TeamMemberEditForm
-                key={`${editing.id}-${editing.updatedAt}`}
-                memberId={editing.id}
-                squads={squads}
-                isSelf={editing.id === currentMemberId}
-                actorIsAdmin={actorIsAdmin}
-                initial={initial}
-                onSaved={closeEdit}
-                onCancel={closeEdit}
-              />
-            </div>
-          </div>
-        </div>
+        </BottomSheet>
       : null}
     </>
   );
