@@ -5,37 +5,44 @@ import { useCallback, useEffect, useState } from "react";
 type Props = {
   title: string;
   children: React.ReactNode;
-  /** 全屏時顯示在頂部列（註解：教練端可放精簡工具列）。 */
-  fullscreenTop?: React.ReactNode;
-  /** 全屏時顯示在底部列（註解：教練端可放儲存等操作）。 */
-  fullscreenBottom?: React.ReactNode;
+  /** 全屏浮動控制區（註解：預設收起；教練端傳入工具＋儲存）。 */
+  fullscreenControls?: React.ReactNode;
+  /** 全屏時永遠顯示的快捷按鈕（註解：例如「儲存」，不需展開工具列）。 */
+  fullscreenQuickActions?: React.ReactNode;
 };
 
 /**
- * 戰術板橫向全屏外殼（註解：同一 SVG 實例切換 fixed overlay；Esc 關閉）。
+ * 戰術板橫向全屏外殼（註解：球場盡量填滿視窗；控制項為浮動可收起面板）。
  */
 export function CourtBoardFullscreenShell({
   title,
   children,
-  fullscreenTop,
-  fullscreenBottom,
+  fullscreenControls,
+  fullscreenQuickActions,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
+  const [controlsOpen, setControlsOpen] = useState(false);
+  const close = useCallback(() => {
+    setOpen(false);
+    setControlsOpen(false);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") {
+        if (controlsOpen) setControlsOpen(false);
+        else close();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, close]);
+  }, [open, close, controlsOpen]);
 
   const expandButton = (
     <button
@@ -51,22 +58,12 @@ export function CourtBoardFullscreenShell({
     </button>
   );
 
-  const boardFrameClass =
-    open ?
-      "h-full w-full max-h-full max-w-[min(100vw-2rem,calc((100vh-8rem)*2))] touch-none"
-    : "w-full touch-none";
-
-  const boardInner = (
-    <div
-      className={
-        open ?
-          "flex min-h-0 flex-1 items-center justify-center p-4 pt-2"
-        : ""
-      }
-    >
-      <div className={open ? `aspect-[2/1] ${boardFrameClass}` : boardFrameClass}>{children}</div>
-    </div>
-  );
+  const safeStyle = {
+    paddingTop: "max(0.25rem, env(safe-area-inset-top))",
+    paddingBottom: "max(0.25rem, env(safe-area-inset-bottom))",
+    paddingLeft: "max(0.25rem, env(safe-area-inset-left))",
+    paddingRight: "max(0.25rem, env(safe-area-inset-right))",
+  } as const;
 
   return (
     <div className="space-y-2">
@@ -77,43 +74,67 @@ export function CourtBoardFullscreenShell({
       <div
         className={
           open ?
-            "fixed inset-0 z-[100] flex flex-col bg-zinc-950 text-zinc-50"
+            "fixed inset-0 z-[100] bg-zinc-950"
           : "relative mx-auto max-w-md overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-inner dark:border-zinc-800 dark:bg-zinc-900 md:max-w-lg"
         }
-        style={
-          open ?
-            {
-              paddingTop: "max(0.75rem, env(safe-area-inset-top))",
-              paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
-              paddingLeft: "max(0.75rem, env(safe-area-inset-left))",
-              paddingRight: "max(0.75rem, env(safe-area-inset-right))",
-            }
-          : undefined
-        }
+        style={open ? safeStyle : undefined}
       >
         {open ?
-          <div className="flex shrink-0 flex-col gap-2 border-b border-zinc-800 px-2 pb-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-sm font-semibold">{title}</span>
-              <button
-                type="button"
-                onClick={close}
-                className="shrink-0 rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-100 hover:bg-zinc-800"
-              >
-                關閉
-              </button>
+          <>
+            {/* 戰術板：盡量填滿視窗（2:1），不受工具列擠壓 */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="aspect-[2/1] w-[min(calc(100vw-0.5rem),calc((100vh-0.5rem)*2))] max-h-[calc(100vh-0.5rem)] touch-none">
+                {children}
+              </div>
             </div>
-            {fullscreenTop ?
-              <div className="overflow-x-auto">{fullscreenTop}</div>
+
+            <button
+              type="button"
+              onClick={close}
+              className="absolute z-20 rounded-full border border-zinc-600/80 bg-zinc-900/90 px-3 py-1.5 text-sm font-medium text-zinc-100 shadow-lg backdrop-blur-sm hover:bg-zinc-800"
+              style={{
+                top: "max(0.5rem, env(safe-area-inset-top))",
+                right: "max(0.5rem, env(safe-area-inset-right))",
+              }}
+              aria-label="關閉全屏"
+            >
+              關閉
+            </button>
+
+            {(fullscreenControls || fullscreenQuickActions) ?
+              <div
+                className="absolute z-20 flex max-w-[calc(100vw-1rem)] flex-col items-end gap-2"
+                style={{
+                  bottom: "max(0.5rem, env(safe-area-inset-bottom))",
+                  right: "max(0.5rem, env(safe-area-inset-right))",
+                  left: "max(0.5rem, env(safe-area-inset-left))",
+                }}
+              >
+                {controlsOpen && fullscreenControls ?
+                  <div className="w-full max-w-md self-end rounded-xl border border-zinc-700/80 bg-zinc-900/95 p-2 shadow-xl backdrop-blur-md">
+                    {fullscreenControls}
+                  </div>
+                : null}
+
+                <div className="flex flex-wrap items-center justify-end gap-2 self-end">
+                  {fullscreenQuickActions}
+                  {fullscreenControls ?
+                    <button
+                      type="button"
+                      onClick={() => setControlsOpen((v) => !v)}
+                      className="rounded-full border border-zinc-600/80 bg-zinc-900/90 px-3 py-1.5 text-sm font-medium text-zinc-100 shadow-lg backdrop-blur-sm hover:bg-zinc-800"
+                      aria-expanded={controlsOpen}
+                    >
+                      {controlsOpen ? "收起工具" : "工具"}
+                    </button>
+                  : null}
+                </div>
+              </div>
             : null}
-          </div>
-        : null}
-
-        {boardInner}
-
-        {open && fullscreenBottom ?
-          <div className="shrink-0 border-t border-zinc-800 px-2 pt-2">{fullscreenBottom}</div>
-        : null}
+          </>
+        : (
+          <div className="w-full touch-none">{children}</div>
+        )}
       </div>
     </div>
   );

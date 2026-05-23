@@ -269,12 +269,15 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
   ] as const;
 
   function renderToolButtons(compact: boolean) {
+    const labels = compact ?
+      { select: "選", player: "員", ball: "球", line: "線" }
+    : { select: "選取／拖曳", player: "點擊放球員", ball: "點擊放排球", line: "畫線（點兩下）" };
     return (
-      <div className={`flex flex-wrap gap-2 ${compact ? "" : "rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-950"}`}>
+      <div className={`flex flex-wrap gap-1.5 ${compact ? "" : "rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-950"}`}>
         {!compact ?
           <span className="self-center text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">工具</span>
         : null}
-        {toolDefs.map(([k, label]) => (
+        {toolDefs.map(([k, labelKey]) => (
           <button
             key={k}
             type="button"
@@ -287,81 +290,79 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
             className={
               tool === k ?
                 compact ?
-                  "rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-900"
+                  "min-h-9 min-w-9 rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-900"
                 : "rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white"
               : compact ?
-                "rounded-md border border-zinc-600 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-200 hover:bg-zinc-800"
+                "min-h-9 min-w-9 rounded-md border border-zinc-600 bg-zinc-800 px-2.5 py-1 text-xs text-zinc-200 hover:bg-zinc-700"
               : "rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
             }
+            title={labelKey}
           >
-            {label}
+            {labels[k]}
           </button>
         ))}
       </div>
     );
   }
 
-  const fullscreenActionButtons = (
+  const fullscreenControlsPanel = (
     <div className="space-y-2">
+      {renderToolButtons(true)}
       {selectedToken ?
-        <div>
-          <label
-            htmlFor={`court-token-label-fs-${formId}`}
-            className="block text-xs font-medium text-zinc-400"
-          >
-            {selectedToken.kind === "PLAYER" ? "選中球員標籤" : "排球標籤"}
-          </label>
-          <input
-            id={`court-token-label-fs-${formId}`}
-            type="text"
-            maxLength={selectedToken.kind === "PLAYER" ? 8 : 4}
-            disabled={disabled}
-            value={selectedToken.kind === "PLAYER" ? selectedToken.label : (selectedToken.label ?? "")}
-            onChange={(e) => {
-              const sid = selectedId;
-              const maxL = selectedToken.kind === "PLAYER" ? 8 : 4;
-              const v = e.target.value.slice(0, maxL);
-              setData((d) => ({
-                ...d,
-                tokens: d.tokens.map((tok) => {
-                  if (tok.id !== sid) return tok;
-                  if (tok.kind === "PLAYER") return { ...tok, label: v };
-                  return { ...tok, label: v || undefined };
-                }),
-              }));
-            }}
-            className="mt-1 w-full max-w-sm rounded-md border border-zinc-600 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 disabled:opacity-50"
-            placeholder={selectedToken.kind === "PLAYER" ? "例如：7、舉…" : "球"}
-          />
-        </div>
+        <input
+          id={`court-token-label-fs-${formId}`}
+          type="text"
+          maxLength={selectedToken.kind === "PLAYER" ? 8 : 4}
+          disabled={disabled}
+          value={selectedToken.kind === "PLAYER" ? selectedToken.label : (selectedToken.label ?? "")}
+          onChange={(e) => {
+            const sid = selectedId;
+            const maxL = selectedToken.kind === "PLAYER" ? 8 : 4;
+            const v = e.target.value.slice(0, maxL);
+            setData((d) => ({
+              ...d,
+              tokens: d.tokens.map((tok) => {
+                if (tok.id !== sid) return tok;
+                if (tok.kind === "PLAYER") return { ...tok, label: v };
+                return { ...tok, label: v || undefined };
+              }),
+            }));
+          }}
+          className="h-9 w-full rounded-md border border-zinc-600 bg-zinc-800 px-2.5 text-sm text-zinc-100 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 disabled:opacity-50"
+          placeholder={selectedToken.kind === "PLAYER" ? "球員標籤" : "球"}
+          aria-label={selectedToken.kind === "PLAYER" ? "選中球員標籤" : "排球標籤"}
+        />
       : null}
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={disabled || !selectedId || tool !== "select"}
-          onClick={() => document.getElementById(`court-token-label-fs-${formId}`)?.focus()}
-          className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-100 hover:bg-zinc-800 disabled:opacity-50"
-        >
-          編輯標籤
-        </button>
+      <div className="flex flex-wrap gap-1.5">
         <button
           type="button"
           disabled={disabled || !selectedId || tool !== "select"}
           onClick={removeSelected}
-          className="rounded-md border border-red-800/60 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-red-300 hover:bg-zinc-800 disabled:opacity-50"
+          className="rounded-md border border-red-800/60 px-2.5 py-1.5 text-xs font-medium text-red-300 hover:bg-zinc-800 disabled:opacity-50"
         >
           刪除選中
         </button>
         <button
           type="button"
-          disabled={disabled || pending}
-          onClick={() => void save()}
-          className="rounded-md bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+          disabled={disabled || (data.tokens.length === 0 && data.lines.length === 0)}
+          onClick={clearAllMarkersAndLines}
+          className="rounded-md border border-red-900/50 px-2.5 py-1.5 text-xs font-medium text-red-400 hover:bg-zinc-800 disabled:opacity-50"
         >
-          {pending ? "儲存中…" : saveButtonLabel}
+          清除全部
         </button>
       </div>
     </div>
+  );
+
+  const fullscreenSaveButton = (
+    <button
+      type="button"
+      disabled={disabled || pending}
+      onClick={() => void save()}
+      className="rounded-full border border-emerald-700/80 bg-emerald-600/95 px-4 py-1.5 text-sm font-semibold text-white shadow-lg backdrop-blur-sm hover:bg-emerald-500 disabled:opacity-50"
+    >
+      {pending ? "儲存中…" : "儲存"}
+    </button>
   );
 
   return (
@@ -374,13 +375,13 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
 
       <CourtBoardFullscreenShell
         title={fullscreenTitle}
-        fullscreenTop={renderToolButtons(true)}
-        fullscreenBottom={fullscreenActionButtons}
+        fullscreenControls={fullscreenControlsPanel}
+        fullscreenQuickActions={fullscreenSaveButton}
       >
         <svg
           ref={svgRef}
           viewBox={COURT_VIEWBOX}
-          className="block h-full w-full touch-none"
+          className="block h-auto max-h-full w-full touch-none"
           onPointerDown={handleSvgPointerDown}
           role="img"
           aria-label={boardAriaLabel}

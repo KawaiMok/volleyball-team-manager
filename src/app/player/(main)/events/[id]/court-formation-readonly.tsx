@@ -13,7 +13,7 @@ const R_BALL = 7;
 /** 球員端：唯讀全場企位 SVG（註解：供一般／全屏共用）。 */
 function CourtReadonlySvg({ data }: { data: CourtSketchData }) {
   return (
-    <svg viewBox={COURT_VIEWBOX} className="block h-full w-full" role="img" aria-label="排球全場企位圖">
+    <svg viewBox={COURT_VIEWBOX} className="block h-auto max-h-full w-full" role="img" aria-label="排球全場企位圖">
       <CourtFullSurface variant="player" />
 
       <g style={{ pointerEvents: "none" }}>
