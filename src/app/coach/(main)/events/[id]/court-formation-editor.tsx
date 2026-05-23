@@ -10,6 +10,7 @@ import {
   courtNormToSvg,
   isOpponentHalfByLengthNorm,
 } from "@/components/court-formation/court-full-surface";
+import { CourtBoardFullscreenShell } from "@/components/court-formation/court-board-fullscreen-shell";
 import type { CourtSketchData, CourtSketchToken } from "@/lib/court-sketch-schema";
 import { COURT_SKETCH_VERSION, emptyCourtSketch } from "@/lib/court-sketch-schema";
 
@@ -258,19 +259,22 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
   const savedToastLabel = isLiveTactical ? "已儲存即時戰術版" : "已儲存企位圖";
   const saveButtonLabel = isLiveTactical ? "儲存戰術版" : "儲存企位圖";
   const boardAriaLabel = isLiveTactical ? "即時戰術排球場圖" : "排球全場企位圖";
+  const fullscreenTitle = isLiveTactical ? "即時戰術版" : "場上企位";
 
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-2">
-        <span className="self-center text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">工具</span>
-        {(
-          [
-            ["select", "選取／拖曳"],
-            ["player", "點擊放球員"],
-            ["ball", "點擊放排球"],
-            ["line", "畫線（點兩下）"],
-          ] as const
-        ).map(([k, label]) => (
+  const toolDefs = [
+    ["select", "選取／拖曳"],
+    ["player", "點擊放球員"],
+    ["ball", "點擊放排球"],
+    ["line", "畫線（點兩下）"],
+  ] as const;
+
+  function renderToolButtons(compact: boolean) {
+    return (
+      <div className={`flex flex-wrap gap-2 ${compact ? "" : "rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-950"}`}>
+        {!compact ?
+          <span className="self-center text-xs font-medium uppercase text-zinc-500 dark:text-zinc-400">工具</span>
+        : null}
+        {toolDefs.map(([k, label]) => (
           <button
             key={k}
             type="button"
@@ -282,24 +286,101 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
             }}
             className={
               tool === k ?
-                "rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white"
-              : "rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:bg-zinc-800"
+                compact ?
+                  "rounded-md bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-900"
+                : "rounded-md bg-zinc-900 px-2.5 py-1 text-xs font-medium text-white"
+              : compact ?
+                "rounded-md border border-zinc-600 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-200 hover:bg-zinc-800"
+              : "rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
             }
           >
             {label}
           </button>
         ))}
       </div>
+    );
+  }
+
+  const fullscreenActionButtons = (
+    <div className="space-y-2">
+      {selectedToken ?
+        <div>
+          <label
+            htmlFor={`court-token-label-fs-${formId}`}
+            className="block text-xs font-medium text-zinc-400"
+          >
+            {selectedToken.kind === "PLAYER" ? "選中球員標籤" : "排球標籤"}
+          </label>
+          <input
+            id={`court-token-label-fs-${formId}`}
+            type="text"
+            maxLength={selectedToken.kind === "PLAYER" ? 8 : 4}
+            disabled={disabled}
+            value={selectedToken.kind === "PLAYER" ? selectedToken.label : (selectedToken.label ?? "")}
+            onChange={(e) => {
+              const sid = selectedId;
+              const maxL = selectedToken.kind === "PLAYER" ? 8 : 4;
+              const v = e.target.value.slice(0, maxL);
+              setData((d) => ({
+                ...d,
+                tokens: d.tokens.map((tok) => {
+                  if (tok.id !== sid) return tok;
+                  if (tok.kind === "PLAYER") return { ...tok, label: v };
+                  return { ...tok, label: v || undefined };
+                }),
+              }));
+            }}
+            className="mt-1 w-full max-w-sm rounded-md border border-zinc-600 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 disabled:opacity-50"
+            placeholder={selectedToken.kind === "PLAYER" ? "例如：7、舉…" : "球"}
+          />
+        </div>
+      : null}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          disabled={disabled || !selectedId || tool !== "select"}
+          onClick={() => document.getElementById(`court-token-label-fs-${formId}`)?.focus()}
+          className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-zinc-100 hover:bg-zinc-800 disabled:opacity-50"
+        >
+          編輯標籤
+        </button>
+        <button
+          type="button"
+          disabled={disabled || !selectedId || tool !== "select"}
+          onClick={removeSelected}
+          className="rounded-md border border-red-800/60 bg-zinc-900 px-3 py-1.5 text-sm font-medium text-red-300 hover:bg-zinc-800 disabled:opacity-50"
+        >
+          刪除選中
+        </button>
+        <button
+          type="button"
+          disabled={disabled || pending}
+          onClick={() => void save()}
+          className="rounded-md bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+        >
+          {pending ? "儲存中…" : saveButtonLabel}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {renderToolButtons(false)}
 
       {tool === "line" && lineDraft ?
         <p className="text-xs text-amber-800">已點第一點，請再點一下完成線段（按「選取」可取消第一點）。</p>
       : null}
 
-      <div className="relative mx-auto max-w-md overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-inner touch-none md:max-w-lg">
+      <CourtBoardFullscreenShell
+        title={fullscreenTitle}
+        fullscreenTop={renderToolButtons(true)}
+        fullscreenBottom={fullscreenActionButtons}
+      >
         <svg
           ref={svgRef}
           viewBox={COURT_VIEWBOX}
-          className="block h-auto w-full touch-none"
+          className="block h-full w-full touch-none"
           onPointerDown={handleSvgPointerDown}
           role="img"
           aria-label={boardAriaLabel}
@@ -421,7 +502,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
             );
           })}
         </svg>
-      </div>
+      </CourtBoardFullscreenShell>
 
       {selectedToken ?
         <div>

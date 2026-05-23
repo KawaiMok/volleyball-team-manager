@@ -4,12 +4,87 @@ import {
   courtNormToSvg,
   isOpponentHalfByLengthNorm,
 } from "@/components/court-formation/court-full-surface";
+import { CourtBoardFullscreenShell } from "@/components/court-formation/court-board-fullscreen-shell";
 import type { CourtSketchData } from "@/lib/court-sketch-schema";
 
 const R_PLAYER = 8;
 const R_BALL = 7;
 
-/** 球員端：唯讀全場企位（註解：與教練端 v2 座標一致）。 */
+/** 球員端：唯讀全場企位 SVG（註解：供一般／全屏共用）。 */
+function CourtReadonlySvg({ data }: { data: CourtSketchData }) {
+  return (
+    <svg viewBox={COURT_VIEWBOX} className="block h-full w-full" role="img" aria-label="排球全場企位圖">
+      <CourtFullSurface variant="player" />
+
+      <g style={{ pointerEvents: "none" }}>
+        {data.lines.map((ln) => {
+          const a = courtNormToSvg(ln.x1, ln.y1);
+          const b = courtNormToSvg(ln.x2, ln.y2);
+          return (
+            <line
+              key={ln.id}
+              x1={a.x}
+              y1={a.y}
+              x2={b.x}
+              y2={b.y}
+              stroke="#e11d48"
+              strokeWidth={1.4}
+              strokeLinecap="round"
+            />
+          );
+        })}
+      </g>
+
+      {data.tokens.map((t) => {
+        const { x: cx, y: cy } = courtNormToSvg(t.x, t.y);
+        if (t.kind === "BALL") {
+          return (
+            <g key={t.id}>
+              <circle cx={cx} cy={cy} r={R_BALL} fill="#ea580c" stroke="#fff7ed" strokeWidth={1} />
+              <text
+                x={cx}
+                y={cy}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={6}
+                fill="white"
+                className="pointer-events-none select-none font-semibold"
+              >
+                {t.label?.trim() || "球"}
+              </text>
+            </g>
+          );
+        }
+        const opp = isOpponentHalfByLengthNorm(t.y);
+        return (
+          <g key={t.id}>
+            <circle
+              cx={cx}
+              cy={cy}
+              r={R_PLAYER}
+              fill={opp ? "#dc2626" : "#334155"}
+              stroke={opp ? "#fecaca" : "#e2e8f0"}
+              strokeWidth={1}
+            />
+            <text
+              x={cx}
+              y={cy}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={7}
+              fill="white"
+              className="pointer-events-none select-none font-semibold"
+            >
+              {t.label || "·"}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** 球員端：唯讀全場企位（註解：與教練端 v2 座標一致；支援橫向全屏）。 */
 export function CourtFormationReadonly({ data }: { data: CourtSketchData | null }) {
   if (!data) {
     return <p className="text-sm text-slate-600 dark:text-slate-400">教練尚未設定企位圖。</p>;
@@ -27,79 +102,12 @@ export function CourtFormationReadonly({ data }: { data: CourtSketchData | null 
   return (
     <div className="space-y-3">
       {hasTokens || hasLines ?
-        <div className="relative mx-auto max-w-md overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-zinc-900 shadow-inner md:max-w-lg">
-          <svg viewBox={COURT_VIEWBOX} className="block h-auto w-full" role="img" aria-label="排球全場企位圖">
-            <CourtFullSurface variant="player" />
-
-            <g style={{ pointerEvents: "none" }}>
-              {data.lines.map((ln) => {
-                const a = courtNormToSvg(ln.x1, ln.y1);
-                const b = courtNormToSvg(ln.x2, ln.y2);
-                return (
-                  <line
-                    key={ln.id}
-                    x1={a.x}
-                    y1={a.y}
-                    x2={b.x}
-                    y2={b.y}
-                    stroke="#e11d48"
-                    strokeWidth={1.4}
-                    strokeLinecap="round"
-                  />
-                );
-              })}
-            </g>
-
-            {data.tokens.map((t) => {
-              const { x: cx, y: cy } = courtNormToSvg(t.x, t.y);
-              if (t.kind === "BALL") {
-                return (
-                  <g key={t.id}>
-                    <circle cx={cx} cy={cy} r={R_BALL} fill="#ea580c" stroke="#fff7ed" strokeWidth={1} />
-                    <text
-                      x={cx}
-                      y={cy}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize={6}
-                      fill="white"
-                      className="pointer-events-none select-none font-semibold"
-                    >
-                      {t.label?.trim() || "球"}
-                    </text>
-                  </g>
-                );
-              }
-              const opp = isOpponentHalfByLengthNorm(t.y);
-              return (
-                <g key={t.id}>
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={R_PLAYER}
-                    fill={opp ? "#dc2626" : "#334155"}
-                    stroke={opp ? "#fecaca" : "#e2e8f0"}
-                    strokeWidth={1}
-                  />
-                  <text
-                    x={cx}
-                    y={cy}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize={7}
-                    fill="white"
-                    className="pointer-events-none select-none font-semibold"
-                  >
-                    {t.label || "·"}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
-        </div>
+        <CourtBoardFullscreenShell title="場上企位">
+          <CourtReadonlySvg data={data} />
+        </CourtBoardFullscreenShell>
       : null}
       {hasNotes ?
-        <p className="whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm text-slate-800 dark:text-slate-200">
+        <p className="whitespace-pre-wrap rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
           {notesTrim}
         </p>
       : null}
