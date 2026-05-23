@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 
 import type { TeamMember, User } from "@/generated/prisma/client";
 import { MemberStatus } from "@/generated/prisma/client";
+import { isDebugAuthEnabled } from "@/lib/debug-auth-access";
 import { getPrisma } from "@/lib/prisma";
 
 /** 目前作用中隊伍（註解：多隊時由 UI 寫入，供 getTeamMember 讀取）。 */
@@ -13,7 +14,7 @@ const ACTIVE_TEAM_COOKIE = ACTIVE_TEAM_COOKIE_NAME;
  * 開發用：仍可用 header / debug cookie（註解：設 ALLOW_DEBUG_AUTH=true 時啟用）。
  */
 async function getDebugTeamMemberFallback(): Promise<TeamMember | null> {
-  if (process.env.ALLOW_DEBUG_AUTH !== "true") return null;
+  if (!isDebugAuthEnabled()) return null;
   const h = await headers();
   const c = await cookies();
   const userId = h.get("x-debug-user-id") ?? c.get("debug-user-id")?.value ?? undefined;

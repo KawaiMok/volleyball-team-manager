@@ -1,6 +1,17 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
+import { isDebugAuthEnabled } from "@/lib/debug-auth-access";
+
+/** 不需 Clerk session 的 API（註解：其餘 /api/* 在 middleware 層強制 auth.protect）。 */
+const PUBLIC_API_PATHS = new Set(["/api/bootstrap"]);
+
+function isPublicApiPath(path: string): boolean {
+  if (PUBLIC_API_PATHS.has(path)) return true;
+  if (path.startsWith("/api/debug/") && isDebugAuthEnabled()) return true;
+  return false;
+}
+
 /**
  * Clerk session 需套用在大部分路由，`auth()` 才能在 API／Server Component 讀取（註解：`/coach`、`/player`、`/onboarding` 強制登入，`/coach/login` 除外）。
  */
@@ -16,6 +27,9 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect();
   }
   if (path === "/onboarding" || path.startsWith("/onboarding/")) {
+    await auth.protect();
+  }
+  if (path.startsWith("/api/") && !isPublicApiPath(path)) {
     await auth.protect();
   }
   return NextResponse.next();

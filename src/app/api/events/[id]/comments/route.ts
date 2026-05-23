@@ -18,8 +18,12 @@ const postSchema = z.object({
   content: z.string().min(1).max(8000).trim(),
 });
 
-const commentInclude = {
+const commentIncludeForCoach = {
   author: { include: { user: { select: { name: true, email: true } } } },
+} as const;
+
+const commentIncludeForPlayer = {
+  author: { include: { user: { select: { name: true } } } },
 } as const;
 
 function serializeComment(
@@ -32,7 +36,7 @@ function serializeComment(
     content: string;
     createdAt: Date;
     updatedAt: Date;
-    author: { user: { name: string | null; email: string | null } };
+    author: { user: { name: string | null; email?: string | null } };
   },
 ) {
   return {
@@ -81,7 +85,9 @@ export async function GET(_req: Request, ctx: Ctx) {
 
   const rows = await prisma.comment.findMany({
     where: { eventId },
-    include: commentInclude,
+    include: canReadEventCommentsAsCoachSide(member) ?
+      commentIncludeForCoach
+    : commentIncludeForPlayer,
     orderBy: { createdAt: "asc" },
   });
 
@@ -139,7 +145,7 @@ export async function POST(req: Request, ctx: Ctx) {
       type: body.type,
       content: body.content,
     },
-    include: commentInclude,
+    include: commentIncludeForCoach,
   });
 
   const authorName =

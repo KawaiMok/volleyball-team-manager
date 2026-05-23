@@ -40,6 +40,17 @@ export async function PATCH(req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "找不到事件" }, { status: 404 });
   }
 
+  const memberIds = [...new Set(body.updates.map((u) => u.memberId))];
+  const validAttendance = await prisma.attendance.findMany({
+    where: { eventId, memberId: { in: memberIds } },
+    select: { memberId: true },
+  });
+  const validMemberIds = new Set(validAttendance.map((row) => row.memberId));
+  const invalidMemberIds = memberIds.filter((id) => !validMemberIds.has(id));
+  if (invalidMemberIds.length > 0) {
+    return NextResponse.json({ error: "含有不屬於此事件的隊員" }, { status: 400 });
+  }
+
   const now = new Date();
   await prisma.$transaction(
     body.updates.map((u) =>

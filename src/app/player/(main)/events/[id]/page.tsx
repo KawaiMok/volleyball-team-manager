@@ -109,13 +109,13 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
     }),
     prisma.comment.findMany({
       where: { eventId: event.id },
-      include: { author: { include: { user: { select: { name: true, email: true } } } } },
+      include: { author: { include: { user: { select: { name: true } } } } },
       orderBy: { createdAt: "asc" },
     }),
     afterEnd ?
       prisma.eventPlayerReview.findUnique({
         where: { eventId_memberId: { eventId: event.id, memberId: member.id } },
-        include: { author: { include: { user: { select: { name: true, email: true } } } } },
+        include: { author: { include: { user: { select: { name: true } } } } },
       })
     : Promise.resolve(null),
   ]);
@@ -136,7 +136,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
     createdAt: c.createdAt.toISOString(),
     updatedAt: c.updatedAt.toISOString(),
     authorMemberId: c.authorMemberId,
-    authorName: c.author.user?.name?.trim() || c.author.user?.email || "成員",
+    authorName: c.author.user?.name?.trim() || "成員",
   }));
 
   /** 結束後可填寫；若已提交則 24 小時內可改（註解：與 API 一致）。 */
@@ -151,11 +151,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
     afterEnd && coachReview ?
       <PlayerCoachReviewSection
         content={coachReview.content}
-        authorName={
-          coachReview.author.user?.name?.trim() ||
-          coachReview.author.user?.email?.trim() ||
-          "教練"
-        }
+        authorName={coachReview.author.user?.name?.trim() || "教練"}
         updatedAt={coachReview.updatedAt}
       />
     : null;

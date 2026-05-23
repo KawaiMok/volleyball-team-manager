@@ -1,5 +1,6 @@
 import { EventStatus, EventType } from "@/generated/prisma/client";
 import { syncEventParticipantsToMemberIds } from "@/lib/event-participant-sync";
+import { eventDetailInclude } from "@/lib/event-response-sanitize";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { isMemberParticipantRuleFullyValid, resolveParticipantMemberIds } from "@/lib/participant-rule";
 import type { ParticipantRule } from "@/lib/participant-rule-types";
@@ -34,21 +35,17 @@ export async function GET(_req: Request, ctx: Ctx) {
   }
 
   const prisma = getPrisma();
+  const coachSide = isCoachLike(member) || isStaff(member);
   const event = await prisma.event.findFirst({
     where: { id, teamId: member.teamId },
-    include: {
-      participants: { include: { member: { include: { user: true } } } },
-      attendance: { include: { member: { include: { user: true } } } },
-      trainingPlan: { include: { blocks: { orderBy: { order: "asc" } } } },
-      feedback: true,
-    },
+    include: eventDetailInclude(coachSide),
   });
 
   if (!event) {
     return NextResponse.json({ error: "找不到事件" }, { status: 404 });
   }
 
-  if (isCoachLike(member) || isStaff(member)) {
+  if (coachSide) {
     return NextResponse.json(event);
   }
 
