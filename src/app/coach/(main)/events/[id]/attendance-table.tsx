@@ -48,12 +48,30 @@ export function AttendanceTable({ eventId, rows, isPublished }: Props) {
     [rows],
   );
 
+  const initialChecked = useMemo(
+    () =>
+      rows.reduce<Record<string, boolean>>((acc, r) => {
+        acc[r.memberId] = r.checkedIn;
+        return acc;
+      }, {}),
+    [rows],
+  );
+
   const updatesPayload = useMemo(
-    () => rows.map((r) => ({ memberId: r.memberId, checkedIn: local[r.memberId] ?? false })),
-    [rows, local],
+    () =>
+      rows
+        .filter(
+          (r) => (local[r.memberId] ?? false) !== (initialChecked[r.memberId] ?? false),
+        )
+        .map((r) => ({ memberId: r.memberId, checkedIn: local[r.memberId] ?? false })),
+    [rows, local, initialChecked],
   );
 
   async function save() {
+    if (updatesPayload.length === 0) {
+      showSuccess("沒有變更");
+      return;
+    }
     setPending(true);
     const res = await fetch(`/api/events/${eventId}/check-in`, {
       method: "PATCH",

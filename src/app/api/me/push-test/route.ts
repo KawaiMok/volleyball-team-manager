@@ -3,7 +3,7 @@ import { buildPushPayload } from "@/lib/push/kinds";
 import { recordUserNotification } from "@/lib/push/record-notification";
 import { sendPushToUserDevices } from "@/lib/push/send";
 import { isPushTestAccessEnabled } from "@/lib/push-test-access";
-import { getOrSyncPrismaUserFromClerk, getTeamMember } from "@/lib/session";
+import { getTeamMember } from "@/lib/session";
 import { NextResponse } from "next/server";
 
 /**
@@ -14,8 +14,8 @@ export async function POST() {
     return NextResponse.json({ error: "推播測試未開放（正式環境已關閉）" }, { status: 403 });
   }
 
-  const user = await getOrSyncPrismaUserFromClerk();
-  if (!user) {
+  const member = await getTeamMember();
+  if (!member) {
     return NextResponse.json({ error: "未授權" }, { status: 401 });
   }
 
@@ -26,13 +26,12 @@ export async function POST() {
     );
   }
 
-  const member = await getTeamMember();
   const payload = buildPushPayload({
     kind: "push_test",
-    teamId: member?.teamId ?? "unknown",
+    teamId: member.teamId,
   });
-  await recordUserNotification(user.id, payload);
-  const result = await sendPushToUserDevices(user.id, payload);
+  await recordUserNotification(member.userId, payload);
+  const result = await sendPushToUserDevices(member.userId, payload);
 
   return NextResponse.json(result);
 }

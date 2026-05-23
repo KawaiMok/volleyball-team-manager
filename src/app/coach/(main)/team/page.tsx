@@ -4,6 +4,7 @@ import { CoachTeamIdentitySettingsForm } from "@/app/coach/(main)/team/coach-tea
 import { CoachTeamRolesEmailPanel } from "@/app/coach/(main)/team/coach-team-roles-email-panel";
 import { TeamAttendanceStats } from "@/app/coach/(main)/team/team-attendance-stats";
 import { TeamPageMembers } from "@/app/coach/(main)/team/team-page-members";
+import { computeTeamAttendanceStats } from "@/lib/attendance-stats";
 import { mapTeamMemberToRosterRow } from "@/lib/team-roster-map";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
 import { TeamRole } from "@/generated/prisma/client";
@@ -18,7 +19,7 @@ export default async function CoachTeamPage() {
   if (!member) return null;
 
   const prisma = getPrisma();
-  const [teamRow, rows] = await Promise.all([
+  const [teamRow, rows, initialAttendanceStats] = await Promise.all([
     prisma.team.findUnique({
       where: { id: member.teamId },
       select: { name: true, season: true, groupConfig: true, notificationSettings: true },
@@ -30,6 +31,7 @@ export default async function CoachTeamPage() {
       },
       orderBy: [{ role: "asc" }, { createdAt: "asc" }],
     }),
+    computeTeamAttendanceStats(member.teamId, "month"),
   ]);
   const squads = parseGroupConfig(teamRow?.groupConfig ?? null);
   const notificationPrefs = parseTeamNotificationSettings(teamRow?.notificationSettings ?? null);
@@ -73,7 +75,10 @@ export default async function CoachTeamPage() {
         </div>
       </section>
 
-      <TeamAttendanceStats key={`${teamSettingsKey}-attendance`} />
+      <TeamAttendanceStats
+        key={`${teamSettingsKey}-attendance`}
+        initialData={initialAttendanceStats}
+      />
 
       <TeamPageMembers
         key={teamSettingsKey}

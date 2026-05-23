@@ -80,6 +80,14 @@ enum PushPlatform {
   ANDROID
 }
 
+/** 每隊 AI 每小時呼叫計數（註解：serverless 多 instance 共用限流窗口）。 */
+model AiRateLimitWindow {
+  teamId      String   @id
+  windowStart DateTime
+  count       Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
 model User {
   id          String   @id @default(cuid())
   clerkUserId String?  @unique
@@ -181,6 +189,7 @@ model TeamMember {
 
   @@unique([teamId, userId])
   @@unique([teamId, jerseyNumber])
+  @@index([userId, status])
 }
 
 model Event {
@@ -215,6 +224,9 @@ model Event {
   fileAssets   FileAsset[]
   /** 教練對參與球員的私評（註解：僅教練與該球員可見）。 */
   playerReviews EventPlayerReview[]
+
+  @@index([teamId, startsAt])
+  @@index([teamId, status, startsAt])
 }
 
 model EventParticipant {
@@ -247,6 +259,7 @@ model Attendance {
   checkedInBy TeamMember? @relation("AttendanceCheckedInBy", fields: [checkedInByMemberId], references: [id], onDelete: SetNull)
 
   @@unique([eventId, memberId])
+  @@index([eventId, rsvpStatus])
 }
 
 model TrainingPlan {
@@ -303,6 +316,7 @@ model Feedback {
   member TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, memberId])
+  @@index([memberId, submittedAt(sort: Desc)])
 }
 
 /** 教練對單一場次、單一球員的私評（註解：非公開留言；僅教練端與該球員可讀）。 */
@@ -335,6 +349,8 @@ model Comment {
   team   Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
   event  Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
   author TeamMember @relation("CommentAuthor", fields: [authorMemberId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, createdAt])
 }
 
 model FileAsset {
@@ -353,4 +369,6 @@ model FileAsset {
   team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   event Event? @relation(fields: [eventId], references: [id], onDelete: Cascade)
   uploadedBy TeamMember @relation("FileAssetUploadedBy", fields: [uploadedByMemberId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
 }

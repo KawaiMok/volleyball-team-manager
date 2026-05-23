@@ -75,7 +75,7 @@ export function AppBottomNav({ surface }: Props) {
     const onUpdate = () => void refreshUnread();
     window.addEventListener("notifications-updated", onUpdate);
     return () => window.removeEventListener("notifications-updated", onUpdate);
-  }, [native, refreshUnread, pathname]);
+  }, [native, refreshUnread]);
 
   if (!native) return null;
 

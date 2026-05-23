@@ -21,6 +21,15 @@ const createBodySchema = z.object({
   participantRule: participantRuleSchema,
 });
 
+const COACH_EVENTS_LIST_MAX = 500;
+
+function parseListLimit(raw: string | null): number {
+  if (raw == null || raw.trim() === "") return COACH_EVENTS_LIST_MAX;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 1) return COACH_EVENTS_LIST_MAX;
+  return Math.min(n, COACH_EVENTS_LIST_MAX);
+}
+
 /** 列出隊伍事件（註解：教練看全部；球員只看已發布且自己有參與）。 */
 export async function GET(req: Request) {
   const member = await getDebugTeamMember();
@@ -36,9 +45,11 @@ export async function GET(req: Request) {
 
   const prisma = getPrisma();
   if (isCoachLike(member)) {
+    const limit = parseListLimit(url.searchParams.get("limit"));
     const events = await prisma.event.findMany({
       where: { teamId },
       orderBy: { startsAt: "asc" },
+      take: limit,
       include: {
         _count: { select: { participants: true, attendance: true } },
       },
@@ -46,6 +57,7 @@ export async function GET(req: Request) {
     return NextResponse.json(events);
   }
 
+  const playerLimit = parseListLimit(url.searchParams.get("limit"));
   const events = await prisma.event.findMany({
     where: {
       teamId,
@@ -53,6 +65,7 @@ export async function GET(req: Request) {
       participants: { some: { memberId: member.id } },
     },
     orderBy: { startsAt: "asc" },
+    take: playerLimit,
     include: {
       attendance: {
         where: { memberId: member.id },

@@ -47,6 +47,9 @@ export default async function CoachDashboardPage() {
       },
       orderBy: { startsAt: "asc" },
       take: 24,
+      include: {
+        _count: { select: { participants: true } },
+      },
     }),
     prisma.event.count({
       where: { teamId: member.teamId, status: EventStatus.DRAFT },
@@ -55,32 +58,23 @@ export default async function CoachDashboardPage() {
 
   const eventIds = upcoming.map((e) => e.id);
 
-  const [unansweredGroups, participantCounts] =
+  const unansweredGroups =
     eventIds.length === 0 ?
-      [[], []]
-    : await Promise.all([
-        prisma.attendance.groupBy({
-          by: ["eventId"],
-          where: {
-            eventId: { in: eventIds },
-            rsvpStatus: RsvpStatus.UNANSWERED,
-          },
-          _count: { _all: true },
-        }),
-        prisma.event.findMany({
-          where: { id: { in: eventIds } },
-          select: {
-            id: true,
-            _count: { select: { participants: true } },
-          },
-        }),
-      ]);
+      []
+    : await prisma.attendance.groupBy({
+        by: ["eventId"],
+        where: {
+          eventId: { in: eventIds },
+          rsvpStatus: RsvpStatus.UNANSWERED,
+        },
+        _count: { _all: true },
+      });
 
   const unansweredByEvent = Object.fromEntries(
     unansweredGroups.map((g) => [g.eventId, g._count._all]),
   );
   const participantsByEvent = Object.fromEntries(
-    participantCounts.map((e) => [e.id, e._count.participants]),
+    upcoming.map((e) => [e.id, e._count.participants]),
   );
 
   /** 已發布且至少一人未回覆的場次（註解：教練追蹤用）。 */

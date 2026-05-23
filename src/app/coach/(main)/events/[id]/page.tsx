@@ -13,9 +13,10 @@ import { CourtFormationEditor } from "@/app/coach/(main)/events/[id]/court-forma
 import { TrainingPlanPanel } from "@/app/coach/(main)/events/[id]/training-plan-panel";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { canManageEventCommentsAsStaff } from "@/lib/event-comment-access";
-import { inferParticipantRule } from "@/lib/infer-participant-rule";
+import { inferParticipantRuleFromRoster } from "@/lib/infer-participant-rule";
 import { isEventEnded } from "@/lib/event-timing";
 import { isPlayerReviewSubjectRole } from "@/lib/player-review-access";
+import { coachMemberUserSelect } from "@/lib/event-response-sanitize";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
 import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
 import {
@@ -70,7 +71,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
       participants: { select: { memberId: true } },
       attendance: {
         include: {
-          member: { include: { user: true } },
+          member: { include: { user: coachMemberUserSelect } },
         },
       },
       trainingPlan: {
@@ -113,11 +114,11 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
   const eventEnded = isEventEnded(event.endsAt);
   const canEditEvent = event.status !== EventStatus.CANCELLED && !eventEnded;
 
-  const [feedbackRows, mediaLinks, commentRows, playerReviewRows] = await Promise.all([
+  const [feedbackRows, mediaLinks, commentRows, playerReviewRows, teamRow] = await Promise.all([
     prisma.feedback.findMany({
       where: { eventId: event.id },
       include: {
-        member: { include: { user: true } },
+        member: { include: { user: coachMemberUserSelect } },
       },
       orderBy: { submittedAt: "desc" },
     }),
@@ -142,25 +143,28 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         },
       })
     : Promise.resolve([]),
+    prisma.team.findUnique({
+      where: { id: member.teamId },
+      select: { groupConfig: true },
+    }),
   ]);
 
   const participantMemberIds = event.participants.map((p) => p.memberId);
   const participantRuleKey = [...participantMemberIds].sort().join("|");
 
-  const teamRow = await prisma.team.findUnique({
-    where: { id: member.teamId },
-    select: { groupConfig: true },
-  });
   const squads = parseGroupConfig(teamRow?.groupConfig ?? null);
 
-  const [rosterRows, initialParticipantRuleResolved] = await Promise.all([
-    prisma.teamMember.findMany({
-      where: { teamId: member.teamId, status: MemberStatus.ACTIVE },
-      include: { user: { select: { name: true, email: true } } },
-      orderBy: [{ role: "asc" }, { createdAt: "asc" }],
-    }),
-    inferParticipantRule(member.teamId, participantMemberIds, squads),
-  ]);
+  const rosterRows = await prisma.teamMember.findMany({
+    where: { teamId: member.teamId, status: MemberStatus.ACTIVE },
+    include: { user: coachMemberUserSelect },
+    orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+  });
+
+  const initialParticipantRuleResolved = inferParticipantRuleFromRoster(
+    rosterRows.map((r) => ({ id: r.id, squad: r.squad })),
+    participantMemberIds,
+    squads,
+  );
 
   const roster = rosterRows.map((r) => ({
     id: r.id,

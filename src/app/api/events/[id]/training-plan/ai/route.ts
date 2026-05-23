@@ -76,7 +76,7 @@ export async function POST(req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "請求內容格式錯誤" }, { status: 400 });
   }
 
-  const limit = checkAiRateLimit(member.teamId);
+  const limit = await checkAiRateLimit(member.teamId);
   if (!limit.ok) {
     return NextResponse.json(
       { error: "AI 呼叫過於頻繁", retryAfterSec: limit.retryAfterSec },

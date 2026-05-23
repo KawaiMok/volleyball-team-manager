@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 
-import type { AttendanceStatsPeriod, MemberAttendanceStatRow } from "@/lib/attendance-stats";
+import type {
+  AttendanceStatsPeriod,
+  MemberAttendanceStatRow,
+} from "@/lib/attendance-stats";
 import { InlineSpinner } from "@/components/inline-spinner";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
 
-type ApiPayload = {
+export type TeamAttendanceStatsPayload = {
   bounds: {
     period: AttendanceStatsPeriod;
     label: string;
@@ -30,12 +33,18 @@ function rateBarClass(rate: number | null): string {
   return "bg-red-500";
 }
 
+type Props = {
+  initialPeriod?: AttendanceStatsPeriod;
+  /** 伺服端預載的預設區間資料（註解：避免 mount 後 client fetch 瀑布）。 */
+  initialData?: TeamAttendanceStatsPayload;
+};
+
 /** 教練端：球員出席率（週／月／年）（註解：資料來自點名 checkedIn）。 */
-export function TeamAttendanceStats({ initialPeriod = "month" }: { initialPeriod?: AttendanceStatsPeriod }) {
+export function TeamAttendanceStats({ initialPeriod = "month", initialData }: Props) {
   const [period, setPeriod] = useState<AttendanceStatsPeriod>(initialPeriod);
   const [anchorYmd, setAnchorYmd] = useState<string | undefined>(undefined);
-  const [data, setData] = useState<ApiPayload | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<TeamAttendanceStatsPayload | null>(initialData ?? null);
+  const [loading, setLoading] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
 
@@ -45,7 +54,7 @@ export function TeamAttendanceStats({ initialPeriod = "month" }: { initialPeriod
       const q = new URLSearchParams({ period: p });
       if (date) q.set("date", date);
       const res = await fetch(`/api/team/attendance-stats?${q.toString()}`, { credentials: "include" });
-      const json = (await res.json()) as ApiPayload & { error?: string };
+      const json = (await res.json()) as TeamAttendanceStatsPayload & { error?: string };
       if (res.ok && json.bounds) {
         setData(json);
       }
@@ -56,10 +65,15 @@ export function TeamAttendanceStats({ initialPeriod = "month" }: { initialPeriod
   }, []);
 
   useEffect(() => {
+    const isDefaultView = period === initialPeriod && anchorYmd === undefined;
+    if (initialData && isDefaultView) {
+      setData(initialData);
+      return;
+    }
     startTransition(() => {
       void load(period, anchorYmd);
     });
-  }, [period, anchorYmd, load, startTransition]);
+  }, [period, anchorYmd, load, startTransition, initialData, initialPeriod]);
 
   function requestChange(nextPeriod: AttendanceStatsPeriod, nextAnchor?: string, key?: string) {
     setPendingKey(key ?? null);
@@ -112,7 +126,7 @@ export function TeamAttendanceStats({ initialPeriod = "month" }: { initialPeriod
             onClick={() => requestChange(period, data.bounds.prevAnchorYmd, "nav:prev")}
             className="inline-flex min-h-[2rem] min-w-[4rem] items-center justify-center rounded-md border border-zinc-200 px-2 py-1 text-sm hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-950"
           >
-            {busy && pendingKey === `nav:prev` ? <InlineSpinner /> : "← 上一段"}
+            {busy && pendingKey === "nav:prev" ? <InlineSpinner /> : "← 上一段"}
           </button>
           <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{data.bounds.label}</span>
           <button
@@ -121,7 +135,7 @@ export function TeamAttendanceStats({ initialPeriod = "month" }: { initialPeriod
             onClick={() => requestChange(period, data.bounds.nextAnchorYmd, "nav:next")}
             className="inline-flex min-h-[2rem] min-w-[4rem] items-center justify-center rounded-md border border-zinc-200 px-2 py-1 text-sm hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-950"
           >
-            {busy && pendingKey === `nav:next` ? <InlineSpinner /> : "下一段 →"}
+            {busy && pendingKey === "nav:next" ? <InlineSpinner /> : "下一段 →"}
           </button>
           <span className="w-full text-xs text-zinc-500 dark:text-zinc-400 sm:w-auto">
             區間內已結束場次：{data.totalEvents} 場
