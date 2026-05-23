@@ -1,5 +1,6 @@
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { getPrisma } from "@/lib/prisma";
+import { notifyCoachPlayerReview } from "@/lib/push/notify-events";
 import {
   canManagePlayerReviews,
   isPlayerReviewSubjectRole,
@@ -32,7 +33,7 @@ export async function PUT(req: Request, ctx: Ctx) {
   const prisma = getPrisma();
   const event = await prisma.event.findFirst({
     where: { id: eventId, teamId: member.teamId },
-    select: { id: true, status: true, endsAt: true },
+    select: { id: true, status: true, endsAt: true, title: true },
   });
   if (!event) {
     return NextResponse.json({ error: "找不到事件" }, { status: 404 });
@@ -44,7 +45,7 @@ export async function PUT(req: Request, ctx: Ctx) {
 
   const participant = await prisma.eventParticipant.findUnique({
     where: { eventId_memberId: { eventId, memberId: targetMemberId } },
-    include: { member: { select: { role: true } } },
+    include: { member: { select: { role: true, userId: true } } },
   });
   if (!participant) {
     return NextResponse.json({ error: "此隊員不在本場參與名單" }, { status: 404 });
@@ -73,6 +74,22 @@ export async function PUT(req: Request, ctx: Ctx) {
       content,
       authorMemberId: member.id,
     },
+  });
+
+  const authorUser = await prisma.user.findUnique({
+    where: { id: member.userId },
+    select: { name: true, email: true },
+  });
+  const authorName = authorUser?.name?.trim() || authorUser?.email?.trim() || "教練";
+
+  notifyCoachPlayerReview({
+    teamId: member.teamId,
+    eventId,
+    eventTitle: event.title,
+    playerUserId: participant.member.userId,
+    authorUserId: member.userId,
+    authorName,
+    preview: content,
   });
 
   return NextResponse.json({

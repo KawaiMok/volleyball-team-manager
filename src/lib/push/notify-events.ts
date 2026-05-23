@@ -140,3 +140,27 @@ export function notifyRsvpReminder(args: {
     return notifyUserIds(args.userIds, payload);
   });
 }
+
+/** 教練對球員私評 → 該球員（註解：不含撰寫者本人）。 */
+export function notifyCoachPlayerReview(args: {
+  teamId: string;
+  eventId: string;
+  eventTitle: string;
+  playerUserId: string;
+  authorUserId: string;
+  authorName: string;
+  preview: string;
+}) {
+  dispatchPush(async () => {
+    const payload = buildPushPayload({
+      kind: "coach_player_review",
+      teamId: args.teamId,
+      eventId: args.eventId,
+      eventTitle: args.eventTitle,
+      authorName: args.authorName,
+      preview: args.preview,
+      path: `/player/events/${args.eventId}`,
+    });
+    return notifyUserIds([args.playerUserId], payload, { excludeUserId: args.authorUserId });
+  });
+}

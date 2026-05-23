@@ -8,6 +8,7 @@ export type PushKind =
   | "event_updated"
   | "event_announcement"
   | "event_comment"
+  | "coach_player_review"
   | "rsvp_updated"
   | "rsvp_reminder";
 
@@ -80,6 +81,14 @@ export function buildPushPayload(input: PushPayloadInput): PushNotificationPaylo
           `${input.authorName ?? "成員"}：${clip(input.preview)}`
         : `${input.authorName ?? "成員"} 留了言`,
         data: { ...data, commentKind: "comment" },
+      };
+    case "coach_player_review":
+      return {
+        title: input.eventTitle ? `教練評語：${input.eventTitle}` : "教練評語",
+        body: input.preview ?
+          `${input.authorName ?? "教練"}：${clip(input.preview)}`
+        : `${input.authorName ?? "教練"} 給你留了評語`,
+        data: { ...data, commentKind: "coach_review" },
       };
     case "rsvp_updated":
       return {

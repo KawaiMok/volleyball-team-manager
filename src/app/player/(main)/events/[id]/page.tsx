@@ -153,6 +153,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         content={coachReview.content}
         authorName={coachReview.author.user?.name?.trim() || "教練"}
         updatedAt={coachReview.updatedAt}
+        eventTitle={event.title}
       />
     : null;
 
@@ -206,7 +207,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         {event.description ?
           <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{event.description}</p>
         : null}
-        {rsvpDeadlineAt ?
+        {!afterEnd && rsvpDeadlineAt ?
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
             出席意願截止：
             {formatDateTimeZh(rsvpDeadlineAt, {
@@ -220,36 +221,37 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         : null}
       </div>
 
-      {afterEnd ?
+      {coachReviewBlock}
+
+      {afterEnd ? feedbackBlock : null}
+
+      {!afterEnd ?
         <>
-          {feedbackBlock}
-          {coachReviewBlock}
+          <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/80 p-4">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">我的狀態</h2>
+            <dl className="mt-2 grid gap-1 text-sm text-slate-700 dark:text-slate-300">
+              <div>
+                <dt className="inline text-slate-500 dark:text-slate-400">出席意願：</dt>
+                <dd className="inline">
+                  {rsvp === "UNANSWERED" ? "尚未回覆" : rsvp === "YES" ? "會到" : rsvp === "NO" ? "不到" : "不一定"}
+                </dd>
+              </div>
+              <div>
+                <dt className="inline text-slate-500 dark:text-slate-400">點名：</dt>
+                <dd className="inline">{att?.checkedIn ? "已簽到" : "未簽到／尚未點名"}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <PlayerRsvpForm
+            eventId={event.id}
+            initialRsvp={rsvp}
+            initialReason={att?.rsvpReason ?? null}
+            disabled={rsvpLocked}
+            disabledReason={rsvpLocked ? "deadline" : undefined}
+          />
         </>
       : null}
-
-      <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/80 p-4">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">我的狀態</h2>
-        <dl className="mt-2 grid gap-1 text-sm text-slate-700 dark:text-slate-300">
-          <div>
-            <dt className="inline text-slate-500 dark:text-slate-400">出席意願：</dt>
-            <dd className="inline">
-              {rsvp === "UNANSWERED" ? "尚未回覆" : rsvp === "YES" ? "會到" : rsvp === "NO" ? "不到" : "不一定"}
-            </dd>
-          </div>
-          <div>
-            <dt className="inline text-slate-500 dark:text-slate-400">點名：</dt>
-            <dd className="inline">{att?.checkedIn ? "已簽到" : "未簽到／尚未點名"}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <PlayerRsvpForm
-        eventId={event.id}
-        initialRsvp={rsvp}
-        initialReason={att?.rsvpReason ?? null}
-        disabled={rsvpLocked}
-        disabledReason={rsvpLocked ? "deadline" : undefined}
-      />
 
       {event.type === EventType.TRAINING && event.trainingPlan ?
         <section className="space-y-3">
