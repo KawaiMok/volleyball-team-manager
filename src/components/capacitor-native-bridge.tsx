@@ -3,11 +3,9 @@
 import { App } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
 import { StatusBar, Style } from "@capacitor/status-bar";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { CIYOU } from "@/lib/ciyou-colors";
-import { setNavDirection } from "@/hooks/use-navigation-direction";
 import { hapticLight } from "@/lib/haptics";
 import { useToast } from "@/components/toast-provider";
 
@@ -33,7 +31,6 @@ const EXIT_CONFIRM_MS = 2000;
  * Capacitor 原生橋接（註解：StatusBar、Android 返回鍵、主題同步）。
  */
 export function CapacitorNativeBridge() {
-  const router = useRouter();
   const { showHint } = useToast();
   const lastExitPromptAtRef = useRef(0);
 
@@ -47,14 +44,8 @@ export function CapacitorNativeBridge() {
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
-    const backSub = App.addListener("backButton", ({ canGoBack }) => {
-      if (canGoBack) {
-        lastExitPromptAtRef.current = 0;
-        setNavDirection("back");
-        router.back();
-        return;
-      }
-
+    /** Android 返回鍵：不瀏覽上一頁，改為雙擊退出 App（註解：與 Web history 脫鉤）。 */
+    const backSub = App.addListener("backButton", () => {
       const now = Date.now();
       if (now - lastExitPromptAtRef.current < EXIT_CONFIRM_MS) {
         lastExitPromptAtRef.current = 0;
@@ -71,7 +62,7 @@ export function CapacitorNativeBridge() {
       observer.disconnect();
       void backSub.then((h) => h.remove());
     };
-  }, [router, showHint]);
+  }, [showHint]);
 
   return null;
 }
