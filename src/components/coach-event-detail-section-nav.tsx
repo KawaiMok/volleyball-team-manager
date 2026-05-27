@@ -11,8 +11,7 @@ const pillClass =
   "flex w-full min-h-9 items-center justify-center rounded-full border border-zinc-200 bg-white px-2 py-1.5 text-center text-xs font-medium text-zinc-700 shadow-sm hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-950 sm:w-auto sm:min-w-0 sm:shrink-0 sm:justify-center sm:px-3";
 
 /**
- * 事件詳情快捷跳段（註解：手機兩欄網格全顯，免橫向捲動；寬螢幕 flex 換行）。
- * 對應各 `<section id={...}>` 須加 `scroll-mt-28` 以免被 sticky 頂欄遮住。
+ * 事件詳情快捷跳段（註解：點擊錨點會自動展開對應摺疊卡片）。
  */
 export function CoachEventDetailSectionNav({ sections }: Props) {
   return (

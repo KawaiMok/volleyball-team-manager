@@ -28,12 +28,14 @@ export type FeedbackEntryForCoach = {
 type Props = {
   eventEndsAt: Date | string;
   entries: FeedbackEntryForCoach[];
-  /** 錨點 id（註解：教練事件詳情長頁跳段） */
+  /** 錨點 id（註解：未 embedded 時包 section） */
   anchorId?: string;
+  /** 由外層摺疊卡片包裝時為 true（註解：不重複 section 外框）。 */
+  embedded?: boolean;
 };
 
 /** 教練視角：圖表／表格檢視 + 檢視 popup。 */
-export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId }: Props) {
+export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId, embedded }: Props) {
   const { mode } = useDataViewMode();
   const [detail, setDetail] = useState<FeedbackEntryForCoach | null>(null);
 
@@ -154,18 +156,21 @@ export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId }: 
     </div>
   );
 
-  return (
-    <section
-      id={anchorId}
-      className={
-        anchorId ?
-          "scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-        : "rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-      }
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">身體回饋</h2>
-        {n > 0 ? <DataViewModeToggle /> : null}
+  const body = (
+    <>
+      <div className={embedded ? "flex flex-wrap items-center justify-between gap-3" : ""}>
+        {!embedded ?
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              身體回饋
+            </h2>
+            {n > 0 ? <DataViewModeToggle /> : null}
+          </div>
+        : n > 0 ?
+          <div className="mb-3 flex w-full justify-end">
+            <DataViewModeToggle />
+          </div>
+        : null}
       </div>
       {!eventEnded ?
         <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
@@ -206,6 +211,21 @@ export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId }: 
           data={{ ...detail, displayName: detail.displayName }}
         />
       : null}
+    </>
+  );
+
+  if (embedded) return body;
+
+  return (
+    <section
+      id={anchorId}
+      className={
+        anchorId ?
+          "scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+        : "rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+      }
+    >
+      {body}
     </section>
   );
 }

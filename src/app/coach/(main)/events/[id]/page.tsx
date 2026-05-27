@@ -22,6 +22,7 @@ import { MatchResultPanel } from "@/app/coach/(main)/events/[id]/match-result-pa
 import { canManageMatchResult } from "@/lib/match-result-access";
 import type { MatchSetScore, MatchTeamStats } from "@/lib/match-result-schema";
 import { EMPTY_PLAYER_STATS, normalizePlayerStats } from "@/lib/match-result-schema";
+import { CoachEventDetailCollapsibleSection } from "@/components/coach-event-detail-collapsible-section";
 import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
 import { EventTitleWithMeta } from "@/components/event-title-with-meta";
 import {
@@ -50,9 +51,8 @@ function typeLabel(t: EventType) {
   }
 }
 
-/** 與下方 `<section id>` 對齊（註解：段落導覽列）。 */
+/** 與下方 `<section id>` 對齊（註解：段落導覽列；不含時間地點，已併入頁首）。 */
 const COACH_EVENT_DETAIL_SECTIONS = [
-  { id: "coach-ev-when", label: "時間地點" },
   { id: "coach-ev-edit", label: "編輯" },
   { id: "coach-ev-attendance", label: "出席點名" },
   { id: "coach-ev-training", label: "訓練計畫" },
@@ -294,60 +294,52 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
 
   const playerReviewsSection =
     eventEnded && event.status === EventStatus.PUBLISHED ?
-      <section
+      <CoachEventDetailCollapsibleSection
         id="coach-ev-reviews"
-        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            球員評語
-          </h2>
+        title="球員評語"
+        titleExtra={
           <HintExclamationToggle>
             事件結束後，可對每位球員寫下私評；僅教練與該球員本人可見，其他隊員無法看到。
           </HintExclamationToggle>
-        </div>
-        <div className="mt-4">
-          <CoachPlayerReviewsPanel
-            eventId={event.id}
-            rows={coachPlayerReviewRows}
-            canEdit={event.status === EventStatus.PUBLISHED}
-          />
-        </div>
-      </section>
+        }
+      >
+        <CoachPlayerReviewsPanel
+          eventId={event.id}
+          rows={coachPlayerReviewRows}
+          canEdit={event.status === EventStatus.PUBLISHED}
+        />
+      </CoachEventDetailCollapsibleSection>
     : null;
 
   const matchResultSection =
     isMatchEvent ?
-      <section
+      <CoachEventDetailCollapsibleSection
         id="coach-ev-match"
-        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            比賽結果
-          </h2>
+        title="比賽結果"
+        titleExtra={
           <HintExclamationToggle>
             比賽結束後可登錄各局比分、球隊數據與個人數據（一傳、防守、進攻、攔網、發球）；儲存後以圖表檢視。
           </HintExclamationToggle>
-        </div>
-        <div className="mt-4">
-          <MatchResultPanel
-            eventId={event.id}
-            teamName={teamRow?.name ?? "我方"}
-            canEdit={canManageMatch}
-            initial={initialMatchResult}
-            roster={matchPlayerRoster}
-          />
-        </div>
-      </section>
+        }
+      >
+        <MatchResultPanel
+          eventId={event.id}
+          teamName={teamRow?.name ?? "我方"}
+          canEdit={canManageMatch}
+          initial={initialMatchResult}
+          roster={matchPlayerRoster}
+        />
+      </CoachEventDetailCollapsibleSection>
     : null;
 
   const feedbackSummarySection = (
-    <EventFeedbackSummarySection
-      eventEndsAt={event.endsAt}
-      entries={feedbackEntries}
-      anchorId="coach-ev-feedback"
-    />
+    <CoachEventDetailCollapsibleSection id="coach-ev-feedback" title="身體回饋">
+      <EventFeedbackSummarySection
+        eventEndsAt={event.endsAt}
+        entries={feedbackEntries}
+        embedded
+      />
+    </CoachEventDetailCollapsibleSection>
   );
 
   const initialEventComments = commentRows.map((c) => ({
@@ -361,7 +353,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
   }));
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-3">
       <div>
         <Link href="/coach/events" className="text-sm text-blue-600 hover:underline">
           ← 事件列表
@@ -383,6 +375,48 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
               <EventStatusIndicator status={event.status} />
             </p>
             <EventStatusLegend className="mt-2" />
+            {!eventEnded || event.meetAt != null ?
+              <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                {!eventEnded ?
+                  <>
+                    <div>
+                      <dt className="text-zinc-500 dark:text-zinc-400">開始</dt>
+                      <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
+                        {formatDateTimeZh(event.startsAt)}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-zinc-500 dark:text-zinc-400">結束</dt>
+                      <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
+                        {formatDateTimeZh(event.endsAt)}
+                      </dd>
+                    </div>
+                  </>
+                : null}
+                {event.meetAt ?
+                  <div>
+                    <dt className="text-zinc-500 dark:text-zinc-400">集合</dt>
+                    <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
+                      {formatDateTimeZh(event.meetAt)}
+                    </dd>
+                  </div>
+                : null}
+                {!eventEnded && event.locationName ?
+                  <div className="sm:col-span-2">
+                    <dt className="text-zinc-500 dark:text-zinc-400">場館</dt>
+                    <dd className="text-zinc-900 dark:text-zinc-50">{event.locationName}</dd>
+                  </div>
+                : null}
+                {!eventEnded && event.rsvpDeadlineAt ?
+                  <div>
+                    <dt className="text-zinc-500 dark:text-zinc-400">出席意願截止</dt>
+                    <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
+                      {formatDateTimeZh(event.rsvpDeadlineAt)}
+                    </dd>
+                  </div>
+                : null}
+              </dl>
+            : null}
           </div>
           <EventPublishButton eventId={event.id} isDraft={event.status === EventStatus.DRAFT} />
         </div>
@@ -408,184 +442,108 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           </>
         : null}
 
-      {(!eventEnded || event.meetAt != null) ?
-      <section
-        id="coach-ev-when"
-        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-      >
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">時間與地點</h2>
-        <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-          {!eventEnded ?
-            <>
-              <div>
-                <dt className="text-zinc-500 dark:text-zinc-400">開始</dt>
-                <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-                  {formatDateTimeZh(event.startsAt)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-zinc-500 dark:text-zinc-400">結束</dt>
-                <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-                  {formatDateTimeZh(event.endsAt)}
-                </dd>
-              </div>
-            </>
-          : null}
-          {event.meetAt ?
-            <div>
-              <dt className="text-zinc-500 dark:text-zinc-400">集合</dt>
-              <dd className="font-medium tabular-nums">{formatDateTimeZh(event.meetAt)}</dd>
-            </div>
-          : null}
-          {!eventEnded && event.locationName ?
-            <div className="sm:col-span-2">
-              <dt className="text-zinc-500 dark:text-zinc-400">場館</dt>
-              <dd>{event.locationName}</dd>
-            </div>
-          : null}
-          {!eventEnded && event.rsvpDeadlineAt ?
-            <div>
-              <dt className="text-zinc-500 dark:text-zinc-400">出席意願截止</dt>
-              <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-                {formatDateTimeZh(event.rsvpDeadlineAt)}
-              </dd>
-            </div>
-          : null}
-        </dl>
-      </section>
-      : null}
-
       {canEditEvent ?
-        <section
+        <CoachEventDetailCollapsibleSection
           id="coach-ev-edit"
-          className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-        >
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">編輯事件</h2>
+          title="編輯事件"
+          titleExtra={
             <HintExclamationToggle>
               可調整標題、時間、場館、出席意願截止與參與對象；變更參與者時將同步名單與出席列。
             </HintExclamationToggle>
-          </div>
-          <div className="mt-4">
-            <EventEditForm
-              key={participantRuleKey}
-              eventId={event.id}
-              initial={{
-                title: event.title,
-                type: event.type,
-                description: event.description,
-                startsAtIso: event.startsAt.toISOString(),
-                endsAtIso: event.endsAt.toISOString(),
-                meetAtIso: event.meetAt?.toISOString() ?? null,
-                locationName: event.locationName,
-                rsvpDeadlineIso: event.rsvpDeadlineAt?.toISOString() ?? null,
-              }}
-              squads={squads}
-              roster={roster}
-              initialParticipantRule={initialParticipantRuleResolved}
-            />
-          </div>
-        </section>
-      : event.status === EventStatus.CANCELLED ?
-        <section
-          id="coach-ev-edit"
-          className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 p-4 shadow-sm"
+          }
         >
+          <EventEditForm
+            key={participantRuleKey}
+            eventId={event.id}
+            initial={{
+              title: event.title,
+              type: event.type,
+              description: event.description,
+              startsAtIso: event.startsAt.toISOString(),
+              endsAtIso: event.endsAt.toISOString(),
+              meetAtIso: event.meetAt?.toISOString() ?? null,
+              locationName: event.locationName,
+              rsvpDeadlineIso: event.rsvpDeadlineAt?.toISOString() ?? null,
+            }}
+            squads={squads}
+            roster={roster}
+            initialParticipantRule={initialParticipantRuleResolved}
+          />
+        </CoachEventDetailCollapsibleSection>
+      : event.status === EventStatus.CANCELLED ?
+        <CoachEventDetailCollapsibleSection id="coach-ev-edit" title="編輯事件">
           <p className="text-sm text-zinc-600 dark:text-zinc-400">已取消的事件無法編輯。</p>
-        </section>
+        </CoachEventDetailCollapsibleSection>
       : null}
 
-      <section
-        id="coach-ev-attendance"
-        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-      >
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          出席點名
-        </h2>
-        <div className="mt-3">
-          <AttendanceTable
-            eventId={event.id}
-            rows={attendanceRows}
-            isPublished={event.status === EventStatus.PUBLISHED}
-          />
-        </div>
-      </section>
+      <CoachEventDetailCollapsibleSection id="coach-ev-attendance" title="出席點名">
+        <AttendanceTable
+          eventId={event.id}
+          rows={attendanceRows}
+          isPublished={event.status === EventStatus.PUBLISHED}
+        />
+      </CoachEventDetailCollapsibleSection>
 
       {!eventEnded ?
-        <section
-          id="coach-ev-training"
-          className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-        >
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">訓練計畫</h2>
-          <div className="mt-3">
-            <TrainingPlanPanel
-              eventId={event.id}
-              isTraining={event.type === EventType.TRAINING}
-              initialPlan={plan}
-            />
-          </div>
-        </section>
+        <CoachEventDetailCollapsibleSection id="coach-ev-training" title="訓練計畫">
+          <TrainingPlanPanel
+            eventId={event.id}
+            isTraining={event.type === EventType.TRAINING}
+            initialPlan={plan}
+          />
+        </CoachEventDetailCollapsibleSection>
       : null}
 
-      <section
+      <CoachEventDetailCollapsibleSection
         id="coach-ev-court"
-        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">場上企位</h2>
+        title="場上企位"
+        titleExtra={
           <HintExclamationToggle>
             全場示意（左為對方、右為我方）：球員／排球標記、畫線；儲存後球員於本事件頁可唯讀檢視。
           </HintExclamationToggle>
-        </div>
-        <div className="mt-4">
-          <CourtFormationEditor
-            variant="event"
-            eventId={event.id}
-            initial={parseCourtSketch(event.courtSketch)}
-            disabled={event.status === EventStatus.CANCELLED}
-          />
-        </div>
-      </section>
-
-      <section
-        id="coach-ev-media"
-        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+        }
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">戰術板與影片</h2>
+        <CourtFormationEditor
+          variant="event"
+          eventId={event.id}
+          initial={parseCourtSketch(event.courtSketch)}
+          disabled={event.status === EventStatus.CANCELLED}
+        />
+      </CoachEventDetailCollapsibleSection>
+
+      <CoachEventDetailCollapsibleSection
+        id="coach-ev-media"
+        title="戰術板與影片"
+        titleExtra={
           <HintExclamationToggle>
             外部白板、錄影連結集中管理；球員在已發布事件中可見（唯讀）。
           </HintExclamationToggle>
-        </div>
-        <div className="mt-4">
-          <CoachEventTacticalVideoPanel
-            eventId={event.id}
-            canEdit={event.status !== EventStatus.CANCELLED}
-            tactical={tacticalLinks}
-            video={videoLinks}
-          />
-        </div>
-      </section>
-
-      <section
-        id="coach-ev-comments"
-        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+        }
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">公告與留言</h2>
+        <CoachEventTacticalVideoPanel
+          eventId={event.id}
+          canEdit={event.status !== EventStatus.CANCELLED}
+          tactical={tacticalLinks}
+          video={videoLinks}
+        />
+      </CoachEventDetailCollapsibleSection>
+
+      <CoachEventDetailCollapsibleSection
+        id="coach-ev-comments"
+        title="公告與留言"
+        titleExtra={
           <HintExclamationToggle>
             發布公告或討論；球員在「我的行程」對應事件頁可見（事件須已發布且對方為參與者）。
           </HintExclamationToggle>
-        </div>
-        <div className="mt-4">
-          <CoachEventCommentsPanel
-            eventId={event.id}
-            currentMemberId={member.id}
-            canManageAll={canManageEventCommentsAsStaff(member)}
-            initialComments={initialEventComments}
-          />
-        </div>
-      </section>
+        }
+      >
+        <CoachEventCommentsPanel
+          eventId={event.id}
+          currentMemberId={member.id}
+          canManageAll={canManageEventCommentsAsStaff(member)}
+          initialComments={initialEventComments}
+        />
+      </CoachEventDetailCollapsibleSection>
 
       {!eventEnded ? feedbackSummarySection : null}
     </div>
