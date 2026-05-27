@@ -1,9 +1,9 @@
 "use client";
 
 import { MatchPlayerStatsTables } from "@/components/match-player-stats-tables";
+import { MatchTeamStatsViewSection } from "@/components/match-team-stats-section";
 import {
   computeSetWins,
-  MATCH_TEAM_STAT_LABELS,
   type MatchSetScore,
   type MatchTeamStats,
   type PlayerMatchStats,
@@ -28,34 +28,11 @@ type Props = {
   highlightMemberId?: string;
 };
 
-function StatBar({ label, value, max }: { label: string; value: number; max: number }) {
-  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
-  return (
-    <div>
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-zinc-600 dark:text-zinc-400">{label}</span>
-        <span className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{value}</span>
-      </div>
-      <div className="mt-1 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-        <div
-          className="h-full rounded-full bg-[var(--brand-primary)] transition-all"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  );
-}
-
 /** 比賽結果可視化（註解：比分、球隊與六大類個人數據）。 */
 export function MatchResultVisualization({ data, teamName = "我方", highlightMemberId }: Props) {
   const { our: setsWonOur, opponent: setsWonOpp } = computeSetWins(data.sets);
   const won = setsWonOur > setsWonOpp;
   const tied = setsWonOur === setsWonOpp;
-
-  const teamStatEntries = Object.entries(data.teamStats ?? {}).filter(
-    ([, v]) => typeof v === "number" && v > 0,
-  ) as [keyof MatchTeamStats, number][];
-  const teamStatMax = Math.max(...teamStatEntries.map(([, v]) => v), 1);
 
   return (
     <div className="space-y-6">
@@ -97,16 +74,7 @@ export function MatchResultVisualization({ data, teamName = "我方", highlightM
       </div>
 
       {/* 球隊數據 */}
-      {teamStatEntries.length > 0 ?
-        <div>
-          <h3 className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">球隊數據</h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {teamStatEntries.map(([key, value]) => (
-              <StatBar key={key} label={MATCH_TEAM_STAT_LABELS[key]} value={value} max={teamStatMax} />
-            ))}
-          </div>
-        </div>
-      : null}
+      <MatchTeamStatsViewSection teamStats={data.teamStats} />
 
       {/* 個人數據：六大分類 */}
       {data.playerStats.length > 0 ?

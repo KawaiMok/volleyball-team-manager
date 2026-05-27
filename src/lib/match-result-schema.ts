@@ -109,6 +109,13 @@ export type OtherStats = z.infer<typeof otherStatsSchema>;
 export type PlayerMatchStats = z.infer<typeof playerMatchStatsInputSchema>;
 export type MatchPlayerStatInput = z.infer<typeof matchPlayerStatSchema>;
 
+/** 教練表單／列表用球員列。 */
+export type MatchResultPlayerRow = {
+  memberId: string;
+  displayName: string;
+  stats: PlayerMatchStats;
+};
+
 /** 六大分類 tab 鍵值。 */
 export const STAT_CATEGORIES = ["attack", "block", "defense", "pass", "serve", "other"] as const;
 export type StatCategory = (typeof STAT_CATEGORIES)[number];
