@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { MatchResultReadonly } from "@/app/player/(main)/events/[id]/match-result-readonly";
+import { EventTitleWithMeta } from "@/components/event-title-with-meta";
 import { CourtFormationReadonly } from "@/app/player/(main)/events/[id]/court-formation-readonly";
 import { PlayerEventTacticalVideoReadonly } from "@/app/player/(main)/events/[id]/event-tactical-video-readonly";
 import { PlayerCoachReviewSection } from "@/app/player/(main)/events/[id]/player-coach-review-section";
@@ -13,8 +14,9 @@ import { getTeamMember } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
 
 import { PlayerFeedbackForm } from "./feedback-form";
+import { PlayerFeedbackViewCard } from "@/components/player-feedback-view-card";
 import { PlayerRsvpForm } from "./rsvp-form";
-import { formatDateTimeZh, formatTimeZh } from "@/lib/format-datetime";
+import { formatDateTimeZh, formatDateZh, formatTimeZh } from "@/lib/format-datetime";
 
 function typeLabel(t: EventType) {
   switch (t) {
@@ -205,10 +207,9 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
       <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">身體回饋</h2>
       {!afterEnd ?
         <p className="text-sm text-slate-600 dark:text-slate-400">事件結束後可填寫身體回饋（RPE／疲勞／疼痛）。</p>
-      : canEditFeedback || feedbackReadOnly ?
+      : canEditFeedback ?
         <PlayerFeedbackForm
           eventId={event.id}
-          readOnly={feedbackReadOnly}
           initial={
             feedback ?
               {
@@ -221,6 +222,17 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
             : undefined
           }
         />
+      : feedbackReadOnly && feedback ?
+        <PlayerFeedbackViewCard
+          data={{
+            rpe: feedback.rpe,
+            fatigue: feedback.fatigue,
+            painLevel: feedback.painLevel,
+            painArea: feedback.painArea,
+            note: feedback.note,
+            submittedAt: feedback.submittedAt.toISOString(),
+          }}
+        />
       : null}
     </section>
   );
@@ -231,22 +243,37 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         <Link href="/player" className="text-sm text-blue-600 hover:underline">
           ← 我的行程
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">{event.title}</h1>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-          {typeLabel(event.type)} ·{" "}
-          {formatDateTimeZh(event.startsAt, {
-            weekday: "long",
-            month: "numeric",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-          {" — "}
-          {formatTimeZh(event.endsAt, { hour: "2-digit", minute: "2-digit" })}
-        </p>
-        {event.locationName ?
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">地點：{event.locationName}</p>
-        : null}
+        <div className="mt-2">
+        <EventTitleWithMeta
+          title={event.title}
+          startsAt={event.startsAt}
+          endsAt={event.endsAt}
+          locationName={event.locationName}
+          ended={afterEnd}
+          titleClassName="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50"
+          metaClassName="text-sm font-normal text-slate-500 dark:text-slate-400"
+        />
+        {!afterEnd ?
+          <>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              {typeLabel(event.type)} ·{" "}
+              {formatDateTimeZh(event.startsAt, {
+                weekday: "long",
+                month: "numeric",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              {" — "}
+              {formatTimeZh(event.endsAt, { hour: "2-digit", minute: "2-digit" })}
+            </p>
+            {event.locationName ?
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">地點：{event.locationName}</p>
+            : null}
+          </>
+        : (
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{typeLabel(event.type)}</p>
+        )}
         {event.description ?
           <p className="mt-3 whitespace-pre-wrap text-sm text-slate-700 dark:text-slate-300">{event.description}</p>
         : null}
@@ -262,6 +289,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
             {rsvpLocked ? <span className="font-medium text-amber-800">（已截止）</span> : null}
           </p>
         : null}
+        </div>
       </div>
 
       {coachReviewBlock}

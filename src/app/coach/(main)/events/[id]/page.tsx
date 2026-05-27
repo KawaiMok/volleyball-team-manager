@@ -23,6 +23,7 @@ import { canManageMatchResult } from "@/lib/match-result-access";
 import type { MatchSetScore, MatchTeamStats } from "@/lib/match-result-schema";
 import { EMPTY_PLAYER_STATS, normalizePlayerStats } from "@/lib/match-result-schema";
 import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
+import { EventTitleWithMeta } from "@/components/event-title-with-meta";
 import {
   EventStatusIndicator,
   EventStatusLegend,
@@ -367,7 +368,13 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </Link>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{event.title}</h1>
+            <EventTitleWithMeta
+              title={event.title}
+              startsAt={event.startsAt}
+              endsAt={event.endsAt}
+              locationName={event.locationName}
+              ended={eventEnded}
+            />
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
               <span>{typeLabel(event.type)}</span>
               <span aria-hidden className="text-zinc-400">
@@ -401,37 +408,42 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           </>
         : null}
 
+      {(!eventEnded || event.meetAt != null) ?
       <section
         id="coach-ev-when"
         className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
       >
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">時間與地點</h2>
         <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-zinc-500 dark:text-zinc-400">開始</dt>
-            <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-              {formatDateTimeZh(event.startsAt)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-zinc-500 dark:text-zinc-400">結束</dt>
-            <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
-              {formatDateTimeZh(event.endsAt)}
-            </dd>
-          </div>
+          {!eventEnded ?
+            <>
+              <div>
+                <dt className="text-zinc-500 dark:text-zinc-400">開始</dt>
+                <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
+                  {formatDateTimeZh(event.startsAt)}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-zinc-500 dark:text-zinc-400">結束</dt>
+                <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
+                  {formatDateTimeZh(event.endsAt)}
+                </dd>
+              </div>
+            </>
+          : null}
           {event.meetAt ?
             <div>
               <dt className="text-zinc-500 dark:text-zinc-400">集合</dt>
               <dd className="font-medium tabular-nums">{formatDateTimeZh(event.meetAt)}</dd>
             </div>
           : null}
-          {event.locationName ?
+          {!eventEnded && event.locationName ?
             <div className="sm:col-span-2">
               <dt className="text-zinc-500 dark:text-zinc-400">場館</dt>
               <dd>{event.locationName}</dd>
             </div>
           : null}
-          {event.rsvpDeadlineAt ?
+          {!eventEnded && event.rsvpDeadlineAt ?
             <div>
               <dt className="text-zinc-500 dark:text-zinc-400">出席意願截止</dt>
               <dd className="font-medium tabular-nums text-zinc-900 dark:text-zinc-50">
@@ -441,6 +453,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           : null}
         </dl>
       </section>
+      : null}
 
       {canEditEvent ?
         <section

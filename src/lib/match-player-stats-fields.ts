@@ -7,7 +7,7 @@ import {
   formatPct,
   formatRating,
 } from "@/lib/match-player-stats-metrics";
-import { hasCategoryData, type PlayerMatchStats, type StatCategory } from "@/lib/match-result-schema";
+import { hasCategoryData, STAT_CATEGORIES, STAT_CATEGORY_LABELS, type PlayerMatchStats, type StatCategory } from "@/lib/match-result-schema";
 
 export type StatFieldDef = {
   key: string;
@@ -75,7 +75,17 @@ export function derivedStatValue(
   }
 }
 
-/** 手機列表摘要（註解：一行顯示是否已填）。 */
+/** 手機列表：球員整體填寫摘要。 */
+export function playerOverallSummary(stats: PlayerMatchStats): string {
+  const filled = STAT_CATEGORIES.filter((c) => hasCategoryData(stats, c));
+  if (filled.length === 0) return "尚未填寫";
+  if (filled.length <= 2) {
+    return filled.map((c) => `${STAT_CATEGORY_LABELS[c]}：${categorySummary(stats, c)}`).join(" · ");
+  }
+  return `已填 ${filled.length} 類（${filled.map((c) => STAT_CATEGORY_LABELS[c]).join("、")}）`;
+}
+
+/** 手機列表摘要（註解：單分類一行）。 */
 export function categorySummary(stats: PlayerMatchStats, category: StatCategory): string {
   if (!hasCategoryData(stats, category)) return "尚未填寫";
 

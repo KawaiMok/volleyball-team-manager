@@ -88,7 +88,6 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
   const [teamStats, setTeamStats] = useState<TeamStatsForm>(() => initTeamStats(initial));
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [playerMap, setPlayerMap] = useState(() => initPlayerMap(initial, roster));
-  const [statTab, setStatTab] = useState<StatCategory>("attack");
   const [pending, setPending] = useState(false);
 
   const viewData = saved;
@@ -292,12 +291,7 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
           onChange={(key, value) => setTeamStats((t) => ({ ...t, [key]: value }))}
         />
 
-        <MatchPlayerStatsInputSection
-          statTab={statTab}
-          onStatTabChange={setStatTab}
-          playerRows={playerRows}
-          onUpdateStat={updateStat}
-        />
+        <MatchPlayerStatsInputSection playerRows={playerRows} onUpdateStat={updateStat} />
 
         <label className="block space-y-1 text-sm">
           <span className="font-medium">備註</span>

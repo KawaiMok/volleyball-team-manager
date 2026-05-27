@@ -23,6 +23,8 @@ import { getTeamMember } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
 import { EventStatus, EventType } from "@/generated/prisma/client";
 import { formatDateTimeZh, formatDateZh } from "@/lib/format-datetime";
+import { EventTitleInlineMeta } from "@/components/event-title-with-meta";
+import { isEventEnded } from "@/lib/event-timing";
 
 function typeLabel(t: EventType) {
   switch (t) {
@@ -40,38 +42,53 @@ type EventRow = {
   title: string;
   type: EventType;
   startsAt: Date;
+  endsAt: Date;
   locationName: string | null;
   rsvpDeadlineAt: Date | null;
   attendance: { rsvpStatus: string }[];
 };
 
-/** 單列行程（註解：InsetGroupedRow；逾 RSVP 截止仍「未回覆」者不標「待 RSVP」）。 */
+/** 單列行程（註解：已結束者時間地點簡寫併入標題）。 */
 function EventListItem({ ev }: { ev: EventRow }) {
   const att = ev.attendance[0];
   const rsvp = att?.rsvpStatus ?? "UNANSWERED";
   const now = new Date();
+  const ended = isEventEnded(ev.endsAt, now);
   const deadlinePassed =
     ev.rsvpDeadlineAt != null && now.getTime() > ev.rsvpDeadlineAt.getTime();
-  const needRsvp = rsvp === "UNANSWERED" && !deadlinePassed;
+  const needRsvp = !ended && rsvp === "UNANSWERED" && !deadlinePassed;
 
-  const subtitle = (
-    <>
-      {typeLabel(ev.type)} ·{" "}
-      {formatDateTimeZh(ev.startsAt, {
-        weekday: "short",
-        month: "numeric",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })}
-      {ev.locationName ? ` · ${ev.locationName}` : ""}
-    </>
-  );
+  const subtitle =
+    ended ?
+      typeLabel(ev.type)
+    : (
+      <>
+        {typeLabel(ev.type)} ·{" "}
+        {formatDateTimeZh(ev.startsAt, {
+          weekday: "short",
+          month: "numeric",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}
+        {ev.locationName ? ` · ${ev.locationName}` : ""}
+      </>
+    );
 
   return (
     <InsetGroupedRow
       href={`/player/events/${ev.id}`}
-      title={ev.title}
+      title={
+        <EventTitleInlineMeta
+          title={ev.title}
+          startsAt={ev.startsAt}
+          endsAt={ev.endsAt}
+          locationName={ev.locationName}
+          ended={ended}
+          titleClassName="font-medium text-zinc-900 dark:text-zinc-50"
+          metaClassName="text-xs font-normal text-zinc-500 dark:text-zinc-400"
+        />
+      }
       subtitle={subtitle}
       badge={
         needRsvp ?

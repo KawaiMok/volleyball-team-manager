@@ -16,6 +16,8 @@ import {
   EventStatusLegend,
 } from "@/components/domain-status-indicators";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
+import { EventTitleInlineMeta } from "@/components/event-title-with-meta";
+import { isEventEnded } from "@/lib/event-timing";
 import { formatDateTimeZh } from "@/lib/format-datetime";
 
 function typeLabel(t: EventType) {
@@ -119,32 +121,43 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
                   {filterActive ? "沒有符合條件的事件，請調整篩選或重設" : "尚無事件，請新增一場訓練或比賽"}
                 </td>
               </tr>
-            : events.map((ev) => (
+            : events.map((ev) => {
+                const ended = isEventEnded(ev.endsAt);
+                return (
                 <tr key={ev.id} className="hover:bg-zinc-50 dark:bg-zinc-950/80">
                   <td className="px-4 py-3">
-                    <Link href={`/coach/events/${ev.id}`} className="font-medium text-blue-600 hover:underline">
-                      {ev.title}
+                    <Link href={`/coach/events/${ev.id}`} className="text-blue-600 hover:underline">
+                      <EventTitleInlineMeta
+                        title={ev.title}
+                        startsAt={ev.startsAt}
+                        endsAt={ev.endsAt}
+                        locationName={ev.locationName}
+                        ended={ended}
+                        titleClassName="font-medium text-blue-600"
+                      />
                     </Link>
-                    {ev.locationName ?
+                    {!ended && ev.locationName ?
                       <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{ev.locationName}</span>
                     : null}
                   </td>
                   <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{typeLabel(ev.type)}</td>
                   <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
-                    {formatDateTimeZh(ev.startsAt, {
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {ended ?
+                      <span className="text-zinc-400">—</span>
+                    : formatDateTimeZh(ev.startsAt, {
+                        year: "numeric",
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-center">
                     <EventStatusIndicator status={ev.status} />
                   </td>
                   <td className="px-4 py-3 tabular-nums text-zinc-600 dark:text-zinc-400">{ev._count.participants}</td>
                 </tr>
-              ))
+              );})
             }
           </tbody>
         </table>

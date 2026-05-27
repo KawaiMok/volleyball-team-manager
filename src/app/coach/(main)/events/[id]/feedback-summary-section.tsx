@@ -1,36 +1,14 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import type { FatigueLevel, PainLevel } from "@/generated/prisma/client";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { formatDateTimeZh } from "@/lib/format-datetime";
-
-function fatigueLabel(f: FatigueLevel) {
-  switch (f) {
-    case "LOW":
-      return "低";
-    case "MED":
-      return "中";
-    case "HIGH":
-      return "高";
-    default:
-      return f;
-  }
-}
-
-function painLabel(p: PainLevel) {
-  switch (p) {
-    case "NONE":
-      return "無";
-    case "MILD":
-      return "輕微";
-    case "SEVERE":
-      return "明顯";
-    default:
-      return p;
-  }
-}
+import {
+  FeedbackRpeHistogram,
+  FeedbackStackedBar,
+} from "@/components/feedback-charts";
+import { FeedbackDetailSheet } from "@/components/feedback-detail-sheet";
+import { fatigueLabel, painLabel } from "@/lib/feedback-display";
 
 export type FeedbackEntryForCoach = {
   id: string;
@@ -50,21 +28,23 @@ type Props = {
   anchorId?: string;
 };
 
-/** 教練視角：單場回饋彙總 + 精簡列表；詳情以 popup 顯示（註解：對應規格 Event Detail / Feedback）。 */
+/** 教練視角：圖表彙總 + 列表；檢視以 popup 顯示圖表與詳情。 */
 export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId }: Props) {
   const [detail, setDetail] = useState<FeedbackEntryForCoach | null>(null);
 
   const endsAtMs = new Date(eventEndsAt).getTime();
-  const now = Date.now();
-  const eventEnded = now >= endsAtMs;
+  const eventEnded = Date.now() >= endsAtMs;
   const n = entries.length;
   const avgRpe = n > 0 ? entries.reduce((s, e) => s + e.rpe, 0) / n : null;
 
   const fatigueBins: Record<FatigueLevel, number> = { LOW: 0, MED: 0, HIGH: 0 };
   const painBins: Record<PainLevel, number> = { NONE: 0, MILD: 0, SEVERE: 0 };
+  const rpeCounts = useMemo(() => Array.from({ length: 10 }, () => 0), []);
+
   for (const e of entries) {
     fatigueBins[e.fatigue]++;
     painBins[e.painLevel]++;
+    if (e.rpe >= 1 && e.rpe <= 10) rpeCounts[e.rpe - 1]++;
   }
 
   const closeDetail = useCallback(() => setDetail(null), []);
@@ -89,28 +69,39 @@ export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId }: 
         <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">尚無球員提交回饋。</p>
       : (
         <>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-md border border-zinc-100 bg-zinc-50 px-3 py-2 dark:bg-zinc-950">
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">回饋人數</div>
-              <div className="text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{n}</div>
-            </div>
-            <div className="rounded-md border border-zinc-100 bg-zinc-50 px-3 py-2 dark:bg-zinc-950">
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">RPE 平均</div>
-              <div className="text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
-                {avgRpe != null ? avgRpe.toFixed(1) : "—"}
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="mb-3 flex items-end justify-between gap-2">
+                <div>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">回饋人數</p>
+                  <p className="text-2xl font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">{n}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">RPE 平均</p>
+                  <p className="text-2xl font-semibold tabular-nums text-indigo-700 dark:text-indigo-300">
+                    {avgRpe != null ? avgRpe.toFixed(1) : "—"}
+                  </p>
+                </div>
               </div>
+              <FeedbackRpeHistogram counts={rpeCounts} />
             </div>
-            <div className="rounded-md border border-zinc-100 bg-zinc-50 px-3 py-2 sm:col-span-2 lg:col-span-2 dark:bg-zinc-950">
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">疲勞（低／中／高）</div>
-              <div className="mt-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                {fatigueBins.LOW}／{fatigueBins.MED}／{fatigueBins.HIGH}
-              </div>
-            </div>
-            <div className="rounded-md border border-zinc-100 bg-zinc-50 px-3 py-2 sm:col-span-2 lg:col-span-4 dark:bg-zinc-950">
-              <div className="text-xs text-zinc-500 dark:text-zinc-400">疼痛（無／輕微／明顯）</div>
-              <div className="mt-1 text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                {painBins.NONE}／{painBins.MILD}／{painBins.SEVERE}
-              </div>
+            <div className="space-y-4 rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
+              <FeedbackStackedBar
+                title="疲勞分布（低／中／高）"
+                segments={[
+                  { label: "低", count: fatigueBins.LOW, className: "bg-emerald-400/90 text-emerald-950" },
+                  { label: "中", count: fatigueBins.MED, className: "bg-amber-400/90 text-amber-950" },
+                  { label: "高", count: fatigueBins.HIGH, className: "bg-rose-400/90 text-rose-950" },
+                ]}
+              />
+              <FeedbackStackedBar
+                title="疼痛分布（無／輕微／明顯）"
+                segments={[
+                  { label: "無", count: painBins.NONE, className: "bg-slate-300/90 text-slate-900" },
+                  { label: "輕", count: painBins.MILD, className: "bg-orange-400/90 text-orange-950" },
+                  { label: "重", count: painBins.SEVERE, className: "bg-red-500/90 text-white" },
+                ]}
+              />
             </div>
           </div>
 
@@ -138,7 +129,7 @@ export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId }: 
                         onClick={() => setDetail(row)}
                         className="rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
                       >
-                        詳情
+                        檢視
                       </button>
                     </td>
                   </tr>
@@ -150,68 +141,12 @@ export function EventFeedbackSummarySection({ eventEndsAt, entries, anchorId }: 
       )}
 
       {detail ?
-        <BottomSheet
+        <FeedbackDetailSheet
           open
           onClose={closeDetail}
-          title="身體回饋詳情"
-          subtitle={detail.displayName}
-          titleId="feedback-detail-title"
-          footer={
-            <button
-              type="button"
-              onClick={closeDetail}
-              className="w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 sm:w-auto"
-            >
-              關閉
-            </button>
-          }
-        >
-          <dl className="space-y-3 text-sm text-zinc-800 dark:text-zinc-200">
-            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                RPE
-              </dt>
-              <dd className="tabular-nums font-medium">{detail.rpe}／10</dd>
-            </div>
-            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                疲勞
-              </dt>
-              <dd>{fatigueLabel(detail.fatigue)}</dd>
-            </div>
-            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                疼痛
-              </dt>
-              <dd>{painLabel(detail.painLevel)}</dd>
-            </div>
-            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                疼痛部位
-              </dt>
-              <dd>{detail.painArea?.trim() ? detail.painArea : "—"}</dd>
-            </div>
-            <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                備註
-              </dt>
-              <dd className="whitespace-pre-wrap break-words text-zinc-700 dark:text-zinc-300">
-                {detail.note?.trim() ? detail.note : "—"}
-              </dd>
-            </div>
-            <div className="flex flex-col gap-0.5 border-t border-zinc-100 pt-3 dark:border-zinc-800 sm:flex-row sm:gap-3">
-              <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                送出時間
-              </dt>
-              <dd className="text-xs text-zinc-600 dark:text-zinc-400">
-                {formatDateTimeZh(new Date(detail.submittedAt), {
-                  dateStyle: "medium",
-                  timeStyle: "short",
-                })}
-              </dd>
-            </div>
-          </dl>
-        </BottomSheet>
+          title="身體回饋"
+          data={{ ...detail, displayName: detail.displayName }}
+        />
       : null}
     </section>
   );
