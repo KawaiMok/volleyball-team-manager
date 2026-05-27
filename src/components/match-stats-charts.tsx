@@ -11,6 +11,7 @@ import {
   type PlayerMatchStats,
   type StatCategory,
 } from "@/lib/match-result-schema";
+import { useMemo, useState } from "react";
 
 /** 單一數值橫條（註解：可視化圖表基礎元件）。 */
 export function MetricBar({
@@ -187,7 +188,94 @@ function CategoryPlayerChart({
   );
 }
 
-/** 全隊個人數據圖表（註解：六大分類）。 */
+function CategoryTabs({
+  active,
+  categories,
+  onChange,
+  className = "",
+}: {
+  active: StatCategory;
+  categories: StatCategory[];
+  onChange: (tab: StatCategory) => void;
+  className?: string;
+}) {
+  return (
+    <div className={`flex flex-wrap gap-1 ${className}`}>
+      {categories.map((c) => (
+        <button
+          key={c}
+          type="button"
+          onClick={() => onChange(c)}
+          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            active === c ?
+              "bg-[var(--brand-primary)] text-white"
+            : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
+          }`}
+        >
+          {STAT_CATEGORY_LABELS[c]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** 單一分類：把所有球員合在同一區塊比較（註解：每個欄位一張「球員排名」小圖）。 */
+function CombinedCategoryComparisonChart({
+  category,
+  rows,
+  highlightMemberId,
+}: {
+  category: StatCategory;
+  rows: PlayerStatsRow[];
+  highlightMemberId?: string;
+}) {
+  const filtered = useMemo(() => rows.filter((r) => hasCategoryData(r.stats, category)), [rows, category]);
+  if (filtered.length === 0) return null;
+
+  const fields = CATEGORY_FIELDS[category].filter((f) => !f.derived);
+
+  return (
+    <div className="space-y-4">
+      {fields.map((f) => {
+        const values = filtered.map((r) => {
+          const cat = r.stats[category] as Record<string, number>;
+          return { ...r, value: cat[f.key] ?? 0 };
+        });
+        const max = Math.max(...values.map((v) => v.value), 1);
+        const sorted = [...values].sort((a, b) => b.value - a.value);
+
+        return (
+          <div key={f.key} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+            <div className="mb-2 flex items-baseline justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{f.label}</p>
+              <p className="text-[10px] text-zinc-400">最多 {max}</p>
+            </div>
+            <div className="space-y-1.5">
+              {sorted.map((r) => {
+                const hl = r.memberId === highlightMemberId;
+                return (
+                  <div
+                    key={r.memberId}
+                    className={`rounded-md px-1 py-0.5 ${hl ? "bg-[var(--brand-primary)]/5" : ""}`}
+                  >
+                    <MetricBar
+                      label={r.displayName}
+                      value={r.value}
+                      max={max}
+                      className={hl ? "bg-[var(--brand-primary)]" : "bg-zinc-400 dark:bg-zinc-600"}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** 全隊個人數據圖表（註解：分類 tabs，點分類時合併所有球員比較）。 */
 export function MatchPlayerStatsCharts({
   playerStats,
   highlightMemberId,
@@ -201,16 +289,19 @@ export function MatchPlayerStatsCharts({
 
   if (categories.length === 0) return null;
 
+  const [active, setActive] = useState<StatCategory>(categories[0]);
+
   return (
-    <div className="space-y-6">
-      {categories.map((c) => (
-        <CategoryPlayerChart
-          key={c}
-          category={c}
-          rows={playerStats}
-          highlightMemberId={highlightMemberId}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">個人數據（比較）</h3>
+        <CategoryTabs active={active} categories={categories} onChange={setActive} />
+      </div>
+      <CombinedCategoryComparisonChart
+        category={active}
+        rows={playerStats}
+        highlightMemberId={highlightMemberId}
+      />
     </div>
   );
 }
