@@ -17,6 +17,11 @@ import {
   type MatchSetScore,
   type StatCategory,
 } from "@/lib/match-result-schema";
+import {
+  parseNonNegativeInt,
+  parseNonNegativeIntOrZero,
+  sanitizeNonNegativeIntInput,
+} from "@/lib/numeric-input";
 
 export type { MatchResultPlayerRow };
 
@@ -39,15 +44,27 @@ const EMPTY_TEAM: TeamStatsForm = {
 };
 
 function parseOptionalInt(s: string): number | undefined {
-  const t = s.trim();
-  if (!t) return undefined;
-  const n = Number(t);
-  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : undefined;
+  return parseNonNegativeInt(s);
 }
 
-function initSets(initial: MatchResultViewData | null): MatchSetScore[] {
-  if (initial?.sets?.length) return initial.sets.map((s) => ({ ...s }));
-  return [{ our: 0, opponent: 0 }];
+/** 各局比分表單列（註解：字串欄位避免 number input 無法輸入）。 */
+type SetScoreForm = { our: string; opponent: string };
+
+function initSets(initial: MatchResultViewData | null): SetScoreForm[] {
+  if (initial?.sets?.length) {
+    return initial.sets.map((s) => ({
+      our: s.our === 0 ? "" : String(s.our),
+      opponent: s.opponent === 0 ? "" : String(s.opponent),
+    }));
+  }
+  return [{ our: "", opponent: "" }];
+}
+
+function setsFormToPayload(forms: SetScoreForm[]): MatchSetScore[] {
+  return forms.map((s) => ({
+    our: parseNonNegativeIntOrZero(s.our),
+    opponent: parseNonNegativeIntOrZero(s.opponent),
+  }));
 }
 
 function initTeamStats(initial: MatchResultViewData | null): TeamStatsForm {
@@ -84,7 +101,7 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
   const [mode, setMode] = useState<"view" | "edit">(initial ? "view" : canEdit ? "edit" : "view");
   const [saved, setSaved] = useState<MatchResultViewData | null>(initial);
   const [opponentName, setOpponentName] = useState(initial?.opponentName ?? "");
-  const [sets, setSets] = useState<MatchSetScore[]>(() => initSets(initial));
+  const [sets, setSets] = useState<SetScoreForm[]>(() => initSets(initial));
   const [teamStats, setTeamStats] = useState<TeamStatsForm>(() => initTeamStats(initial));
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [playerMap, setPlayerMap] = useState(() => initPlayerMap(initial, roster));
@@ -95,7 +112,7 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
 
   const updateStat = useCallback(
     (memberId: string, category: StatCategory, field: string, value: string) => {
-      const n = parseOptionalInt(value) ?? 0;
+      const n = parseNonNegativeIntOrZero(sanitizeNonNegativeIntInput(value));
       setPlayerMap((prev) => {
         const next = new Map(prev);
         const row = next.get(memberId);
@@ -131,7 +148,7 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         opponentName: opponentName.trim() || null,
-        sets,
+        sets: setsFormToPayload(sets),
         teamStats: hasTeamStats ? teamStatsPayload : null,
         notes: notes.trim() || null,
         playerStats: playerRows.map((p) => ({
@@ -235,7 +252,7 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
               <button
                 type="button"
                 className="text-xs text-[var(--brand-primary)] hover:underline"
-                onClick={() => setSets((s) => [...s, { our: 0, opponent: 0 }])}
+                onClick={() => setSets((s) => [...s, { our: "", opponent: "" }])}
               >
                 + 新增一局
               </button>
@@ -246,31 +263,39 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
               <div key={i} className="flex flex-wrap items-center gap-2">
                 <span className="w-14 text-xs text-zinc-500">第 {i + 1} 局</span>
                 <input
-                  type="number"
-                  min={0}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={s.our}
+                  placeholder="0"
                   onChange={(e) =>
                     setSets((prev) =>
                       prev.map((row, j) =>
-                        j === i ? { ...row, our: parseOptionalInt(e.target.value) ?? 0 } : row,
+                        j === i ?
+                          { ...row, our: sanitizeNonNegativeIntInput(e.target.value) }
+                        : row,
                       ),
                     )
                   }
-                  className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                  className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
                 />
                 <span className="text-zinc-400">:</span>
                 <input
-                  type="number"
-                  min={0}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={s.opponent}
+                  placeholder="0"
                   onChange={(e) =>
                     setSets((prev) =>
                       prev.map((row, j) =>
-                        j === i ? { ...row, opponent: parseOptionalInt(e.target.value) ?? 0 } : row,
+                        j === i ?
+                          { ...row, opponent: sanitizeNonNegativeIntInput(e.target.value) }
+                        : row,
                       ),
                     )
                   }
-                  className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                  className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
                 />
                 {sets.length > 1 ?
                   <button
@@ -288,7 +313,9 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
 
         <MatchTeamStatsInputSection
           teamStats={teamStats}
-          onChange={(key, value) => setTeamStats((t) => ({ ...t, [key]: value }))}
+          onChange={(key, value) =>
+            setTeamStats((t) => ({ ...t, [key]: sanitizeNonNegativeIntInput(value) }))
+          }
         />
 
         <MatchPlayerStatsInputSection playerRows={playerRows} onUpdateStat={updateStat} />

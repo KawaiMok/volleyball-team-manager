@@ -4,6 +4,8 @@ import { useToast } from "@/components/toast-provider";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { sanitizeNonNegativeIntInput } from "@/lib/numeric-input";
+
 type Props = {
   eventId: string;
   /** 初始值（註解：若已有回饋則預填以利修改）。 */
@@ -21,7 +23,7 @@ type Props = {
 export function PlayerFeedbackForm({ eventId, initial, readOnly }: Props) {
   const router = useRouter();
   const { showError, showSuccess } = useToast();
-  const [rpe, setRpe] = useState(initial?.rpe ?? 5);
+  const [rpe, setRpe] = useState(String(initial?.rpe ?? 5));
   const [fatigue, setFatigue] = useState<"LOW" | "MED" | "HIGH">(initial?.fatigue ?? "MED");
   const [painLevel, setPainLevel] = useState<"NONE" | "MILD" | "SEVERE">(initial?.painLevel ?? "NONE");
   const [painArea, setPainArea] = useState(initial?.painArea ?? "");
@@ -31,13 +33,18 @@ export function PlayerFeedbackForm({ eventId, initial, readOnly }: Props) {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (readOnly) return;
+    const rpeNum = Number(rpe);
+    if (!Number.isFinite(rpeNum) || rpeNum < 1 || rpeNum > 10) {
+      showError("RPE 請填 1–10");
+      return;
+    }
     setPending(true);
     const res = await fetch(`/api/events/${eventId}/feedback`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        rpe,
+        rpe: rpeNum,
         fatigue,
         painLevel,
         painArea: painArea.trim() || null,
@@ -60,13 +67,14 @@ export function PlayerFeedbackForm({ eventId, initial, readOnly }: Props) {
       <label className="block text-xs text-slate-600 dark:text-slate-400">
         RPE 自覺強度（1–10）
         <input
-          type="number"
-          min={1}
-          max={10}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={rpe}
-          onChange={(e) => setRpe(Number(e.target.value))}
+          placeholder="1–10"
+          onChange={(e) => setRpe(sanitizeNonNegativeIntInput(e.target.value))}
           disabled={readOnly || pending}
-          className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-2 text-sm tabular-nums"
         />
       </label>
       <fieldset disabled={readOnly || pending} className="space-y-2">

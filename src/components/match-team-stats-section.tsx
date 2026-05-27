@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { MATCH_TEAM_STAT_LABELS, type MatchTeamStats } from "@/lib/match-result-schema";
+import { sanitizeNonNegativeIntInput } from "@/lib/numeric-input";
 
 export type TeamStatKey = keyof typeof MATCH_TEAM_STAT_LABELS;
 
@@ -50,12 +51,12 @@ function TeamStatsFields({
           <label key={key} className="block space-y-1.5">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{MATCH_TEAM_STAT_LABELS[key]}</span>
             <input
-              type="number"
-              min={0}
+              type="text"
               inputMode="numeric"
+              pattern="[0-9]*"
               value={teamStats[key]}
               placeholder="選填"
-              onChange={(e) => onChange?.(key, e.target.value)}
+              onChange={(e) => onChange?.(key, sanitizeNonNegativeIntInput(e.target.value))}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-base tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
             />
           </label>
@@ -85,11 +86,13 @@ export function MatchTeamStatsInputSection({ teamStats, onChange }: InputProps) 
           <label key={key} className="block space-y-1 text-sm">
             <span className="text-zinc-600 dark:text-zinc-400">{MATCH_TEAM_STAT_LABELS[key]}</span>
             <input
-              type="number"
-              min={0}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={teamStats[key]}
-              onChange={(e) => onChange(key, e.target.value)}
-              className="w-full rounded border border-zinc-300 px-2 py-1 dark:border-zinc-700 dark:bg-zinc-950"
+              placeholder="選填"
+              onChange={(e) => onChange(key, sanitizeNonNegativeIntInput(e.target.value))}
+              className="w-full rounded border border-zinc-300 px-2 py-1 tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
             />
           </label>
         ))}

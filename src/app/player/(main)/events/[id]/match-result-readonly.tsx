@@ -1,12 +1,9 @@
 "use client";
 
-import { useState } from "react";
-
 import {
   MatchResultVisualization,
   type MatchResultViewData,
 } from "@/app/coach/(main)/events/[id]/match-result-visualization";
-import { MatchPlayerStatsTables } from "@/components/match-player-stats-tables";
 import {
   computeAttackRates,
   computeBlockRating,
@@ -133,24 +130,17 @@ function PersonalStatCard({
   );
 }
 
-/** 球員：比賽結果與個人數據唯讀（註解：突出本人、可展開全隊）。 */
+/** 球員：僅顯示大比分與本人數據（註解：不含球隊／全隊個人表）。 */
 export function MatchResultReadonly({ data, teamName, currentMemberId }: Props) {
-  const [showTeam, setShowTeam] = useState(false);
   const myRow = data.playerStats.find((p) => p.memberId === currentMemberId);
   const myStats = myRow?.stats;
+  const hasPersonalStats = myStats && STAT_CATEGORIES.some((c) => hasCategoryData(myStats, c));
 
   return (
     <div className="space-y-6">
-      <MatchResultVisualization
-        data={{
-          ...data,
-          /** 比分區塊不需列出全隊個人表（註解：下方另有本人卡片）。 */
-          playerStats: [],
-        }}
-        teamName={teamName}
-      />
+      <MatchResultVisualization data={data} teamName={teamName} scoreOnly />
 
-      {myStats ?
+      {hasPersonalStats ?
         <section className="space-y-3">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">我的數據</h3>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -162,21 +152,6 @@ export function MatchResultReadonly({ data, teamName, currentMemberId }: Props) 
       : (
         <p className="text-sm text-slate-500 dark:text-slate-400">教練尚未登錄你的個人數據。</p>
       )}
-
-      {data.playerStats.length > 0 ?
-        <section className="space-y-3">
-          <button
-            type="button"
-            onClick={() => setShowTeam((v) => !v)}
-            className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-          >
-            {showTeam ? "收起全隊數據" : "查看全隊數據"}
-          </button>
-          {showTeam ?
-            <MatchPlayerStatsTables playerStats={data.playerStats} highlightMemberId={currentMemberId} />
-          : null}
-        </section>
-      : null}
     </div>
   );
 }

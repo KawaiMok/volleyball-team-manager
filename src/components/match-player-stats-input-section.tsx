@@ -8,6 +8,7 @@ import {
   derivedStatValue,
   playerOverallSummary,
 } from "@/lib/match-player-stats-fields";
+import { formatNumericFieldValue } from "@/lib/numeric-input";
 import {
   hasAnyPlayerStats,
   hasCategoryData,
@@ -21,10 +22,6 @@ type Props = {
   playerRows: MatchResultPlayerRow[];
   onUpdateStat: (memberId: string, category: StatCategory, field: string, value: string) => void;
 };
-
-function parseDisplayInt(value: number): string {
-  return value === 0 ? "" : String(value);
-}
 
 function CategoryTabs({
   active,
@@ -89,10 +86,10 @@ function PlayerStatSheetForm({
             <label key={f.key} className="block space-y-1.5">
               <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{f.label}</span>
               <input
-                type="number"
-                min={0}
+                type="text"
                 inputMode="numeric"
-                value={parseDisplayInt(cat[f.key] ?? 0)}
+                pattern="[0-9]*"
+                value={formatNumericFieldValue(cat[f.key] ?? 0)}
                 placeholder="0"
                 onChange={(e) => onUpdateStat(player.memberId, category, f.key, e.target.value)}
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-base tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
@@ -108,18 +105,21 @@ function PlayerStatSheetForm({
 /** 個人數據輸入：桌機表格 + 手機 popup（分類 tab 在 popup 內）。 */
 export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props) {
   const [statTab, setStatTab] = useState<StatCategory>("attack");
-  const [sheetPlayer, setSheetPlayer] = useState<MatchResultPlayerRow | null>(null);
+  const [sheetMemberId, setSheetMemberId] = useState<string | null>(null);
   const [sheetCategory, setSheetCategory] = useState<StatCategory>("attack");
   const fields = CATEGORY_FIELDS[statTab];
+  /** 從最新 playerRows 取資料，避免 popup 內輸入後 state 過期（註解）。 */
+  const sheetPlayer =
+    sheetMemberId ? playerRows.find((p) => p.memberId === sheetMemberId) ?? null : null;
 
   function openPlayerSheet(player: MatchResultPlayerRow) {
     const initial = STAT_CATEGORIES.find((c) => hasCategoryData(player.stats, c)) ?? "attack";
     setSheetCategory(initial);
-    setSheetPlayer(player);
+    setSheetMemberId(player.memberId);
   }
 
   function closePlayerSheet() {
-    setSheetPlayer(null);
+    setSheetMemberId(null);
   }
 
   return (
@@ -164,9 +164,11 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
                       : (
                         <td key={f.key} className="px-1 py-1 align-middle">
                           <input
-                            type="number"
-                            min={0}
-                            value={cat[f.key] ?? 0}
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            value={formatNumericFieldValue(cat[f.key] ?? 0)}
+                            placeholder="0"
                             onChange={(e) => onUpdateStat(p.memberId, statTab, f.key, e.target.value)}
                             className="box-border w-full min-w-0 rounded border border-zinc-300 px-1 py-0.5 text-center tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
                           />

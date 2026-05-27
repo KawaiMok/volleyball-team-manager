@@ -24,12 +24,19 @@ export type MatchResultViewData = {
 type Props = {
   data: MatchResultViewData;
   teamName?: string;
-  /** 高亮當前球員（註解：球員端唯讀）。 */
+  /** 高亮當前球員（註解：教練端全隊表）。 */
   highlightMemberId?: string;
+  /** 僅顯示大比分（註解：球員端不顯示球隊／全隊個人表）。 */
+  scoreOnly?: boolean;
 };
 
 /** 比賽結果可視化（註解：比分、球隊與六大類個人數據）。 */
-export function MatchResultVisualization({ data, teamName = "我方", highlightMemberId }: Props) {
+export function MatchResultVisualization({
+  data,
+  teamName = "我方",
+  highlightMemberId,
+  scoreOnly = false,
+}: Props) {
   const { our: setsWonOur, opponent: setsWonOpp } = computeSetWins(data.sets);
   const won = setsWonOur > setsWonOpp;
   const tied = setsWonOur === setsWonOpp;
@@ -73,23 +80,27 @@ export function MatchResultVisualization({ data, teamName = "我方", highlightM
         </div>
       </div>
 
-      {/* 球隊數據 */}
-      <MatchTeamStatsViewSection teamStats={data.teamStats} />
+      {scoreOnly ? null : (
+        <>
+          {/* 球隊數據 */}
+          <MatchTeamStatsViewSection teamStats={data.teamStats} />
 
-      {/* 個人數據：六大分類 */}
-      {data.playerStats.length > 0 ?
-        <div>
-          <h3 className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">個人數據</h3>
-          <MatchPlayerStatsTables playerStats={data.playerStats} highlightMemberId={highlightMemberId} />
-        </div>
-      : null}
+          {/* 個人數據：六大分類 */}
+          {data.playerStats.length > 0 ?
+            <div>
+              <h3 className="mb-3 text-sm font-semibold text-zinc-800 dark:text-zinc-200">個人數據</h3>
+              <MatchPlayerStatsTables playerStats={data.playerStats} highlightMemberId={highlightMemberId} />
+            </div>
+          : null}
 
-      {data.notes ?
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <p className="text-xs font-semibold uppercase text-zinc-500">備註</p>
-          <p className="mt-1 whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">{data.notes}</p>
-        </div>
-      : null}
+          {data.notes ?
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm dark:border-zinc-800 dark:bg-zinc-950">
+              <p className="text-xs font-semibold uppercase text-zinc-500">備註</p>
+              <p className="mt-1 whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">{data.notes}</p>
+            </div>
+          : null}
+        </>
+      )}
     </div>
   );
 }
