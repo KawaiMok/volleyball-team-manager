@@ -70,8 +70,15 @@ async function main() {
     process.exit(1);
   }
 
+  const defaultOrg = await prisma.organization.findUnique({ where: { slug: "aaaism" } });
+  if (!defaultOrg) {
+    console.error("找不到預設組織（slug: aaaism），請先執行 migration。");
+    process.exit(1);
+  }
+
   const team = await prisma.team.create({
     data: {
+      organizationId: defaultOrg.id,
       name: teamName,
       season: String(new Date().getFullYear()),
       groupConfig: ["A", "B"],

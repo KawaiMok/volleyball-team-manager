@@ -12,8 +12,16 @@ export async function POST() {
   }
 
   const prisma = getPrisma();
+
+  /** 預設組織（migration backfill；註解：本機 bootstrap 亦歸屬此 org）。 */
+  const defaultOrg = await prisma.organization.findUnique({ where: { slug: "aaaism" } });
+  if (!defaultOrg) {
+    return NextResponse.json({ error: "找不到預設組織，請先執行 migration" }, { status: 500 });
+  }
+
   const team = await prisma.team.create({
     data: {
+      organizationId: defaultOrg.id,
       name: "示範排球隊",
       season: "2026",
       groupConfig: ["A", "B"],

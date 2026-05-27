@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { CoachPlayerViewSwitch } from "@/components/coach-player-view-switch";
+import { BrandStyleSwitcher } from "@/components/brand-style-switcher";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 
 type Surface = "coach" | "player";
@@ -120,6 +121,12 @@ export function ToolbarUtilityDropdown({ surface, currentView, canAccessCoach }:
               </div>
             : null}
             <div className={showViewSection ? `border-t pt-3 ${sep}` : ""}>
+              <p className={`mb-2 text-[11px] font-semibold uppercase tracking-wide ${labelMuted}`}>
+                Logo／Avatar
+              </p>
+              <BrandStyleSwitcher variant={surface} />
+            </div>
+            <div className={`border-t pt-3 ${sep}`}>
               <p className={`mb-2 text-[11px] font-semibold uppercase tracking-wide ${labelMuted}`}>外觀</p>
               <ThemeSwitcher variant={surface} />
             </div>

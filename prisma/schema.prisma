@@ -26,6 +26,29 @@ enum MemberStatus {
   INACTIVE
 }
 
+/** 組織內角色（註解：多租戶 SaaS；ORG_ADMIN 可建隊、指派教練）。 */
+enum OrganizationRole {
+  ORG_ADMIN
+  ORG_STAFF
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+/** 球隊生命週期（註解：與 MemberStatus 分開；ARCHIVED 後教練端可限制新建事件）。 */
+enum TeamLifecycleStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+/** Logo／Avatar 風格（註解：預設＝通用排球；CIQING＝慈青體育會）。 */
+enum BrandStyle {
+  DEFAULT
+  CIQING
+}
+
 enum EventType {
   TRAINING
   MATCH
@@ -94,12 +117,16 @@ model User {
   email       String?  @unique
   name        String?
   avatarUrl   String?
+  /** Logo／Avatar 風格偏好（註解：預設 DEFAULT；慈青 CIQING）。 */
+  brandStyle  BrandStyle @default(DEFAULT)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  memberships      TeamMember[]
-  pushDevices      PushDevice[]
-  notifications    UserNotification[]
+  memberships           TeamMember[]
+  pushDevices           PushDevice[]
+  notifications         UserNotification[]
+  organizationMembers   OrganizationMember[]
+  platformAdmin         PlatformAdmin?
 }
 
 /** App 內通知紀錄（註解：與 FCM 推播同步寫入；供「通知」頁面瀏覽）。 */
@@ -134,11 +161,66 @@ model PushDevice {
   @@index([userId])
 }
 
+/** 多租戶組織（註解：協會／學校等；旗下可有多支球隊）。 */
+model Organization {
+  id           String             @id @default(cuid())
+  name         String
+  slug         String             @unique
+  status       OrganizationStatus @default(ACTIVE)
+  contactEmail String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  members OrganizationMember[]
+  teams   Team[]
+}
+
+/** 組織成員（註解：ORG_ADMIN 可管理組織內球隊；依 Email 預建，Clerk 登入後合併）。 */
+model OrganizationMember {
+  id             String           @id @default(cuid())
+  organizationId String
+  userId         String
+  role           OrganizationRole
+  status         MemberStatus     @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId, status])
+}
+
+/** 平台超管（註解：跨組織；與 PLATFORM_ADMIN_EMAILS 環境變數互補）。 */
+model PlatformAdmin {
+  userId    String   @id
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/** 平台操作審計（註解：Phase 2 UI；先建表供 API 寫入）。 */
+model PlatformAuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  action      String
+  targetType  String
+  targetId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+  @@index([targetType, targetId])
+}
+
 model Team {
   id          String   @id @default(cuid())
+  organizationId String
   name        String
   season      String?
   timezone    String   @default("Asia/Taipei")
+  lifecycleStatus TeamLifecycleStatus @default(ACTIVE)
   groupConfig Json?
   /** Email 等通知偏好（註解：實際寄信／排程尚未接時仍可先存設定）。 */
   notificationSettings Json?
@@ -147,11 +229,14 @@ model Team {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   members      TeamMember[]
   events       Event[]
   trainingPlans TrainingPlan[]
   comments     Comment[]
   fileAssets   FileAsset[]
+
+  @@index([organizationId])
 }
 
 model TeamMember {
@@ -186,6 +271,10 @@ model TeamMember {
   playerReviewsReceived EventPlayerReview[] @relation("PlayerReviewSubject")
   /** 教練撰寫的私評（註解：author）。 */
   playerReviewsAuthored EventPlayerReview[] @relation("PlayerReviewAuthor")
+  /** 比賽個人數據（註解：MATCH 事件）。 */
+  matchPlayerStats MatchPlayerStat[]
+  /** 登錄的比賽結果（註解：recordedBy）。 */
+  matchResultsRecorded MatchResult[] @relation("MatchResultRecordedBy")
 
   @@unique([teamId, userId])
   @@unique([teamId, jerseyNumber])
@@ -224,6 +313,8 @@ model Event {
   fileAssets   FileAsset[]
   /** 教練對參與球員的私評（註解：僅教練與該球員可見）。 */
   playerReviews EventPlayerReview[]
+  /** 比賽結果（註解：僅 MATCH 類型；一事件一筆）。 */
+  matchResult   MatchResult?
 
   @@index([teamId, startsAt])
   @@index([teamId, status, startsAt])
@@ -334,6 +425,42 @@ model EventPlayerReview {
   author TeamMember @relation("PlayerReviewAuthor", fields: [authorMemberId], references: [id], onDelete: Restrict)
 
   @@unique([eventId, memberId])
+}
+
+/** 比賽結果（註解：事件須為 MATCH；含比分、球隊與個人數據）。 */
+model MatchResult {
+  id                 String   @id @default(cuid())
+  eventId            String   @unique
+  opponentName       String?
+  /** 各局比分 JSON：[{ our, opponent }] */
+  sets               Json
+  /** 球隊整體數據 JSON（註解：得分、失誤、Ace 等）。 */
+  teamStats          Json?
+  notes              String?
+  recordedByMemberId String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  event      Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  recordedBy TeamMember         @relation("MatchResultRecordedBy", fields: [recordedByMemberId], references: [id], onDelete: Restrict)
+  playerStats MatchPlayerStat[]
+}
+
+/** 比賽個人數據（註解：攻擊、攔網、防守、一傳、發球、其他；JSON 結構見 match-result-schema）。 */
+model MatchPlayerStat {
+  id            String   @id @default(cuid())
+  matchResultId String
+  memberId      String
+  /** 六大類細項計數 JSON（註解：rating/百分比由前端即時計算）。 */
+  stats         Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  matchResult MatchResult @relation(fields: [matchResultId], references: [id], onDelete: Cascade)
+  member      TeamMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([matchResultId, memberId])
+  @@index([memberId])
 }
 
 model Comment {

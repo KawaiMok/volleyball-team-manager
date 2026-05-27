@@ -29,6 +29,10 @@ export default clerkMiddleware(async (auth, req) => {
   if (path === "/onboarding" || path.startsWith("/onboarding/")) {
     await auth.protect();
   }
+  /** 平台／組織後台需登入（註解：細粒度 RBAC 在 layout／API）。 */
+  if (path.startsWith("/platform") || path.startsWith("/org")) {
+    await auth.protect();
+  }
   if (path.startsWith("/api/") && !isPublicApiPath(path)) {
     await auth.protect();
   }

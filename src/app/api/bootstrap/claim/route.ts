@@ -54,8 +54,13 @@ export async function POST(req: Request) {
     orderBy: { createdAt: "asc" },
   });
   if (!team) {
+    const defaultOrg = await prisma.organization.findUnique({ where: { slug: "aaaism" } });
+    if (!defaultOrg) {
+      return NextResponse.json({ error: "找不到預設組織" }, { status: 500 });
+    }
     team = await prisma.team.create({
       data: {
+        organizationId: defaultOrg.id,
         name: DEMO_TEAM_NAME,
         season: String(new Date().getFullYear()),
         groupConfig: ["A", "B"],

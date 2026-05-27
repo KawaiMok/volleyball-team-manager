@@ -2,7 +2,12 @@ import Link from "next/link";
 
 import { ActiveTeamSwitcher } from "@/components/active-team-switcher";
 import { AppLogo } from "@/components/brand/app-logo";
-import { getTeamMember, listActiveTeamsForSwitcher } from "@/lib/session";
+import { BrandStyleSwitcher } from "@/components/brand-style-switcher";
+import {
+  isCurrentUserPlatformAdmin,
+  listManageableOrganizationsForUser,
+} from "@/lib/platform-rbac";
+import { getOrSyncPrismaUserFromClerk, getTeamMember, listActiveTeamsForSwitcher } from "@/lib/session";
 
 /**
  * 落地首頁：選擇教練端或球員端再登入；已登入則直入對應區（註解：`?dest=` 見 sign-in／sign-up）。
@@ -10,8 +15,11 @@ import { getTeamMember, listActiveTeamsForSwitcher } from "@/lib/session";
 export default async function Home() {
   const member = await getTeamMember();
   const teamOptions = member ? await listActiveTeamsForSwitcher() : [];
+  const user = await getOrSyncPrismaUserFromClerk();
+  const isPlatformAdmin = await isCurrentUserPlatformAdmin();
+  const orgOptions = user ? await listManageableOrganizationsForUser(user.id) : [];
 
-  const signedIn = Boolean(member);
+  const signedIn = Boolean(member || user);
   const coachHref = signedIn ? "/coach" : "/sign-in?dest=coach";
   const playerHref = signedIn ? "/player" : "/sign-in?dest=player";
   const signUpCoach = "/sign-up?dest=coach";
@@ -60,6 +68,41 @@ export default async function Home() {
           </span>
         </Link>
       </div>
+
+      {(isPlatformAdmin || orgOptions.length > 0) ?
+        <section className="rounded-lg border border-blue-200 bg-blue-50/60 p-4 text-sm dark:border-blue-900/50 dark:bg-blue-950/30">
+          <h2 className="font-medium text-blue-950 dark:text-blue-100">管理後台</h2>
+          <div className="mt-3 flex flex-wrap gap-3">
+            {isPlatformAdmin ?
+              <Link
+                href="/platform"
+                className="rounded-lg bg-[var(--brand-primary)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+              >
+                平台管理
+              </Link>
+            : null}
+            {orgOptions.map((o) => (
+              <Link
+                key={o.id}
+                href={`/org/${o.slug}`}
+                className="rounded-lg border border-blue-300 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100 dark:border-blue-800 dark:text-blue-100 dark:hover:bg-blue-900/40"
+              >
+                {o.name}（組織）
+              </Link>
+            ))}
+          </div>
+        </section>
+      : null}
+
+      {signedIn ?
+        <section className="rounded-lg border border-zinc-200 bg-zinc-50/80 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900/50">
+          <h2 className="font-medium text-zinc-900 dark:text-zinc-50">Logo／Avatar 風格</h2>
+          <p className="mt-1 text-xs text-zinc-500">預設＝通用排球；慈青＝慈青體育會圖騰。</p>
+          <div className="mt-3">
+            <BrandStyleSwitcher variant="coach" />
+          </div>
+        </section>
+      : null}
 
       {!signedIn ?
         <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">

@@ -18,6 +18,10 @@ import { isEventEnded } from "@/lib/event-timing";
 import { isPlayerReviewSubjectRole } from "@/lib/player-review-access";
 import { coachMemberUserSelect } from "@/lib/event-response-sanitize";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
+import { MatchResultPanel } from "@/app/coach/(main)/events/[id]/match-result-panel";
+import { canManageMatchResult } from "@/lib/match-result-access";
+import type { MatchSetScore, MatchTeamStats } from "@/lib/match-result-schema";
+import { EMPTY_PLAYER_STATS, normalizePlayerStats } from "@/lib/match-result-schema";
 import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
 import {
   EventStatusIndicator,
@@ -55,6 +59,7 @@ const COACH_EVENT_DETAIL_SECTIONS = [
   { id: "coach-ev-media", label: "戰術影片" },
   { id: "coach-ev-comments", label: "公告留言" },
   { id: "coach-ev-reviews", label: "球員評語" },
+  { id: "coach-ev-match", label: "比賽結果" },
   { id: "coach-ev-feedback", label: "身體回饋" },
 ] as const;
 
@@ -76,6 +81,14 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
       },
       trainingPlan: {
         include: { blocks: { orderBy: { order: "asc" } } },
+      },
+      matchResult: {
+        include: {
+          playerStats: {
+            include: { member: { include: { user: coachMemberUserSelect } } },
+            orderBy: { member: { jerseyNumber: "asc" } },
+          },
+        },
       },
     },
   });
@@ -145,7 +158,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     : Promise.resolve([]),
     prisma.team.findUnique({
       where: { id: member.teamId },
-      select: { groupConfig: true },
+      select: { name: true, groupConfig: true },
     }),
   ]);
 
@@ -224,19 +237,57 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
       };
     });
 
+  const isMatchEvent = event.type === EventType.MATCH;
+  const canManageMatch = canManageMatchResult(member, event);
+
+  const matchPlayerRoster = roster
+    .filter((r) => isPlayerReviewSubjectRole(r.role))
+    .filter((r) => participantMemberIds.includes(r.id))
+    .map((r) => ({
+      memberId: r.id,
+      displayName: r.displayName,
+      stats: { ...EMPTY_PLAYER_STATS },
+    }));
+
+  const initialMatchResult =
+    event.matchResult ?
+      {
+        opponentName: event.matchResult.opponentName,
+        sets: event.matchResult.sets as MatchSetScore[],
+        teamStats: (event.matchResult.teamStats as MatchTeamStats | null) ?? null,
+        notes: event.matchResult.notes,
+        playerStats: event.matchResult.playerStats.map((p) => ({
+          memberId: p.memberId,
+          displayName: p.member.user?.name ?? p.member.user?.email ?? p.memberId.slice(0, 8),
+          stats: normalizePlayerStats(p.stats),
+        })),
+      }
+    : null;
+
   const detailSections = COACH_EVENT_DETAIL_SECTIONS.filter((s) => {
+    if (!isMatchEvent && s.id === "coach-ev-match") return false;
     if (!eventEnded) {
-      return s.id !== "coach-ev-reviews";
+      return s.id !== "coach-ev-reviews" && s.id !== "coach-ev-match";
     }
     return s.id !== "coach-ev-edit" && s.id !== "coach-ev-training";
   });
 
-  /** 已結束場次：身體回饋、球員評語置頂（註解：段落導覽順序同步）。 */
+  /** 已結束場次：身體回饋、球員評語、比賽結果置頂（註解：段落導覽順序同步）。 */
   const orderedDetailSections =
     eventEnded ?
       [
-        ...detailSections.filter((s) => s.id === "coach-ev-feedback" || s.id === "coach-ev-reviews"),
-        ...detailSections.filter((s) => s.id !== "coach-ev-feedback" && s.id !== "coach-ev-reviews"),
+        ...detailSections.filter(
+          (s) =>
+            s.id === "coach-ev-feedback" ||
+            s.id === "coach-ev-reviews" ||
+            s.id === "coach-ev-match",
+        ),
+        ...detailSections.filter(
+          (s) =>
+            s.id !== "coach-ev-feedback" &&
+            s.id !== "coach-ev-reviews" &&
+            s.id !== "coach-ev-match",
+        ),
       ]
     : detailSections;
 
@@ -259,6 +310,32 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
             eventId={event.id}
             rows={coachPlayerReviewRows}
             canEdit={event.status === EventStatus.PUBLISHED}
+          />
+        </div>
+      </section>
+    : null;
+
+  const matchResultSection =
+    isMatchEvent ?
+      <section
+        id="coach-ev-match"
+        className="scroll-mt-28 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            比賽結果
+          </h2>
+          <HintExclamationToggle>
+            比賽結束後可登錄各局比分、球隊數據與個人數據（一傳、防守、進攻、攔網、發球）；儲存後以圖表檢視。
+          </HintExclamationToggle>
+        </div>
+        <div className="mt-4">
+          <MatchResultPanel
+            eventId={event.id}
+            teamName={teamRow?.name ?? "我方"}
+            canEdit={canManageMatch}
+            initial={initialMatchResult}
+            roster={matchPlayerRoster}
           />
         </div>
       </section>
@@ -305,17 +382,24 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         <CoachEventDetailSectionNav sections={[...orderedDetailSections]} />
         {eventEnded ?
           <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-            此場次已結束，可檢視點名、企位、留言、球員評語與身體回饋。
+            此場次已結束，可檢視點名、企位、留言
+            {isMatchEvent ? "、比賽結果" : ""}
+            、球員評語與身體回饋。
+          </p>
+        : isMatchEvent && !eventEnded ?
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            比賽結束後可登錄比分與數據。
           </p>
         : null}
       </div>
 
-      {eventEnded ?
-        <>
-          {feedbackSummarySection}
-          {playerReviewsSection}
-        </>
-      : null}
+        {eventEnded ?
+          <>
+            {isMatchEvent ? matchResultSection : null}
+            {feedbackSummarySection}
+            {playerReviewsSection}
+          </>
+        : null}
 
       <section
         id="coach-ev-when"

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { MatchResultReadonly } from "@/app/player/(main)/events/[id]/match-result-readonly";
 import { CourtFormationReadonly } from "@/app/player/(main)/events/[id]/court-formation-readonly";
 import { PlayerEventTacticalVideoReadonly } from "@/app/player/(main)/events/[id]/event-tactical-video-readonly";
 import { PlayerCoachReviewSection } from "@/app/player/(main)/events/[id]/player-coach-review-section";
 import { PlayerEventComments } from "@/app/player/(main)/events/[id]/player-event-comments";
 import { EventStatus, EventType, FileAssetCategory, FileAssetKind } from "@/generated/prisma/client";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
+import { normalizePlayerStats, type MatchSetScore, type MatchTeamStats } from "@/lib/match-result-schema";
 import { getTeamMember } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
 
@@ -72,6 +74,15 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
           blocks: { orderBy: { order: "asc" } },
         },
       },
+      matchResult: {
+        include: {
+          playerStats: {
+            include: { member: { include: { user: { select: { name: true, email: true } } } } },
+            orderBy: { member: { jerseyNumber: "asc" } },
+          },
+        },
+      },
+      team: { select: { name: true } },
     },
   });
 
@@ -157,6 +168,38 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
       />
     : null;
 
+  const matchResultData =
+    afterEnd && event.type === EventType.MATCH && event.matchResult ?
+      {
+        opponentName: event.matchResult.opponentName,
+        sets: event.matchResult.sets as MatchSetScore[],
+        teamStats: (event.matchResult.teamStats as MatchTeamStats | null) ?? null,
+        notes: event.matchResult.notes,
+        playerStats: event.matchResult.playerStats.map((p) => ({
+          memberId: p.memberId,
+          displayName: p.member.user?.name ?? p.member.user?.email ?? p.memberId.slice(0, 8),
+          stats: normalizePlayerStats(p.stats),
+        })),
+      }
+    : null;
+
+  const matchResultBlock =
+    matchResultData ?
+      <section id="player-ev-match-stats" className="space-y-3">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">比賽數據</h2>
+        <MatchResultReadonly
+          data={matchResultData}
+          teamName={event.team.name}
+          currentMemberId={member.id}
+        />
+      </section>
+    : afterEnd && event.type === EventType.MATCH ?
+      <section className="space-y-2">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">比賽數據</h2>
+        <p className="text-sm text-slate-600 dark:text-slate-400">教練尚未登錄比賽結果。</p>
+      </section>
+    : null;
+
   const feedbackBlock = (
     <section className="space-y-2">
       <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">身體回饋</h2>
@@ -222,6 +265,8 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
       </div>
 
       {coachReviewBlock}
+
+      {matchResultBlock}
 
       {afterEnd ? feedbackBlock : null}
 

@@ -7,10 +7,14 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { CapacitorNativeBridge } from "@/components/capacitor-native-bridge";
 import { CapacitorPushBridge } from "@/components/capacitor-push-bridge";
+import { BrandStyleProvider } from "@/components/brand/brand-style-provider";
 import { NavigationTransitionBar } from "@/components/navigation-transition-bar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ScrollToTopButton } from "@/components/scroll-to-top-button";
 import { ToastProvider } from "@/components/toast-provider";
+import { BRAND_STYLE_STORAGE_KEY } from "@/lib/brand-style";
+import { brandStyleBootScript } from "@/lib/brand-style-preference";
+import { getBrandStyleForRequest } from "@/lib/brand-style-server";
 import { THEME_STORAGE_KEY, themeBootScript } from "@/lib/theme-preference";
 
 import "./globals.css";
@@ -34,24 +38,34 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const brandStyle = await getBrandStyleForRequest();
+
   return (
     <ClerkProvider>
       <html
         lang="zh-Hant"
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+        data-brand-style={brandStyle}
         suppressHydrationWarning
       >
-        {/** 註解：在 React 注水前套用 localStorage 主題，避免閃爍 */}
+        {/** 註解：在 React 注水前套用 localStorage 主題與 Logo 風格 */}
         <Script
           id="theme-boot"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: themeBootScript(THEME_STORAGE_KEY),
+          }}
+        />
+        <Script
+          id="brand-style-boot"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: brandStyleBootScript(BRAND_STYLE_STORAGE_KEY),
           }}
         />
         <body className="flex min-h-full flex-col">
@@ -61,13 +75,15 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <CapacitorPushBridge />
           </Suspense>
-          <ThemeProvider>
-            <ToastProvider>
-              <CapacitorNativeBridge />
-              {children}
-              <ScrollToTopButton />
-            </ToastProvider>
-          </ThemeProvider>
+          <BrandStyleProvider initialStyle={brandStyle}>
+            <ThemeProvider>
+              <ToastProvider>
+                <CapacitorNativeBridge />
+                {children}
+                <ScrollToTopButton />
+              </ToastProvider>
+            </ThemeProvider>
+          </BrandStyleProvider>
         </body>
       </html>
     </ClerkProvider>

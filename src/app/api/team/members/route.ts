@@ -2,6 +2,7 @@ import { MemberStatus, TeamRole } from "@/generated/prisma/client";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { getPrisma } from "@/lib/prisma";
 import { isCoachLike, isTeamAdmin } from "@/lib/rbac";
+import { findOrCreateUserByEmail } from "@/lib/team-provisioning";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -66,19 +67,7 @@ export async function POST(req: Request) {
 
   const prisma = getPrisma();
 
-  let user = await prisma.user.findUnique({
-    where: { email: emailNorm },
-  });
-  if (!user) {
-    user = await prisma.user.create({
-      data: { email: emailNorm, name: displayTrim ?? undefined },
-    });
-  } else if (displayTrim && !(user.name && user.name.trim())) {
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: { name: displayTrim },
-    });
-  }
+  const user = await findOrCreateUserByEmail(emailNorm, displayTrim);
 
   const dup = await prisma.teamMember.findUnique({
     where: { teamId_userId: { teamId: member.teamId, userId: user.id } },
