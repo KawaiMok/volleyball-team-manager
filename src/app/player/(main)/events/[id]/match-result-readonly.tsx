@@ -4,6 +4,9 @@ import {
   MatchResultVisualization,
   type MatchResultViewData,
 } from "@/app/coach/(main)/events/[id]/match-result-visualization";
+import { DataViewModeToggle } from "@/components/data-view-mode-toggle";
+import { useDataViewMode } from "@/components/data-view-mode-provider";
+import { PersonalStatsChartGrid } from "@/components/match-stats-charts";
 import {
   computeAttackRates,
   computeBlockRating,
@@ -130,24 +133,33 @@ function PersonalStatCard({
   );
 }
 
-/** 球員：僅顯示大比分與本人數據（註解：不含球隊／全隊個人表）。 */
+/** 球員：僅顯示大比分與本人數據（註解：支援表格／圖表檢視）。 */
 export function MatchResultReadonly({ data, teamName, currentMemberId }: Props) {
+  const { mode } = useDataViewMode();
   const myRow = data.playerStats.find((p) => p.memberId === currentMemberId);
   const myStats = myRow?.stats;
   const hasPersonalStats = myStats && STAT_CATEGORIES.some((c) => hasCategoryData(myStats, c));
 
   return (
     <div className="space-y-6">
-      <MatchResultVisualization data={data} teamName={teamName} scoreOnly />
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">比賽結果</h3>
+        <DataViewModeToggle variant="player" />
+      </div>
+      <MatchResultVisualization data={data} teamName={teamName} scoreOnly hideViewToggle />
 
       {hasPersonalStats ?
         <section className="space-y-3">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">我的數據</h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {STAT_CATEGORIES.map((c) => (
-              <PersonalStatCard key={c} category={c} stats={myStats} />
-            ))}
-          </div>
+          {mode === "chart" ?
+            <PersonalStatsChartGrid stats={myStats} />
+          : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {STAT_CATEGORIES.map((c) => (
+                <PersonalStatCard key={c} category={c} stats={myStats} />
+              ))}
+            </div>
+          )}
         </section>
       : (
         <p className="text-sm text-slate-500 dark:text-slate-400">教練尚未登錄你的個人數據。</p>

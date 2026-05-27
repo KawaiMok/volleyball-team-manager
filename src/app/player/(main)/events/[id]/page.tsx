@@ -188,7 +188,6 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
   const matchResultBlock =
     matchResultData ?
       <section id="player-ev-match-stats" className="space-y-3">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">比賽數據</h2>
         <MatchResultReadonly
           data={matchResultData}
           teamName={event.team.name}

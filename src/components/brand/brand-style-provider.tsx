@@ -4,9 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 import {
   applyDomBrandStyle,
-  getBrandStylePreference,
   setBrandStylePreference,
-  subscribeBrandStylePreference,
 } from "@/lib/brand-style-preference";
 import type { BrandStyleId } from "@/lib/brand-style";
 
@@ -22,32 +20,23 @@ type Props = {
   children: React.ReactNode;
 };
 
-/** 全站 Logo／Avatar 風格（註解：SSR initialStyle + localStorage 同步）。 */
+/** 全站 Logo（註解：固定慈青；切換 UI 已隱藏）。 */
 export function BrandStyleProvider({ initialStyle, children }: Props) {
-  const [style, setStyleState] = useState<BrandStyleId>(initialStyle);
+  const lockedStyle: BrandStyleId = "ciqing";
+  const [style, setStyleState] = useState<BrandStyleId>(lockedStyle);
 
   useEffect(() => {
-    const stored = getBrandStylePreference();
-    if (stored !== initialStyle) {
-      setStyleState(stored);
-      applyDomBrandStyle(stored);
-    } else {
-      applyDomBrandStyle(initialStyle);
-      if (typeof window !== "undefined" && !localStorage.getItem("vtm-brand-style")) {
-        localStorage.setItem("vtm-brand-style", initialStyle);
-      }
-    }
-    return subscribeBrandStylePreference(() => {
-      setStyleState(getBrandStylePreference());
-    });
+    applyDomBrandStyle(lockedStyle);
+    setBrandStylePreference(lockedStyle);
+    setStyleState(lockedStyle);
   }, [initialStyle]);
 
   const value = useMemo(
     () => ({
       style,
-      setStyle: (next: BrandStyleId) => {
-        setBrandStylePreference(next);
-        setStyleState(next);
+      setStyle: (_next: BrandStyleId) => {
+        setBrandStylePreference(lockedStyle);
+        setStyleState(lockedStyle);
       },
     }),
     [style],
@@ -60,7 +49,7 @@ export function useBrandStyle(): BrandStyleContextValue {
   const ctx = useContext(BrandStyleContext);
   if (!ctx) {
     return {
-      style: "default",
+      style: "ciqing",
       setStyle: () => {},
     };
   }

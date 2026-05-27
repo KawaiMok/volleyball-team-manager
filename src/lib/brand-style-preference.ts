@@ -5,10 +5,9 @@ import {
   parseBrandStyleId,
 } from "@/lib/brand-style";
 
+/** 讀取 Logo 偏好（註解：固定慈青）。 */
 export function getBrandStylePreference(): BrandStyleId {
-  if (typeof window === "undefined") return "default";
-  const v = localStorage.getItem(BRAND_STYLE_STORAGE_KEY);
-  return parseBrandStyleId(v) ?? "default";
+  return "ciqing";
 }
 
 /** 套用至 `html[data-brand-style]`（註解：供 CSS 或除錯）。 */
@@ -40,5 +39,5 @@ export function subscribeBrandStylePreference(cb: () => void) {
 
 /** 首屏 inline script（註解：與 applyDomBrandStyle 一致）。 */
 export function brandStyleBootScript(storageKey: string) {
-  return `(function(){try{var k=${JSON.stringify(storageKey)};var r=document.documentElement;var s=localStorage.getItem(k);if(s==="ciqing"||s==="default"){r.dataset.brandStyle=s;}else{r.dataset.brandStyle="default";}}catch(e){}})();`;
+  return `(function(){try{var r=document.documentElement;r.dataset.brandStyle="ciqing";}catch(e){}})();`;
 }

@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { DataViewModeToggle } from "@/components/data-view-mode-toggle";
+import { useDataViewMode } from "@/components/data-view-mode-provider";
 import { FeedbackDetailSheet } from "@/components/feedback-detail-sheet";
+import { FeedbackLevelBar, FeedbackRpeBar } from "@/components/feedback-charts";
 import type { FeedbackDisplayData } from "@/lib/feedback-display";
 import { feedbackOneLineSummary } from "@/lib/feedback-display";
 import { formatDateTimeZh } from "@/lib/format-datetime";
@@ -21,8 +24,9 @@ type Props = {
   items: PlayerFeedbackHistoryItem[];
 };
 
-/** 球員回饋歷史列表（註解：檢視 popup 含圖表）。 */
+/** 球員回饋歷史：表格／圖表檢視 + 詳情 popup。 */
 export function PlayerFeedbackHistoryList({ items }: Props) {
+  const { mode } = useDataViewMode();
   const [detail, setDetail] = useState<PlayerFeedbackHistoryItem | null>(null);
 
   if (items.length === 0) {
@@ -35,41 +39,40 @@ export function PlayerFeedbackHistoryList({ items }: Props) {
 
   return (
     <>
+      <li className="border-b border-slate-200 px-4 py-3 dark:border-slate-700">
+        <div className="flex items-center justify-end">
+          <DataViewModeToggle variant="player" />
+        </div>
+      </li>
       {items.map((fb) => (
-        <li key={fb.id} className="px-4 py-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0 flex-1">
-              <Link
-                href={`/player/events/${fb.eventId}`}
-                className="font-medium text-slate-900 hover:text-blue-700 hover:underline dark:text-slate-50"
-              >
-                {fb.eventTitle}
-              </Link>
-              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                場次：
-                {formatDateTimeZh(new Date(fb.eventStartsAt), { dateStyle: "short", timeStyle: "short" })}
-              </p>
-              <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
-                {feedbackOneLineSummary(fb)}
-              </p>
-            </div>
-            <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
-              {fb.editable ?
-                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-900">
-                  可編輯至 {fb.editDeadlineLabel}
-                </span>
-              : (
-                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                  已鎖定
-                </span>
-              )}
+        <li key={fb.id} className="border-b border-slate-200 px-4 py-4 last:border-b-0 dark:border-slate-700">
+          {mode === "chart" ?
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <Link
+                    href={`/player/events/${fb.eventId}`}
+                    className="font-medium text-slate-900 hover:text-blue-700 hover:underline dark:text-slate-50"
+                  >
+                    {fb.eventTitle}
+                  </Link>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    場次：
+                    {formatDateTimeZh(new Date(fb.eventStartsAt), { dateStyle: "short", timeStyle: "short" })}
+                  </p>
+                </div>
+                <FeedbackStatusBadge editable={fb.editable} editDeadlineLabel={fb.editDeadlineLabel} />
+              </div>
+              <FeedbackRpeBar rpe={fb.rpe} />
+              <FeedbackLevelBar kind="fatigue" value={fb.fatigue} />
+              <FeedbackLevelBar kind="pain" value={fb.painLevel} />
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setDetail(fb)}
                   className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-slate-50 dark:border-slate-600 dark:text-indigo-300 dark:hover:bg-zinc-800"
                 >
-                  檢視
+                  詳情
                 </button>
                 <Link
                   href={`/player/events/${fb.eventId}`}
@@ -79,7 +82,43 @@ export function PlayerFeedbackHistoryList({ items }: Props) {
                 </Link>
               </div>
             </div>
-          </div>
+          : (
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={`/player/events/${fb.eventId}`}
+                  className="font-medium text-slate-900 hover:text-blue-700 hover:underline dark:text-slate-50"
+                >
+                  {fb.eventTitle}
+                </Link>
+                <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  場次：
+                  {formatDateTimeZh(new Date(fb.eventStartsAt), { dateStyle: "short", timeStyle: "short" })}
+                </p>
+                <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                  {feedbackOneLineSummary(fb)}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+                <FeedbackStatusBadge editable={fb.editable} editDeadlineLabel={fb.editDeadlineLabel} />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDetail(fb)}
+                    className="rounded-lg border border-slate-200 px-3 py-1 text-xs font-medium text-indigo-700 hover:bg-slate-50 dark:border-slate-600 dark:text-indigo-300 dark:hover:bg-zinc-800"
+                  >
+                    檢視
+                  </button>
+                  <Link
+                    href={`/player/events/${fb.eventId}`}
+                    className="rounded-lg px-3 py-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    場次詳情
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
         </li>
       ))}
 
@@ -93,4 +132,22 @@ export function PlayerFeedbackHistoryList({ items }: Props) {
       : null}
     </>
   );
+}
+
+function FeedbackStatusBadge({
+  editable,
+  editDeadlineLabel,
+}: {
+  editable: boolean;
+  editDeadlineLabel: string | null;
+}) {
+  return editable ?
+      <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-900">
+        可編輯至 {editDeadlineLabel}
+      </span>
+    : (
+      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+        已鎖定
+      </span>
+    );
 }

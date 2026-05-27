@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 
+import { useDataViewMode } from "@/components/data-view-mode-provider";
 import { FeedbackDetailSheet } from "@/components/feedback-detail-sheet";
-import { FeedbackRpeBar } from "@/components/feedback-charts";
+import { FeedbackLevelBar, FeedbackRpeBar } from "@/components/feedback-charts";
 import type { FeedbackDisplayData } from "@/lib/feedback-display";
 import { feedbackOneLineSummary } from "@/lib/feedback-display";
 
@@ -14,8 +15,9 @@ type Props = {
   editHint?: string;
 };
 
-/** 球員：已提交回饋的精簡卡片 + 檢視 popup（註解：唯讀或鎖定後）。 */
+/** 球員：已提交回饋卡片；圖表模式 inline 顯示，表格模式精簡摘要。 */
 export function PlayerFeedbackViewCard({ data, canEdit, editHint }: Props) {
+  const { mode } = useDataViewMode();
   const [open, setOpen] = useState(false);
 
   return (
@@ -24,11 +26,19 @@ export function PlayerFeedbackViewCard({ data, canEdit, editHint }: Props) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50">身體回饋</h3>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              {feedbackOneLineSummary(data)}
-            </p>
-            <div className="mt-3 max-w-xs">
+            {mode === "table" ?
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                {feedbackOneLineSummary(data)}
+              </p>
+            : null}
+            <div className={`space-y-3 ${mode === "chart" ? "mt-3" : "mt-3 max-w-xs"}`}>
               <FeedbackRpeBar rpe={data.rpe} />
+              {mode === "chart" ?
+                <>
+                  <FeedbackLevelBar kind="fatigue" value={data.fatigue} />
+                  <FeedbackLevelBar kind="pain" value={data.painLevel} />
+                </>
+              : null}
             </div>
             {canEdit && editHint ?
               <p className="mt-2 text-xs text-emerald-700 dark:text-emerald-400">{editHint}</p>

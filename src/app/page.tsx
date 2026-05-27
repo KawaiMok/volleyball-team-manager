@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { ActiveTeamSwitcher } from "@/components/active-team-switcher";
 import { AppLogo } from "@/components/brand/app-logo";
-import { BrandStyleSwitcher } from "@/components/brand-style-switcher";
 import {
   isCurrentUserPlatformAdmin,
   listManageableOrganizationsForUser,
@@ -90,16 +89,6 @@ export default async function Home() {
                 {o.name}（組織）
               </Link>
             ))}
-          </div>
-        </section>
-      : null}
-
-      {signedIn ?
-        <section className="rounded-lg border border-zinc-200 bg-zinc-50/80 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900/50">
-          <h2 className="font-medium text-zinc-900 dark:text-zinc-50">Logo／Avatar 風格</h2>
-          <p className="mt-1 text-xs text-zinc-500">預設＝通用排球；慈青＝慈青體育會圖騰。</p>
-          <div className="mt-3">
-            <BrandStyleSwitcher variant="coach" />
           </div>
         </section>
       : null}

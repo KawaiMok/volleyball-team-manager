@@ -8,6 +8,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { CapacitorNativeBridge } from "@/components/capacitor-native-bridge";
 import { CapacitorPushBridge } from "@/components/capacitor-push-bridge";
 import { BrandStyleProvider } from "@/components/brand/brand-style-provider";
+import { DataViewModeProvider } from "@/components/data-view-mode-provider";
 import { NavigationTransitionBar } from "@/components/navigation-transition-bar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ScrollToTopButton } from "@/components/scroll-to-top-button";
@@ -76,13 +77,15 @@ export default async function RootLayout({
             <CapacitorPushBridge />
           </Suspense>
           <BrandStyleProvider initialStyle={brandStyle}>
-            <ThemeProvider>
-              <ToastProvider>
-                <CapacitorNativeBridge />
-                {children}
-                <ScrollToTopButton />
-              </ToastProvider>
-            </ThemeProvider>
+            <DataViewModeProvider>
+              <ThemeProvider>
+                <ToastProvider>
+                  <CapacitorNativeBridge />
+                  {children}
+                  <ScrollToTopButton />
+                </ToastProvider>
+              </ThemeProvider>
+            </DataViewModeProvider>
           </BrandStyleProvider>
         </body>
       </html>
