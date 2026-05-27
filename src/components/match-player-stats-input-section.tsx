@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import {
@@ -107,10 +107,36 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
   const [statTab, setStatTab] = useState<StatCategory>("attack");
   const [sheetMemberId, setSheetMemberId] = useState<string | null>(null);
   const [sheetCategory, setSheetCategory] = useState<StatCategory>("attack");
+  /**
+   * 桌機：避免球員人數多時整張卡片變過長（註解：改成表格容器內捲動，必要時可展開成完整高度）。
+   */
+  const [tableExpanded, setTableExpanded] = useState(false);
   const fields = CATEGORY_FIELDS[statTab];
   /** 從最新 playerRows 取資料，避免 popup 內輸入後 state 過期（註解）。 */
   const sheetPlayer =
     sheetMemberId ? playerRows.find((p) => p.memberId === sheetMemberId) ?? null : null;
+
+  /**
+   * 手機：清單很長時的可用性優化（註解：用篩選 + 搜尋 + 完成度，快速找到未填的人）。
+   */
+  const [mobileFilter, setMobileFilter] = useState<"all" | "todo" | "done">("todo");
+  const [mobileQuery, setMobileQuery] = useState("");
+
+  const mobileRows = useMemo(() => {
+    const q = mobileQuery.trim().toLowerCase();
+    return playerRows.filter((p) => {
+      const filled = hasAnyPlayerStats(p.stats);
+      if (mobileFilter === "todo" && filled) return false;
+      if (mobileFilter === "done" && !filled) return false;
+      if (!q) return true;
+      return p.displayName.toLowerCase().includes(q);
+    });
+  }, [playerRows, mobileFilter, mobileQuery]);
+
+  const mobileDoneCount = useMemo(
+    () => playerRows.filter((p) => hasAnyPlayerStats(p.stats)).length,
+    [playerRows],
+  );
 
   function openPlayerSheet(player: MatchResultPlayerRow) {
     const initial = STAT_CATEGORIES.find((c) => hasCategoryData(player.stats, c)) ?? "attack";
@@ -124,12 +150,33 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
 
   return (
     <div>
-      <h3 className="mb-2 text-sm font-semibold">個人數據</h3>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold">個人數據</h3>
+        {/* 只影響桌機寬表格；手機本來就是列表 + popup（註解）。 */}
+        {playerRows.length >= 10 ?
+          <button
+            type="button"
+            className="hidden text-xs text-[var(--brand-primary)] hover:underline md:inline"
+            onClick={() => setTableExpanded((v) => !v)}
+          >
+            {tableExpanded ? "收合表格高度" : "展開表格高度"}
+          </button>
+        : null}
+      </div>
 
       {/* 桌機：分類 tab + 寬表格 */}
       <div className="hidden md:block">
         <CategoryTabs active={statTab} onChange={setStatTab} className="mb-3" />
-        <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+        <div
+          className={[
+            "overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800",
+            /**
+             * 註解：球員數量一多，讓表格本體內捲動，避免整張卡片高度失控。
+             * 展開時解除高度限制，方便一次檢視／截圖。
+             */
+            tableExpanded ? "" : "max-h-[520px] overflow-y-auto",
+          ].join(" ")}
+        >
           <table className="w-full table-fixed text-sm">
             <colgroup>
               <col className="w-[7rem]" />
@@ -137,7 +184,7 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
                 <col key={f.key} />
               ))}
             </colgroup>
-            <thead className="bg-zinc-50 text-xs text-zinc-500 dark:bg-zinc-950">
+            <thead className="sticky top-0 z-10 bg-zinc-50 text-xs text-zinc-500 dark:bg-zinc-950">
               <tr>
                 <th className="px-2 py-2 text-left font-medium">球員</th>
                 {fields.map((f) => (
@@ -185,9 +232,53 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
 
       {/* 手機：球員列表，分類在 popup 內切換 */}
       <div className="space-y-2 md:hidden">
-        <p className="text-xs text-zinc-500">點選球員，在 popup 內切換分類並輸入數據</p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-zinc-500">點選球員，在 popup 內切換分類並輸入數據</p>
+          <p className="text-xs text-zinc-500">
+            已填 {mobileDoneCount}/{playerRows.length}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-full bg-zinc-100 p-1 text-xs dark:bg-zinc-800">
+            <button
+              type="button"
+              onClick={() => setMobileFilter("todo")}
+              className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
+                mobileFilter === "todo" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-950 dark:text-zinc-50" : "text-zinc-600 dark:text-zinc-300"
+              }`}
+            >
+              未填
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileFilter("done")}
+              className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
+                mobileFilter === "done" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-950 dark:text-zinc-50" : "text-zinc-600 dark:text-zinc-300"
+              }`}
+            >
+              已填
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileFilter("all")}
+              className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
+                mobileFilter === "all" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-950 dark:text-zinc-50" : "text-zinc-600 dark:text-zinc-300"
+              }`}
+            >
+              全部
+            </button>
+          </div>
+          <input
+            value={mobileQuery}
+            onChange={(e) => setMobileQuery(e.target.value)}
+            placeholder="搜尋球員"
+            className="min-w-0 flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          />
+        </div>
+
         <ul className="divide-y divide-zinc-100 overflow-hidden rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-          {playerRows.map((p) => {
+          {mobileRows.map((p) => {
             const filled = hasAnyPlayerStats(p.stats);
             return (
               <li key={p.memberId}>
@@ -210,6 +301,9 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
             );
           })}
         </ul>
+        {mobileRows.length === 0 ?
+          <p className="text-xs text-zinc-500">沒有符合條件的球員。</p>
+        : null}
       </div>
 
       <BottomSheet

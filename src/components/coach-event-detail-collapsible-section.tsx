@@ -7,6 +7,12 @@ type Props = {
   title: ReactNode;
   /** 標題列右側（註解：如 HintExclamationToggle）。 */
   titleExtra?: ReactNode;
+  /**
+   * 標題列右側元件顯示時機（註解：避免在「摺疊」狀態點擊 `HintExclamationToggle` 造成內容插入標題列下方而破版）。
+   * - "open": 只在展開時顯示（預設）
+   * - "always": 無論摺疊/展開都顯示
+   */
+  titleExtraVisibility?: "open" | "always";
   children: ReactNode;
   /** 預設摺疊（註解：事件詳情各卡片初始關閉）。 */
   defaultOpen?: boolean;
@@ -17,6 +23,7 @@ export function CoachEventDetailCollapsibleSection({
   id,
   title,
   titleExtra,
+  titleExtraVisibility = "open",
   children,
   defaultOpen = false,
 }: Props) {
@@ -57,7 +64,7 @@ export function CoachEventDetailCollapsibleSection({
             ▼
           </span>
         </button>
-        {titleExtra ?
+        {(titleExtraVisibility === "always" || open) && titleExtra ?
           <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
             {titleExtra}
           </div>
