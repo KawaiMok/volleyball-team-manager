@@ -37,10 +37,12 @@ type Props = {
   initialPeriod?: AttendanceStatsPeriod;
   /** 伺服端預載的預設區間資料（註解：避免 mount 後 client fetch 瀑布）。 */
   initialData?: TeamAttendanceStatsPayload;
+  /** 是否嵌入到外層卡片（註解：外層已提供 border/padding 時避免重複卡片樣式）。 */
+  embedded?: boolean;
 };
 
 /** 教練端：球員出席率（週／月／年）（註解：資料來自點名 checkedIn）。 */
-export function TeamAttendanceStats({ initialPeriod = "month", initialData }: Props) {
+export function TeamAttendanceStats({ initialPeriod = "month", initialData, embedded = false }: Props) {
   const [period, setPeriod] = useState<AttendanceStatsPeriod>(initialPeriod);
   const [anchorYmd, setAnchorYmd] = useState<string | undefined>(undefined);
   const [data, setData] = useState<TeamAttendanceStatsPayload | null>(initialData ?? null);
@@ -83,8 +85,8 @@ export function TeamAttendanceStats({ initialPeriod = "month", initialData }: Pr
 
   const busy = loading || isPending;
 
-  return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+  const content = (
+    <>
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           出席率統計
@@ -194,6 +196,14 @@ export function TeamAttendanceStats({ initialPeriod = "month", initialData }: Pr
           </table>
         </div>
       )}
-    </section>
+    </>
   );
+
+  return embedded ?
+      <div>{content}</div>
+    : (
+        <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          {content}
+        </section>
+      );
 }

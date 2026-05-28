@@ -6,6 +6,7 @@ import { AddTeamMemberForm } from "@/app/coach/(main)/team/add-member-form";
 import { TeamRosterSection, type TeamRosterRow } from "@/app/coach/(main)/team/team-roster-section";
 import { TeamMemberStatusLegend } from "@/components/domain-status-indicators";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
+import { CoachEventDetailCollapsibleSection } from "@/components/coach-event-detail-collapsible-section";
 import { mapTeamMemberToRosterRow } from "@/lib/team-roster-map";
 
 type Props = {
@@ -39,37 +40,33 @@ export function TeamPageMembers({ initialRows, squads, currentMemberId, actorIsA
 
   return (
     <>
-      <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          新增隊員／隊務
-        </h2>
-        <div className="mt-4">
-          <AddTeamMemberForm squads={squads} actorIsAdmin={actorIsAdmin} onMemberAdded={onMemberAdded} />
-        </div>
-      </section>
+      <CoachEventDetailCollapsibleSection id="coach-team-add-member" title="新增隊員／隊務" defaultOpen={false}>
+        <AddTeamMemberForm squads={squads} actorIsAdmin={actorIsAdmin} onMemberAdded={onMemberAdded} />
+      </CoachEventDetailCollapsibleSection>
 
-      <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
-        <div className="border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              目前名單
-            </h2>
-            <HintExclamationToggle>
-              主表僅顯示姓名、角色、背號、狀態；「詳情」可檢視聯絡方式與備註，「編輯」開大視窗修改。手機面板由下往上，可按 ×、背景或 Esc 關閉。
-            </HintExclamationToggle>
-          </div>
-          <TeamMemberStatusLegend className="mt-2" />
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 md:hidden">
-            表格較寬時，可左右滑動查看「操作」欄
-          </p>
+      <CoachEventDetailCollapsibleSection
+        id="coach-team-roster"
+        title="目前名單"
+        defaultOpen={false}
+        titleExtra={
+          <HintExclamationToggle>
+            主表僅顯示姓名、角色、背號、狀態；「詳情」可檢視聯絡方式與備註，「編輯」開大視窗修改。手機面板由下往上，可按 ×、背景或 Esc 關閉。
+          </HintExclamationToggle>
+        }
+      >
+        <TeamMemberStatusLegend />
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 md:hidden">
+          表格較寬時，可左右滑動查看「操作」欄
+        </p>
+        <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+          <TeamRosterSection
+            squads={squads}
+            currentMemberId={currentMemberId}
+            rows={rows}
+            actorIsAdmin={actorIsAdmin}
+          />
         </div>
-        <TeamRosterSection
-          squads={squads}
-          currentMemberId={currentMemberId}
-          rows={rows}
-          actorIsAdmin={actorIsAdmin}
-        />
-      </section>
+      </CoachEventDetailCollapsibleSection>
     </>
   );
 }

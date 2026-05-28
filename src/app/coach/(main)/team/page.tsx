@@ -7,6 +7,7 @@ import { TeamPageMembers } from "@/app/coach/(main)/team/team-page-members";
 import { computeTeamAttendanceStats } from "@/lib/attendance-stats";
 import { mapTeamMemberToRosterRow } from "@/lib/team-roster-map";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
+import { CoachEventDetailCollapsibleSection } from "@/components/coach-event-detail-collapsible-section";
 import { TeamRole } from "@/generated/prisma/client";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { parseGroupConfig } from "@/lib/group-config";
@@ -57,28 +58,30 @@ export default async function CoachTeamPage() {
         </div>
       </div>
 
-      <section className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">隊伍設定</h2>
+      <CoachEventDetailCollapsibleSection
+        id="coach-team-settings"
+        title="隊伍設定"
+        defaultOpen={false}
+        titleExtra={
           <HintExclamationToggle>隊名、賽季與分組會影響標題列與行事曆／事件篩選。</HintExclamationToggle>
-        </div>
-        <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-10">
+        }
+      >
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
           <CoachTeamIdentitySettingsForm
             key={teamSettingsKey}
             initialName={teamRow?.name ?? ""}
             initialSeason={teamRow?.season ?? ""}
             initialGroupLines={squads.join("\n")}
           />
-          <div className="lg:border-l lg:border-zinc-100 lg:pl-10">
+          <div className="lg:border-l lg:border-zinc-100 lg:pl-10 dark:lg:border-zinc-800">
             <CoachTeamRolesEmailPanel key={teamSettingsKey} initialNotifications={notificationPrefs} />
           </div>
         </div>
-      </section>
+      </CoachEventDetailCollapsibleSection>
 
-      <TeamAttendanceStats
-        key={`${teamSettingsKey}-attendance`}
-        initialData={initialAttendanceStats}
-      />
+      <CoachEventDetailCollapsibleSection id="coach-team-attendance" title="出席率統計" defaultOpen={false}>
+        <TeamAttendanceStats key={`${teamSettingsKey}-attendance`} initialData={initialAttendanceStats} embedded />
+      </CoachEventDetailCollapsibleSection>
 
       <TeamPageMembers
         key={teamSettingsKey}

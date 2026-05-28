@@ -46,7 +46,8 @@ export function CoachEventDetailCollapsibleSection({
       id={id}
       className="scroll-mt-28 overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
-      <div className="flex items-center gap-2 px-4 py-3.5">
+      {/** 註解：標題列需要 `flex-wrap`，讓 `HintExclamationToggle` 展開的 panel 用 `basis-full` 正常換行，避免破版。 */}
+      <div className="flex flex-wrap items-center gap-2 px-4 py-3.5">
         <button
           type="button"
           className="flex min-w-0 flex-1 items-center gap-3 text-left hover:opacity-80"
