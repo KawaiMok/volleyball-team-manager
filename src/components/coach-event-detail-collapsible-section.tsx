@@ -66,7 +66,11 @@ export function CoachEventDetailCollapsibleSection({
           </span>
         </button>
         {(titleExtraVisibility === "always" || open) && titleExtra ?
-          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+          /**
+           * 註解：這裡用 `w-full flex-wrap`，讓 `HintExclamationToggle` 展開的內容可以占滿整行（basis-full）
+           * 並正常換行；若用 `shrink-0` 包住，展開面板會被限制在很窄的寬度，看起來像文字被截斷。
+           */
+          <div className="flex w-full flex-wrap justify-end" onClick={(e) => e.stopPropagation()}>
             {titleExtra}
           </div>
         : null}

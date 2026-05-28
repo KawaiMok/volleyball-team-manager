@@ -369,10 +369,8 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
             />
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
               <span>{typeLabel(event.type)}</span>
-              <span aria-hidden className="text-zinc-400">
-                ·
-              </span>
-              <EventStatusIndicator status={event.status} />
+              
+            
             </p>
             <EventStatusLegend className="mt-2" />
             {!eventEnded || event.meetAt != null ?
