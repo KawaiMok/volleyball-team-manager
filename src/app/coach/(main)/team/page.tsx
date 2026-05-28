@@ -59,6 +59,24 @@ export default async function CoachTeamPage() {
       </div>
 
       <CoachEventDetailCollapsibleSection
+        id="coach-team-stats-entry"
+        title="統計"
+        defaultOpen={false}
+        titleExtra={
+          <HintExclamationToggle>
+            目前提供：出席率、回饋（RPE/疲勞/疼痛）場均與榜單（註解：第一版以已發布且已結束事件為樣本）。
+          </HintExclamationToggle>
+        }
+      >
+        <Link
+          href="/coach/team/stats"
+          className="inline-flex items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        >
+          前往隊伍統計頁
+        </Link>
+      </CoachEventDetailCollapsibleSection>
+
+      <CoachEventDetailCollapsibleSection
         id="coach-team-settings"
         title="隊伍設定"
         defaultOpen={false}

@@ -12,6 +12,23 @@ export function formatRating(value: number | null): string {
   return value.toFixed(2);
 }
 
+function clamp01(x: number): number {
+  if (!Number.isFinite(x)) return 0;
+  if (x < 0) return 0;
+  if (x > 1) return 1;
+  return x;
+}
+
+/**
+ * 將 rating 正規化到 0–1（註解：供「總指標」合併使用；不同分類量尺不同）。
+ * - 若超出區間則 clamp
+ */
+export function normalizeRating(value: number | null, min: number, max: number): number | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  if (max <= min) return null;
+  return clamp01((value - min) / (max - min));
+}
+
 /** 攻擊：得分率%、失誤率%。 */
 export function computeAttackRates(stats: PlayerMatchStats) {
   const a = stats.attack;
@@ -20,6 +37,16 @@ export function computeAttackRates(stats: PlayerMatchStats) {
     scoreRate: a.points / a.attempts,
     errorRate: a.errors / a.attempts,
   };
+}
+
+/**
+ * 攻擊 rating（註解：用次數/得分/失誤計算）
+ * 公式：\((得分 - 失誤) / 次數\)，區間約在 [-1, 1]（若 points/errors ≤ attempts）。
+ */
+export function computeAttackRating(stats: PlayerMatchStats): number | null {
+  const a = stats.attack;
+  if (!a || a.attempts <= 0) return null;
+  return (a.points - a.errors) / a.attempts;
 }
 
 /** 攔網 rating = (得分×2 + 有效) / 次數。 */
@@ -34,6 +61,16 @@ export function computeDefenseRate(stats: PlayerMatchStats): number | null {
   const d = stats.defense;
   if (!d || d.attempts <= 0) return null;
   return d.success / d.attempts;
+}
+
+/**
+ * 防守 rating（註解：用次數/成功/失誤計算）
+ * 公式：\((成功 - 失誤) / 次數\)，區間約在 [-1, 1]。
+ */
+export function computeDefenseRating(stats: PlayerMatchStats): number | null {
+  const d = stats.defense;
+  if (!d || d.attempts <= 0) return null;
+  return (d.success - d.errors) / d.attempts;
 }
 
 /** 一傳總數 = A + B + C + 被ACE。 */
@@ -66,4 +103,24 @@ export function computeServeRating(stats: PlayerMatchStats): number | null {
   if (!s || total <= 0) return null;
   const score = s.aces * 4 + s.strong * 3 + s.normal * 2 + s.weak * 1 + s.errors * -1;
   return score / total;
+}
+
+/**
+ * 總指標（註解：整合各範疇 rating）
+ * - 將各分類 rating 正規化到 0–1
+ * - 取「可用」分類的平均
+ * - 轉成 0–100（越高越好）
+ */
+export function computeOverallIndicator(stats: PlayerMatchStats): number | null {
+  const parts: Array<number | null> = [
+    normalizeRating(computeAttackRating(stats), -1, 1),
+    normalizeRating(computeDefenseRating(stats), -1, 1),
+    normalizeRating(computeBlockRating(stats), 0, 3),
+    normalizeRating(computePassRating(stats), -1, 3),
+    normalizeRating(computeServeRating(stats), -1, 4),
+  ];
+  const usable = parts.filter((x): x is number => x != null);
+  if (usable.length === 0) return null;
+  const avg = usable.reduce((s, x) => s + x, 0) / usable.length;
+  return Math.round(avg * 1000) / 10;
 }
