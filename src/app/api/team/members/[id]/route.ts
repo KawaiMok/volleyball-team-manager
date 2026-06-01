@@ -17,6 +17,8 @@ const patchSchema = z.object({
   notes: z.union([z.string().max(2000), z.null()]),
   /** 顯示姓名：同步寫入 User.name（註解：空字串則清空）。 */
   displayName: z.string().max(120),
+  /** 登入信箱：僅在未連結 Clerk 時可改（註解：修正邀請時輸入錯誤）。 */
+  email: z.string().email().optional(),
 });
 
 /** 更新隊員／隊務隊籍（註解：教練／管理員；不可停用自己）。 */
@@ -40,7 +42,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
   const prisma = getPrisma();
   const target = await prisma.teamMember.findFirst({
     where: { id: targetMemberId, teamId: actor.teamId },
-    include: { user: { select: { id: true } } },
+    include: { user: { select: { id: true, email: true, clerkUserId: true } } },
   });
 
   if (!target) {
@@ -87,6 +89,42 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }
   }
 
+  let emailNorm: string | undefined;
+  if (body.email !== undefined) {
+    emailNorm = body.email.trim().toLowerCase();
+    const currentEmail = target.user.email?.trim().toLowerCase() ?? "";
+    if (emailNorm !== currentEmail) {
+      if (target.user.clerkUserId) {
+        return NextResponse.json(
+          { error: "已連結 Clerk 的帳號無法變更信箱，請對方自行於登入帳號管理" },
+          { status: 403 },
+        );
+      }
+      const other = await prisma.user.findUnique({ where: { email: emailNorm } });
+      if (other && other.id !== target.userId) {
+        const onTeam = await prisma.teamMember.findUnique({
+          where: { teamId_userId: { teamId: actor.teamId, userId: other.id } },
+        });
+        if (onTeam) {
+          return NextResponse.json(
+            { error: "此信箱已在名單中，請直接編輯該成員或改用其他信箱" },
+            { status: 409 },
+          );
+        }
+        return NextResponse.json({ error: "此信箱已被其他帳號使用" }, { status: 409 });
+      }
+    } else {
+      emailNorm = undefined;
+    }
+  }
+
+  const userUpdates: { name: string | null; email?: string } = {
+    name: displayTrim === "" ? null : displayTrim,
+  };
+  if (emailNorm !== undefined) {
+    userUpdates.email = emailNorm;
+  }
+
   const [updatedMember] = await prisma.$transaction([
     prisma.teamMember.update({
       where: { id: targetMemberId },
@@ -105,7 +143,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }),
     prisma.user.update({
       where: { id: target.userId },
-      data: { name: displayTrim === "" ? null : displayTrim },
+      data: userUpdates,
     }),
   ]);
 

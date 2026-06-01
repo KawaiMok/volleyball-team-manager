@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { parseGroupConfig } from "@/lib/group-config";
 import { AttendanceTable } from "@/app/coach/(main)/events/[id]/attendance-table";
 import { EventPublishButton } from "@/app/coach/(main)/events/[id]/event-detail-actions";
+import { EventDuplicateButton } from "@/components/event-duplicate-actions";
 import { EventEditForm } from "@/app/coach/(main)/events/[id]/event-edit-form";
 import { CoachEventCommentsPanel } from "@/app/coach/(main)/events/[id]/coach-event-comments-panel";
 import { CoachEventTacticalVideoPanel } from "@/app/coach/(main)/events/[id]/event-tactical-video-panel";
@@ -416,7 +417,10 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
               </dl>
             : null}
           </div>
-          <EventPublishButton eventId={event.id} isDraft={event.status === EventStatus.DRAFT} />
+          <div className="flex flex-col items-stretch gap-2 sm:items-end">
+            <EventPublishButton eventId={event.id} isDraft={event.status === EventStatus.DRAFT} />
+            <EventDuplicateButton eventId={event.id} />
+          </div>
         </div>
         <CoachEventDetailSectionNav sections={[...orderedDetailSections]} />
         {eventEnded ?

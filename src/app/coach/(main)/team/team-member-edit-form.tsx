@@ -25,6 +25,7 @@ function roleLabel(r: string) {
 
 export type TeamMemberEditInitial = {
   displayName: string;
+  email: string;
   role: string;
   status: string;
   jerseyNumber: number | null;
@@ -40,6 +41,8 @@ type Props = {
   isSelf: boolean;
   /** 目前登入者是否為隊伍管理員（註解：非管理員不可變更「管理員」角色）。 */
   actorIsAdmin: boolean;
+  /** 已連結 Clerk 時信箱唯讀（註解：登入信箱由 Clerk 管理）。 */
+  clerkLinked: boolean;
   initial: TeamMemberEditInitial;
   /** 表單 id（註解：供 BottomSheet footer 以 form 屬性提交）。 */
   formId?: string;
@@ -69,6 +72,7 @@ export function TeamMemberEditForm({
   squads,
   isSelf,
   actorIsAdmin,
+  clerkLinked,
   initial,
   formId = "team-member-edit-form",
   externalActions = false,
@@ -97,6 +101,22 @@ export function TeamMemberEditForm({
     const phone = String(fd.get("phone") ?? "").trim();
     const notes = String(fd.get("notes") ?? "").trim();
     const jerseyRaw = String(fd.get("jerseyNumber") ?? "").trim();
+    const emailRaw = String(fd.get("email") ?? "").trim();
+
+    if (!clerkLinked) {
+      if (!emailRaw) {
+        showError("請填寫登入信箱");
+        setPending(false);
+        onPendingChange?.(false);
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailRaw)) {
+        showError("信箱格式不正確");
+        setPending(false);
+        onPendingChange?.(false);
+        return;
+      }
+    }
 
     if (isSelf && status === "INACTIVE") {
       showError("不可將自己的隊籍設為停用");
@@ -140,6 +160,7 @@ export function TeamMemberEditForm({
           phone: phone || null,
           notes: notes || null,
           displayName,
+          ...(!clerkLinked ? { email: emailRaw } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -171,6 +192,39 @@ export function TeamMemberEditForm({
             defaultValue={initial.displayName}
             className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            登入信箱（Clerk 主要 Email）
+            {!clerkLinked ?
+              <span className="text-red-600">*</span>
+            : null}
+          </label>
+          {clerkLinked ?
+            <>
+              <input type="hidden" name="email" value={initial.email} />
+              <p className="mt-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm break-all text-zinc-800 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200">
+                {initial.email || "—"}
+              </p>
+              <p className="mt-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                已連結登入帳號，信箱由對方於 Clerk 管理，教練端無法變更。
+              </p>
+            </>
+          : (
+            <>
+              <input
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                defaultValue={initial.email}
+                className="mt-1.5 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-600"
+              />
+              <p className="mt-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                對方尚未登入前可修正輸入錯誤；須與其 Clerk 帳號主要信箱一致，首次登入才會自動合併。
+              </p>
+            </>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">角色</label>

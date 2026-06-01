@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { EventCreateForm } from "@/app/coach/(main)/events/new/event-create-form";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
+import { CopyLastTrainingButton } from "@/components/event-duplicate-actions";
 import { parseGroupConfig } from "@/lib/group-config";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { getPrisma } from "@/lib/prisma";
@@ -42,6 +43,12 @@ export default async function CoachNewEventPage() {
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <h1 className="text-2xl font-semibold tracking-tight">新增事件</h1>
           <HintExclamationToggle>建立後為草稿，可在詳情頁發布。</HintExclamationToggle>
+        </div>
+        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+          每週固定練習可一鍵複製最近一場訓練（含參與者、訓練計畫、企位與戰術／影片連結，時間 +7 天）。
+        </p>
+        <div className="mt-3">
+          <CopyLastTrainingButton />
         </div>
       </div>
       <EventCreateForm teamId={member.teamId} squads={squads} roster={roster} />

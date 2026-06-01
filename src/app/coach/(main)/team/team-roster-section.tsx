@@ -85,6 +85,7 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
     editing ?
       {
         displayName: editing.displayName ?? "",
+        email: editing.email ?? "",
         role: editing.role,
         status: editing.status,
         jerseyNumber: editing.jerseyNumber,
@@ -278,6 +279,7 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
             squads={squads}
             isSelf={editing.id === currentMemberId}
             actorIsAdmin={actorIsAdmin}
+            clerkLinked={editing.clerkLinked}
             initial={initial}
             formId={ROSTER_EDIT_FORM_ID}
             externalActions

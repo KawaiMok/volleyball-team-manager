@@ -17,6 +17,10 @@ import {
 } from "@/components/domain-status-indicators";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
 import { EventTitleInlineMeta } from "@/components/event-title-with-meta";
+import {
+  CopyLastTrainingButton,
+  EventDuplicateButton,
+} from "@/components/event-duplicate-actions";
 import { isEventEnded } from "@/lib/event-timing";
 import { formatDateTimeZh } from "@/lib/format-datetime";
 
@@ -87,12 +91,15 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
             <HintExclamationToggle>依開始時間排序（最新在上）。</HintExclamationToggle>
           </div>
         </div>
-        <Link
-          href="/coach/events/new"
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
-        >
-          新增事件
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <CopyLastTrainingButton />
+          <Link
+            href="/coach/events/new"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+          >
+            新增事件
+          </Link>
+        </div>
       </div>
 
       <CoachEventsListFilters values={formValues} squads={squads} hasActiveFilters={filterActive} />
@@ -112,12 +119,13 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
               <th className="px-4 py-3 font-medium">開始</th>
               <th className="px-4 py-3 text-center font-medium">狀態</th>
               <th className="px-4 py-3 font-medium">人數</th>
+              <th className="px-4 py-3 text-right font-medium">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {events.length === 0 ?
               <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-zinc-500 dark:text-zinc-400">
+                <td colSpan={6} className="px-4 py-12 text-center text-zinc-500 dark:text-zinc-400">
                   {filterActive ? "沒有符合條件的事件，請調整篩選或重設" : "尚無事件，請新增一場訓練或比賽"}
                 </td>
               </tr>
@@ -156,6 +164,13 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
                     <EventStatusIndicator status={ev.status} />
                   </td>
                   <td className="px-4 py-3 tabular-nums text-zinc-600 dark:text-zinc-400">{ev._count.participants}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right">
+                    <EventDuplicateButton
+                      eventId={ev.id}
+                      label="複製"
+                      className="inline-flex min-h-0 items-center rounded-md px-2 py-1 text-sm font-medium text-blue-600 hover:bg-blue-50 hover:underline disabled:opacity-60 dark:text-blue-400 dark:hover:bg-blue-950/40"
+                    />
+                  </td>
                 </tr>
               );})
             }
