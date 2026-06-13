@@ -3,30 +3,20 @@ import { notFound } from "next/navigation";
 
 import { CoachEventDetailCollapsibleSection } from "@/components/coach-event-detail-collapsible-section";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
+import { SportFeatureComingSoon } from "@/components/sport-feature-coming-soon";
 import { getDebugTeamMember } from "@/lib/debug-session";
+import { getSportModule } from "@/lib/sports/registry";
+import { prismaSportToId } from "@/lib/sports/registry-server";
 import { fatigueLabel, fatigueLevelIndex, painLabel, painLevelIndex } from "@/lib/feedback-display";
 import { getPrisma } from "@/lib/prisma";
 import { formatDateTimeZh } from "@/lib/format-datetime";
 import { EventStatus, MemberStatus } from "@/generated/prisma/client";
 import { MemberStatsTable, type MemberStatsTableRow } from "@/app/coach/(main)/team/stats/member-stats-table";
-import {
-  EMPTY_PLAYER_STATS,
-  hasAnyPlayerStats,
-  normalizePlayerStats,
-  type PlayerMatchStats,
-} from "@/lib/match-result-schema";
-import {
-  computeAttackRates,
-  computeAttackRating,
-  computeBlockRating,
-  computeDefenseRate,
-  computeDefenseRating,
-  computePassRating,
-  computeServeRating,
-  computeOverallIndicator,
-} from "@/lib/match-player-stats-metrics";
 import { MatchStatsTotalsToggle } from "@/app/coach/(main)/team/stats/match-stats-totals-toggle";
 import { MatchQuickIndicators, type QuickIndicatorRow } from "@/app/coach/(main)/team/stats/match-quick-indicators";
+import { MatchStandoutCards } from "@/app/coach/(main)/team/stats/match-standout-cards";
+import type { PlayerStatsRecord } from "@/lib/sports/match/types";
+import { computeStandoutWinners } from "@/lib/sports/match/standout";
 
 type MemberRow = {
   memberId: string;
@@ -57,25 +47,63 @@ function topN<T>(rows: T[], n: number): T[] {
   return rows.slice(0, Math.max(0, n));
 }
 
-function addMatchStats(a: PlayerMatchStats, b: PlayerMatchStats): PlayerMatchStats {
-  const out: PlayerMatchStats = {
-    attack: { ...a.attack },
-    block: { ...a.block },
-    defense: { ...a.defense },
-    pass: { ...a.pass },
-    serve: { ...a.serve },
-    other: { ...a.other },
-  };
-  (["attack", "block", "defense", "pass", "serve", "other"] as const).forEach((cat) => {
-    const ca = out[cat];
-    const cb = b[cat];
-    if (!ca || !cb) return;
-    for (const [k, v] of Object.entries(cb)) {
-      if (typeof v !== "number") continue;
-      (ca as Record<string, number>)[k] = ((ca as Record<string, number>)[k] ?? 0) + v;
+function addMatchStats(a: PlayerStatsRecord, b: PlayerStatsRecord, matchMod: NonNullable<ReturnType<typeof getSportModule>["match"]>): PlayerStatsRecord {
+  return matchMod.addPlayerStats(a, b);
+}
+
+type MatchTotalRow = {
+  memberId: string;
+  displayName: string;
+  jerseyNumber: number | null;
+  squad: string | null;
+  position: string | null;
+  matchCount: number;
+  stats: PlayerStatsRecord;
+};
+
+/** 累計比賽個人數據（註解：供突出者榜單與快速指標共用）。 */
+function buildMatchTotals(
+  members: Array<{
+    id: string;
+    jerseyNumber: number | null;
+    squad: string | null;
+    position: string | null;
+    user: { name: string | null; email: string | null };
+  }>,
+  matchEvents: Array<{
+    matchResult: {
+      playerStats: Array<{ memberId: string; stats: unknown }>;
+    } | null;
+  }>,
+  matchMod: NonNullable<ReturnType<typeof getSportModule>["match"]>,
+): MatchTotalRow[] {
+  const totals = new Map<string, MatchTotalRow>();
+
+  for (const m of members) {
+    totals.set(m.id, {
+      memberId: m.id,
+      displayName: m.user.name ?? m.user.email ?? m.id.slice(0, 8),
+      jerseyNumber: m.jerseyNumber,
+      squad: m.squad,
+      position: m.position,
+      matchCount: 0,
+      stats: matchMod.emptyPlayerStats(),
+    });
+  }
+
+  for (const ev of matchEvents) {
+    const ps = ev.matchResult?.playerStats ?? [];
+    for (const row of ps) {
+      const normalized = matchMod.normalizePlayerStats(row.stats);
+      if (!matchMod.hasAnyPlayerStats(normalized)) continue;
+      const existing = totals.get(row.memberId);
+      if (!existing) continue;
+      existing.matchCount += 1;
+      existing.stats = addMatchStats(existing.stats, normalized, matchMod);
     }
-  });
-  return out;
+  }
+
+  return Array.from(totals.values()).filter((r) => r.matchCount > 0);
 }
 
 /** 教練端：隊伍統計（註解：第一版以「出席 + 回饋」為主，樣本＝已發布且已結束之事件）。 */
@@ -86,9 +114,12 @@ export default async function CoachTeamStatsPage() {
   const prisma = getPrisma();
   const team = await prisma.team.findUnique({
     where: { id: member.teamId },
-    select: { name: true },
+    select: { name: true, sport: true },
   });
   if (!team) notFound();
+
+  const sportMod = getSportModule(prismaSportToId(team.sport));
+  const matchMod = sportMod.match;
 
   const now = new Date();
 
@@ -157,6 +188,7 @@ export default async function CoachTeamStatsPage() {
         displayName: m.user.name ?? m.user.email ?? m.id.slice(0, 8),
         squad: m.squad,
         jerseyNumber: m.jerseyNumber,
+        position: m.position,
       },
     ]),
   );
@@ -234,10 +266,32 @@ export default async function CoachTeamStatsPage() {
   const totalEndedPublishedMatches = matchEvents.length;
 
   const byAttendance = [...rows].sort((a, b) => (b.attendanceRatePct ?? -1) - (a.attendanceRatePct ?? -1));
+  const attendanceTop = topN(byAttendance.filter((r) => r.attendanceRatePct != null), 1)[0];
 
-  const standout = {
-    attendanceTop: topN(byAttendance.filter((r) => r.attendanceRatePct != null), 5),
-  };
+  const matchTotalRows =
+    sportMod.capabilities.matchStats && matchMod ?
+      buildMatchTotals(members, matchEvents, matchMod)
+    : [];
+
+  const matchStandoutCards =
+    matchMod && matchTotalRows.length > 0 ?
+      computeStandoutWinners(matchMod.standoutLeaders, matchTotalRows)
+    : [];
+
+  const quickRows: QuickIndicatorRow[] =
+    matchMod ?
+      matchTotalRows.map((r) => ({
+        memberId: r.memberId,
+        displayName: r.displayName,
+        jerseyNumber: r.jerseyNumber,
+        squad: r.squad,
+        position: r.position,
+        matchCount: r.matchCount,
+        stats: r.stats,
+        ratings: Object.fromEntries(matchMod.ratings.map((def) => [def.key, def.compute(r.stats)])),
+        overall: matchMod.computeOverallIndicator(r.stats),
+      }))
+    : [];
 
   const tableRows: MemberStatsTableRow[] = rows.map((r) => {
     const fatigueAvgLabel =
@@ -294,36 +348,33 @@ export default async function CoachTeamStatsPage() {
         defaultOpen={true}
         titleExtra={
           <HintExclamationToggle>
-            榜單用途是快速掃描（註解：並非評分）；若樣本數不足（例如只參與 1 場），請搭配下方總表一起看。
+            榜單用途是快速掃描（註解：並非評分）；比賽榜單依累計個人數據計算，樣本不足時請搭配下方總表一起看。
           </HintExclamationToggle>
         }
       >
-        <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">出席率 Top</p>
-            <ol className="mt-2 space-y-1 text-sm">
-              {standout.attendanceTop.length === 0 ?
-                <li className="text-zinc-500 dark:text-zinc-400">尚無可計算的出席率</li>
-              : standout.attendanceTop.map((r) => (
-                  <li key={r.memberId} className="flex items-center justify-between gap-2">
-                    <span className="min-w-0 truncate font-medium text-zinc-900 dark:text-zinc-50">
-                      {r.displayName}
-                      {r.jerseyNumber != null ? <span className="ml-1 text-xs text-zinc-500">#{r.jerseyNumber}</span> : null}
-                    </span>
-                    <span className="shrink-0 tabular-nums text-emerald-700 dark:text-emerald-300">
-                      {r.attendanceRatePct?.toFixed(1)}%
-                    </span>
-                  </li>
-                ))}
-            </ol>
-          </div>
-          <div className="rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">註解</p>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-              出席率分母＝「該員為參與者」且事件已結束、已發布之場次；分子＝教練點名 checkedIn。
-            </p>
-          </div>
-        </div>
+        <MatchStandoutCards
+          attendanceCard={
+            attendanceTop ?
+              {
+                key: "attendance",
+                title: "出席王",
+                subtitle: "出席率最高",
+                displayName: attendanceTop.displayName,
+                jerseyNumber: attendanceTop.jerseyNumber,
+                formattedValue: `${attendanceTop.attendanceRatePct?.toFixed(1)}%`,
+                detail: `${attendanceTop.attendedEvents} / ${attendanceTop.eligibleEvents} 場`,
+              }
+            : { key: "attendance", title: "出席王", subtitle: "出席率最高", empty: true }
+          }
+          matchCards={matchStandoutCards}
+          matchSampleNote={
+            sportMod.capabilities.matchStats && matchMod && matchTotalRows.length > 0 ?
+              `比賽榜單依近 ${totalEndedPublishedMatches} 場已結束比賽之累計個人數據計算（最多 200 場）。`
+            : sportMod.capabilities.matchStats && matchMod ?
+              "尚無比賽個人數據，僅顯示出席榜單。"
+            : undefined
+          }
+        />
       </CoachEventDetailCollapsibleSection>
 
       <CoachEventDetailCollapsibleSection
@@ -340,62 +391,9 @@ export default async function CoachTeamStatsPage() {
       </CoachEventDetailCollapsibleSection>
 
       <CoachEventDetailCollapsibleSection id="coach-team-stats-next" title="下一步（比賽個人數據）" defaultOpen={false}>
-        {(() => {
-          const totals = new Map<
-            string,
-            {
-              memberId: string;
-              displayName: string;
-              jerseyNumber: number | null;
-              squad: string | null;
-              matchCount: number;
-              stats: PlayerMatchStats;
-            }
-          >();
-
-          for (const m of members) {
-            totals.set(m.id, {
-              memberId: m.id,
-              displayName: m.user.name ?? m.user.email ?? m.id.slice(0, 8),
-              jerseyNumber: m.jerseyNumber,
-              squad: m.squad,
-              matchCount: 0,
-              stats: { ...EMPTY_PLAYER_STATS },
-            });
-          }
-
-          for (const ev of matchEvents) {
-            const ps = ev.matchResult?.playerStats ?? [];
-            for (const row of ps) {
-              const memberId = row.memberId;
-              const normalized = normalizePlayerStats(row.stats);
-              if (!hasAnyPlayerStats(normalized)) continue;
-              const existing = totals.get(memberId);
-              if (!existing) continue;
-              existing.matchCount += 1;
-              existing.stats = addMatchStats(existing.stats, normalized);
-            }
-          }
-
-          const totalRows = Array.from(totals.values()).filter((r) => r.matchCount > 0);
-          totalRows.sort((a, b) => b.matchCount - a.matchCount);
-
-          const quickRows: QuickIndicatorRow[] = totalRows.map((r) => ({
-            memberId: r.memberId,
-            displayName: r.displayName,
-            jerseyNumber: r.jerseyNumber,
-            squad: r.squad,
-            matchCount: r.matchCount,
-            stats: r.stats,
-            attackRating: computeAttackRating(r.stats),
-            defenseRating: computeDefenseRating(r.stats),
-            blockRating: computeBlockRating(r.stats),
-            passRating: computePassRating(r.stats),
-            serveRating: computeServeRating(r.stats),
-            overall: computeOverallIndicator(r.stats),
-          }));
-
-          return (
+        {!sportMod.capabilities.matchStats || !matchMod ?
+          <SportFeatureComingSoon sport={prismaSportToId(team.sport)} featureLabel="比賽個人數據累計" />
+        : (
             <div className="space-y-4">
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
                 已結束且已發布的 MATCH 事件：{totalEndedPublishedMatches} 場（最多 200 場）。以下僅統計「有填寫個人數據」之球員與場次。
@@ -409,12 +407,12 @@ export default async function CoachTeamStatsPage() {
                 defaultOpen={false}
                 titleExtra={
                   <HintExclamationToggle>
-                    這裡顯示「累計後」的六大分類表格；若要看單場資料，請到各事件頁的「比賽結果」。
+                    這裡顯示「累計後」的分類表格；若要看單場資料，請到各事件頁的「比賽結果」。
                   </HintExclamationToggle>
                 }
               >
                 <MatchStatsTotalsToggle
-                  rows={totalRows.map((r) => ({
+                  rows={matchTotalRows.map((r) => ({
                     memberId: r.memberId,
                     displayName: r.displayName,
                     stats: r.stats,
@@ -423,8 +421,7 @@ export default async function CoachTeamStatsPage() {
                 />
               </CoachEventDetailCollapsibleSection>
             </div>
-          );
-        })()}
+          )}
       </CoachEventDetailCollapsibleSection>
     </div>
   );

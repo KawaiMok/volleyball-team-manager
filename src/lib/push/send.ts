@@ -1,4 +1,5 @@
 import { PushPlatform } from "@/generated/prisma/client";
+import { sendApnsToToken } from "@/lib/push/apns";
 import { sendFcmToToken } from "@/lib/push/fcm";
 import { getPrisma } from "@/lib/prisma";
 import type { PushNotificationPayload } from "@/lib/push/types";
@@ -6,7 +7,7 @@ import type { PushNotificationPayload } from "@/lib/push/types";
 export type { PushNotificationPayload } from "@/lib/push/types";
 
 /**
- * 發送至單一裝置（註解：Android 走 FCM；iOS 待 APNs）。
+ * 發送至單一裝置（註解：Android 走 FCM；iOS 走 APNs HTTP/2）。
  */
 export async function sendPushToDevice(args: {
   token: string;
@@ -22,7 +23,16 @@ export async function sendPushToDevice(args: {
     return { ok: false, error: result.error };
   }
 
-  return { ok: false, skipped: "apns_not_configured" };
+  if (args.platform === PushPlatform.IOS) {
+    const result = await sendApnsToToken(args.token, args.payload);
+    if (result.ok) return { ok: true };
+    if (result.error === "apns_not_configured") {
+      return { ok: false, skipped: "apns_not_configured" };
+    }
+    return { ok: false, error: result.error };
+  }
+
+  return { ok: false, skipped: "unknown_platform" };
 }
 
 /**
@@ -53,7 +63,7 @@ export async function sendPushToUserDevices(userId: string, payload: PushNotific
   }
 
   if (sent === 0 && errors.length === 0) {
-    return { sent: 0, total: devices.length, skipped: "fcm_not_configured" as const };
+    return { sent: 0, total: devices.length, skipped: "push_not_configured" as const };
   }
 
   return { sent, total: devices.length, errors: errors.length > 0 ? errors : undefined };

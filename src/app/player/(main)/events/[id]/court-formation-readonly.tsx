@@ -1,20 +1,25 @@
-import {
-  COURT_VIEWBOX,
-  CourtFullSurface,
-  courtNormToSvg,
-  isOpponentHalfByLengthNorm,
-} from "@/components/court-formation/court-full-surface";
+"use client";
+
 import { CourtBoardFullscreenShell } from "@/components/court-formation/court-board-fullscreen-shell";
+import { useTeamSport } from "@/components/team-sport-provider";
 import type { CourtSketchData } from "@/lib/court-sketch-schema";
 
 const R_PLAYER = 8;
 const R_BALL = 7;
 
-/** 球員端：唯讀全場企位 SVG（註解：供一般／全屏共用）。 */
-function CourtReadonlySvg({ data }: { data: CourtSketchData }) {
+/** 球員端：唯讀全場企位 SVG（註解：場地由 TeamSportProvider 注入）。 */
+function CourtReadonlySvg({
+  data,
+  court,
+}: {
+  data: CourtSketchData;
+  court: NonNullable<ReturnType<typeof useTeamSport>["court"]>;
+}) {
+  const { viewBox, courtNormToSvg, isOpponentHalf, labels, Surface: CourtSurface } = court;
+
   return (
-    <svg viewBox={COURT_VIEWBOX} className="block h-auto max-h-full w-full" role="img" aria-label="排球全場企位圖">
-      <CourtFullSurface variant="player" />
+    <svg viewBox={viewBox} className="block h-full w-full" role="img" aria-label={labels.readonlyAria}>
+      <CourtSurface variant="player" />
 
       <g style={{ pointerEvents: "none" }}>
         {data.lines.map((ln) => {
@@ -50,12 +55,12 @@ function CourtReadonlySvg({ data }: { data: CourtSketchData }) {
                 fill="white"
                 className="pointer-events-none select-none font-semibold"
               >
-                {t.label?.trim() || "球"}
+                {t.label?.trim() || labels.ballDefault}
               </text>
             </g>
           );
         }
-        const opp = isOpponentHalfByLengthNorm(t.y);
+        const opp = isOpponentHalf(t.y);
         return (
           <g key={t.id}>
             <circle
@@ -86,8 +91,15 @@ function CourtReadonlySvg({ data }: { data: CourtSketchData }) {
 
 /** 球員端：唯讀全場企位（註解：與教練端 v2 座標一致；支援橫向全屏）。 */
 export function CourtFormationReadonly({ data }: { data: CourtSketchData | null }) {
+  const sportMod = useTeamSport();
+  const court = sportMod.court;
+
+  if (!court) {
+    return <p className="text-sm text-slate-600 dark:text-slate-400">此運動尚未支援內建戰術板。</p>;
+  }
+
   if (!data) {
-    return <p className="text-sm text-slate-600 dark:text-slate-400">教練尚未設定企位圖。</p>;
+    return <p className="text-sm text-slate-600 dark:text-slate-400">{court.labels.readonlyEmpty}</p>;
   }
 
   const hasTokens = data.tokens.length > 0;
@@ -96,14 +108,17 @@ export function CourtFormationReadonly({ data }: { data: CourtSketchData | null 
   const hasNotes = Boolean(notesTrim);
 
   if (!hasTokens && !hasLines && !hasNotes) {
-    return <p className="text-sm text-slate-600 dark:text-slate-400">教練尚未設定企位圖。</p>;
+    return <p className="text-sm text-slate-600 dark:text-slate-400">{court.labels.readonlyEmpty}</p>;
   }
 
   return (
     <div className="space-y-3">
       {hasTokens || hasLines ?
-        <CourtBoardFullscreenShell title="場上企位">
-          <CourtReadonlySvg data={data} />
+        <CourtBoardFullscreenShell
+          title={court.labels.fullscreenTitleEvent}
+          aspectRatio={court.displayAspectRatio}
+        >
+          <CourtReadonlySvg data={data} court={court} />
         </CourtBoardFullscreenShell>
       : null}
       {hasNotes ?

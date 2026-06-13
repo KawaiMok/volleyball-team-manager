@@ -1,4 +1,4 @@
-import { MemberStatus, TeamRole } from "@/generated/prisma/client";
+import { MemberStatus, Sport, TeamRole } from "@/generated/prisma/client";
 import { isBootstrapAccessEnabled } from "@/lib/bootstrap-access";
 import { getPrisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
@@ -23,6 +23,7 @@ export async function POST() {
     data: {
       organizationId: defaultOrg.id,
       name: "示範排球隊",
+      sport: Sport.VOLLEYBALL,
       season: "2026",
       groupConfig: ["A", "B"],
     },

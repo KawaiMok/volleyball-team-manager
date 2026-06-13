@@ -98,6 +98,7 @@ export const matchResultBodySchema = z.object({
   playerStats: z.array(matchPlayerStatSchema),
 });
 
+export type MatchResultBody = z.infer<typeof matchResultBodySchema>;
 export type MatchSetScore = z.infer<typeof matchSetScoreSchema>;
 export type MatchTeamStats = z.infer<typeof matchTeamStatsSchema>;
 export type AttackStats = z.infer<typeof attackStatsSchema>;

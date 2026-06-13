@@ -1,6 +1,7 @@
 # 排球隊管理 — MVP 進度追蹤
 
 > 對照規格：`docs/volleyball-team-manager/01-mvp-pages.md`（若規格在 monorepo 其他路徑請自行調整連結）。  
+> 多運動擴展進度見 [MULTI-SPORT-PROGRESS.md](./MULTI-SPORT-PROGRESS.md)。  
 > 使用方式：完成項目改為 `[x]`，進行中可在文字後標註「進行中」。
 
 **最後更新**：2026-05-09（A7 隊伍設定／通知偏好已接上 `/coach/team`）

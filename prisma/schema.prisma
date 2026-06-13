@@ -43,6 +43,13 @@ enum TeamLifecycleStatus {
   ARCHIVED
 }
 
+/** 隊伍運動類型（註解：建隊時選定，建立後不可變；驅動戰術板與比賽統計外掛）。 */
+enum Sport {
+  VOLLEYBALL
+  SOCCER
+  BASKETBALL
+}
+
 /** Logo／Avatar 風格（註解：預設＝通用排球；CIQING＝慈青體育會）。 */
 enum BrandStyle {
   DEFAULT
@@ -219,6 +226,8 @@ model Team {
   organizationId String
   name        String
   season      String?
+  /** 運動類型（註解：決定戰術板場地與比賽統計 schema；預設排球以相容既有隊伍）。 */
+  sport       Sport    @default(VOLLEYBALL)
   timezone    String   @default("Asia/Taipei")
   lifecycleStatus TeamLifecycleStatus @default(ACTIVE)
   groupConfig Json?

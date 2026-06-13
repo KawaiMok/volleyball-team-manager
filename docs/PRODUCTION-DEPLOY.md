@@ -128,6 +128,7 @@ flowchart LR
 ## 9. 相關文件
 
 - 本機環境變數範例：[`.env.example`](../.env.example)
+- **自訂網域（Cloudflare + Vercel + Clerk）**：[CUSTOM-DOMAIN.md](./CUSTOM-DOMAIN.md)
 - 產品 MVP 進度：[MVP-PROGRESS.md](./MVP-PROGRESS.md)
 - 工作區規格（上層）：`docs/volleyball-team-manager/`
 

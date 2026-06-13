@@ -12,12 +12,20 @@ import { mapTeamMemberToRosterRow } from "@/lib/team-roster-map";
 type Props = {
   initialRows: TeamRosterRow[];
   squads: string[];
+  /** 位置欄位 placeholder（註解：依隊伍運動由 server 傳入）。 */
+  positionPlaceholder: string;
   currentMemberId: string;
   actorIsAdmin: boolean;
 };
 
 /** 新增隊員＋名單（註解：成功後立即更新 client 名單，不依賴 router.refresh 時序）。 */
-export function TeamPageMembers({ initialRows, squads, currentMemberId, actorIsAdmin }: Props) {
+export function TeamPageMembers({
+  initialRows,
+  squads,
+  positionPlaceholder,
+  currentMemberId,
+  actorIsAdmin,
+}: Props) {
   const [rows, setRows] = useState(initialRows);
 
   useEffect(() => {
@@ -41,7 +49,12 @@ export function TeamPageMembers({ initialRows, squads, currentMemberId, actorIsA
   return (
     <>
       <CoachEventDetailCollapsibleSection id="coach-team-add-member" title="新增隊員／隊務" defaultOpen={false}>
-        <AddTeamMemberForm squads={squads} actorIsAdmin={actorIsAdmin} onMemberAdded={onMemberAdded} />
+        <AddTeamMemberForm
+          squads={squads}
+          positionPlaceholder={positionPlaceholder}
+          actorIsAdmin={actorIsAdmin}
+          onMemberAdded={onMemberAdded}
+        />
       </CoachEventDetailCollapsibleSection>
 
       <CoachEventDetailCollapsibleSection

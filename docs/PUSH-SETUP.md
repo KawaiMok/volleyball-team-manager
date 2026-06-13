@@ -1,6 +1,7 @@
-# Android 推播設定（FCM）
+# 推播設定
 
-依序完成下列步驟。iOS（APNs）尚未實作，目前僅 **Android** 可收推播。
+- **Android（FCM）**：[`PUSH-SETUP.md`](./PUSH-SETUP.md)
+- **iOS（APNs）**：[`PUSH-SETUP-IOS.md`](./PUSH-SETUP-IOS.md)
 
 ---
 

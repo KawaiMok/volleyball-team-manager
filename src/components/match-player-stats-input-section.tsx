@@ -3,38 +3,31 @@
 import { useMemo, useState } from "react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import {
-  CATEGORY_FIELDS,
-  derivedStatValue,
-  playerOverallSummary,
-} from "@/lib/match-player-stats-fields";
+import { useMatchModule } from "@/components/team-sport-provider";
 import { formatNumericFieldValue } from "@/lib/numeric-input";
-import {
-  hasAnyPlayerStats,
-  hasCategoryData,
-  STAT_CATEGORIES,
-  STAT_CATEGORY_LABELS,
-  type MatchResultPlayerRow,
-  type StatCategory,
-} from "@/lib/match-result-schema";
+import type { MatchResultPlayerRow } from "@/lib/sports/match/types";
 
 type Props = {
   playerRows: MatchResultPlayerRow[];
-  onUpdateStat: (memberId: string, category: StatCategory, field: string, value: string) => void;
+  onUpdateStat: (memberId: string, category: string, field: string, value: string) => void;
 };
 
 function CategoryTabs({
+  categories,
+  labels,
   active,
   onChange,
   className = "",
 }: {
-  active: StatCategory;
-  onChange: (tab: StatCategory) => void;
+  categories: readonly string[];
+  labels: Record<string, string>;
+  active: string;
+  onChange: (tab: string) => void;
   className?: string;
 }) {
   return (
     <div className={`flex flex-wrap gap-1 ${className}`}>
-      {STAT_CATEGORIES.map((c) => (
+      {categories.map((c) => (
         <button
           key={c}
           type="button"
@@ -45,7 +38,7 @@ function CategoryTabs({
             : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
           }`}
         >
-          {STAT_CATEGORY_LABELS[c]}
+          {labels[c] ?? c}
         </button>
       ))}
     </div>
@@ -60,16 +53,22 @@ function PlayerStatSheetForm({
   onUpdateStat,
 }: {
   player: MatchResultPlayerRow;
-  category: StatCategory;
-  onCategoryChange: (tab: StatCategory) => void;
+  category: string;
+  onCategoryChange: (tab: string) => void;
   onUpdateStat: Props["onUpdateStat"];
 }) {
-  const fields = CATEGORY_FIELDS[category];
+  const match = useMatchModule();
+  const fields = match.categoryFields[category] ?? [];
   const cat = player.stats[category] as Record<string, number>;
 
   return (
     <div className="space-y-4">
-      <CategoryTabs active={category} onChange={onCategoryChange} />
+      <CategoryTabs
+        categories={match.categories}
+        labels={match.categoryLabels}
+        active={category}
+        onChange={onCategoryChange}
+      />
       <div className="space-y-4 pt-1">
         {fields.map((f) =>
           f.derived ?
@@ -79,7 +78,7 @@ function PlayerStatSheetForm({
             >
               <span className="text-sm text-zinc-600 dark:text-zinc-400">{f.label}</span>
               <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
-                {derivedStatValue(player.stats, f.derived)}
+                {match.derivedStatValue(player.stats, f.derived)}
               </span>
             </div>
           : (
@@ -89,7 +88,7 @@ function PlayerStatSheetForm({
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
-                value={formatNumericFieldValue(cat[f.key] ?? 0)}
+                value={formatNumericFieldValue(cat?.[f.key] ?? 0)}
                 placeholder="0"
                 onChange={(e) => onUpdateStat(player.memberId, category, f.key, e.target.value)}
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-base tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
@@ -104,55 +103,45 @@ function PlayerStatSheetForm({
 
 /** 個人數據輸入：桌機表格 + 手機 popup（分類 tab 在 popup 內）。 */
 export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props) {
-  const [statTab, setStatTab] = useState<StatCategory>("attack");
+  const match = useMatchModule();
+  const [statTab, setStatTab] = useState<string>(match.categories[0]);
   const [sheetMemberId, setSheetMemberId] = useState<string | null>(null);
-  const [sheetCategory, setSheetCategory] = useState<StatCategory>("attack");
-  /**
-   * 桌機：避免球員人數多時整張卡片變過長（註解：改成表格容器內捲動，必要時可展開成完整高度）。
-   */
+  const [sheetCategory, setSheetCategory] = useState<string>(match.categories[0]);
   const [tableExpanded, setTableExpanded] = useState(false);
-  const fields = CATEGORY_FIELDS[statTab];
-  /** 從最新 playerRows 取資料，避免 popup 內輸入後 state 過期（註解）。 */
+  const fields = match.categoryFields[statTab] ?? [];
   const sheetPlayer =
     sheetMemberId ? playerRows.find((p) => p.memberId === sheetMemberId) ?? null : null;
 
-  /**
-   * 手機：清單很長時的可用性優化（註解：用篩選 + 搜尋 + 完成度，快速找到未填的人）。
-   */
   const [mobileFilter, setMobileFilter] = useState<"all" | "todo" | "done">("todo");
   const [mobileQuery, setMobileQuery] = useState("");
 
   const mobileRows = useMemo(() => {
     const q = mobileQuery.trim().toLowerCase();
     return playerRows.filter((p) => {
-      const filled = hasAnyPlayerStats(p.stats);
+      const filled = match.hasAnyPlayerStats(p.stats);
       if (mobileFilter === "todo" && filled) return false;
       if (mobileFilter === "done" && !filled) return false;
       if (!q) return true;
       return p.displayName.toLowerCase().includes(q);
     });
-  }, [playerRows, mobileFilter, mobileQuery]);
+  }, [playerRows, mobileFilter, mobileQuery, match]);
 
   const mobileDoneCount = useMemo(
-    () => playerRows.filter((p) => hasAnyPlayerStats(p.stats)).length,
-    [playerRows],
+    () => playerRows.filter((p) => match.hasAnyPlayerStats(p.stats)).length,
+    [playerRows, match],
   );
 
   function openPlayerSheet(player: MatchResultPlayerRow) {
-    const initial = STAT_CATEGORIES.find((c) => hasCategoryData(player.stats, c)) ?? "attack";
+    const initial =
+      match.categories.find((c) => match.hasCategoryData(player.stats, c)) ?? match.categories[0];
     setSheetCategory(initial);
     setSheetMemberId(player.memberId);
-  }
-
-  function closePlayerSheet() {
-    setSheetMemberId(null);
   }
 
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold">個人數據</h3>
-        {/* 只影響桌機寬表格；手機本來就是列表 + popup（註解）。 */}
         {playerRows.length >= 10 ?
           <button
             type="button"
@@ -164,16 +153,18 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
         : null}
       </div>
 
-      {/* 桌機：分類 tab + 寬表格 */}
+      {/* 桌機 */}
       <div className="hidden md:block">
-        <CategoryTabs active={statTab} onChange={setStatTab} className="mb-3" />
+        <CategoryTabs
+          categories={match.categories}
+          labels={match.categoryLabels}
+          active={statTab}
+          onChange={setStatTab}
+          className="mb-3"
+        />
         <div
           className={[
             "overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800",
-            /**
-             * 註解：球員數量一多，讓表格本體內捲動，避免整張卡片高度失控。
-             * 展開時解除高度限制，方便一次檢視／截圖。
-             */
             tableExpanded ? "" : "max-h-[520px] overflow-y-auto",
           ].join(" ")}
         >
@@ -206,7 +197,7 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
                           key={f.key}
                           className="px-1 py-1 align-middle text-center text-xs text-zinc-500 tabular-nums"
                         >
-                          {derivedStatValue(p.stats, f.derived)}
+                          {match.derivedStatValue(p.stats, f.derived)}
                         </td>
                       : (
                         <td key={f.key} className="px-1 py-1 align-middle">
@@ -214,7 +205,7 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
                             type="text"
                             inputMode="numeric"
                             pattern="[0-9]*"
-                            value={formatNumericFieldValue(cat[f.key] ?? 0)}
+                            value={formatNumericFieldValue(cat?.[f.key] ?? 0)}
                             placeholder="0"
                             onChange={(e) => onUpdateStat(p.memberId, statTab, f.key, e.target.value)}
                             className="box-border w-full min-w-0 rounded border border-zinc-300 px-1 py-0.5 text-center tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
@@ -230,7 +221,7 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
         </div>
       </div>
 
-      {/* 手機：球員列表，分類在 popup 內切換 */}
+      {/* 手機 */}
       <div className="space-y-2 md:hidden">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs text-zinc-500">點選球員，在 popup 內切換分類並輸入數據</p>
@@ -241,33 +232,20 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
 
         <div className="flex items-center gap-2">
           <div className="flex rounded-full bg-zinc-100 p-1 text-xs dark:bg-zinc-800">
-            <button
-              type="button"
-              onClick={() => setMobileFilter("todo")}
-              className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
-                mobileFilter === "todo" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-950 dark:text-zinc-50" : "text-zinc-600 dark:text-zinc-300"
-              }`}
-            >
-              未填
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileFilter("done")}
-              className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
-                mobileFilter === "done" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-950 dark:text-zinc-50" : "text-zinc-600 dark:text-zinc-300"
-              }`}
-            >
-              已填
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileFilter("all")}
-              className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
-                mobileFilter === "all" ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-950 dark:text-zinc-50" : "text-zinc-600 dark:text-zinc-300"
-              }`}
-            >
-              全部
-            </button>
+            {(["todo", "done", "all"] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setMobileFilter(f)}
+                className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
+                  mobileFilter === f ?
+                    "bg-white text-zinc-900 shadow-sm dark:bg-zinc-950 dark:text-zinc-50"
+                  : "text-zinc-600 dark:text-zinc-300"
+                }`}
+              >
+                {f === "todo" ? "未填" : f === "done" ? "已填" : "全部"}
+              </button>
+            ))}
           </div>
           <input
             value={mobileQuery}
@@ -279,7 +257,7 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
 
         <ul className="divide-y divide-zinc-100 overflow-hidden rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
           {mobileRows.map((p) => {
-            const filled = hasAnyPlayerStats(p.stats);
+            const filled = match.hasAnyPlayerStats(p.stats);
             return (
               <li key={p.memberId}>
                 <button
@@ -290,7 +268,7 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-zinc-900 dark:text-zinc-50">{p.displayName}</p>
                     <p className={`mt-0.5 line-clamp-2 text-xs ${filled ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-400"}`}>
-                      {playerOverallSummary(p.stats)}
+                      {match.playerOverallSummary(p.stats)}
                     </p>
                   </div>
                   <span className="shrink-0 text-xs font-medium text-[var(--brand-primary)]">
@@ -308,14 +286,14 @@ export function MatchPlayerStatsInputSection({ playerRows, onUpdateStat }: Props
 
       <BottomSheet
         open={sheetPlayer !== null}
-        onClose={closePlayerSheet}
+        onClose={() => setSheetMemberId(null)}
         title={sheetPlayer?.displayName ?? ""}
         subtitle="個人數據 · 切換上方分類"
         tall
         footer={
           <button
             type="button"
-            onClick={closePlayerSheet}
+            onClick={() => setSheetMemberId(null)}
             className="w-full rounded-lg bg-[var(--brand-primary)] px-4 py-2.5 text-sm font-medium text-white hover:opacity-90"
           >
             完成

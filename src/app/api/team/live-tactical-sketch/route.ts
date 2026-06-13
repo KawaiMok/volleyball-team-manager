@@ -2,6 +2,8 @@ import { courtSketchSchema } from "@/lib/court-sketch-schema";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { getPrisma } from "@/lib/prisma";
 import { isCoachLike } from "@/lib/rbac";
+import { sportFeatureUnavailableResponse } from "@/lib/sport-api-guard";
+import { getTeamSportModule } from "@/lib/team-sport";
 import { NextResponse } from "next/server";
 
 /** 更新隊伍即時戰術版 JSON（註解：僅教練／管理員；與事件企位同 schema）。 */
@@ -12,6 +14,11 @@ export async function PATCH(req: Request) {
   }
   if (!isCoachLike(member)) {
     return NextResponse.json({ error: "需要教練或管理員權限" }, { status: 403 });
+  }
+
+  const sportMod = await getTeamSportModule(member.teamId);
+  if (!sportMod?.capabilities.liveTactical) {
+    return sportFeatureUnavailableResponse("liveTactical");
   }
 
   let body: unknown;

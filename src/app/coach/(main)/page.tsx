@@ -12,6 +12,8 @@ import { EventStatusIndicator } from "@/components/domain-status-indicators";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { buildDailyRpeSeries } from "@/lib/coach-dashboard-rpe-series";
+import { getSportModule } from "@/lib/sports/registry";
+import { prismaSportToId } from "@/lib/sports/registry-server";
 import { getPrisma } from "@/lib/prisma";
 import { EventStatus, EventType, RsvpStatus } from "@/generated/prisma/client";
 import { formatDateTimeZh } from "@/lib/format-datetime";
@@ -33,6 +35,12 @@ export default async function CoachDashboardPage() {
   if (!member) return null;
 
   const prisma = getPrisma();
+  const team = await prisma.team.findUnique({
+    where: { id: member.teamId },
+    select: { sport: true },
+  });
+  const showLiveTactical = team ? getSportModule(prismaSportToId(team.sport)).capabilities.liveTactical : false;
+
   const now = new Date();
   const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
@@ -149,12 +157,14 @@ export default async function CoachDashboardPage() {
               </HintExclamationToggle>
             </div>
           </div>
-          <Link
-            href="/coach/live-tactical"
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800"
-          >
-            即時戰術版
-          </Link>
+          {showLiveTactical ?
+            <Link
+              href="/coach/live-tactical"
+              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800"
+            >
+              即時戰術版
+            </Link>
+          : null}
         </div>
 
         <CoachDashboardSettingsPanel />

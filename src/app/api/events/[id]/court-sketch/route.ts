@@ -3,6 +3,8 @@ import { courtSketchSchema } from "@/lib/court-sketch-schema";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { getPrisma } from "@/lib/prisma";
 import { isCoachLike } from "@/lib/rbac";
+import { sportFeatureUnavailableResponse } from "@/lib/sport-api-guard";
+import { getTeamSportModule } from "@/lib/team-sport";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -16,6 +18,11 @@ export async function PATCH(req: Request, ctx: Ctx) {
   }
   if (!isCoachLike(member)) {
     return NextResponse.json({ error: "需要教練或管理員權限" }, { status: 403 });
+  }
+
+  const sportMod = await getTeamSportModule(member.teamId);
+  if (!sportMod?.capabilities.courtSketch) {
+    return sportFeatureUnavailableResponse("courtSketch");
   }
 
   let body: unknown;

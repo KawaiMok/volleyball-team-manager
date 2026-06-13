@@ -82,6 +82,7 @@ export async function duplicateEvent(tx: Tx, input: DuplicateEventInput) {
       status: EventStatus.DRAFT,
       rsvpDeadlineAt: rsvpDeadlineAt ?? undefined,
       createdByMemberId: input.actorMemberId,
+      /** 同隊複製：sport 不變，企位 JSON 可沿用（註解：跨隊複製不在此 API）。 */
       courtSketch: copyCourtSketch && source.courtSketch != null ? source.courtSketch : undefined,
     },
   });

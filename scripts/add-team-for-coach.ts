@@ -80,6 +80,7 @@ async function main() {
     data: {
       organizationId: defaultOrg.id,
       name: teamName,
+      sport: "VOLLEYBALL",
       season: String(new Date().getFullYear()),
       groupConfig: ["A", "B"],
     },

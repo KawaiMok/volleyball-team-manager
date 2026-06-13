@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { SPORT_CREATE_OPTIONS, getSportDisplayName } from "@/lib/sports/sport-options";
+import type { SportId } from "@/lib/sports/sport-id";
+
 type Props = {
   orgId: string;
   orgSlug: string;
@@ -12,6 +15,7 @@ type Props = {
 export function CreateTeamForm({ orgId, orgSlug }: Props) {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [sport, setSport] = useState<SportId>("VOLLEYBALL");
   const [season, setSeason] = useState(new Date().getFullYear().toString());
   const [coachEmail, setCoachEmail] = useState("");
   const [coachName, setCoachName] = useState("");
@@ -28,6 +32,7 @@ export function CreateTeamForm({ orgId, orgSlug }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
+          sport,
           season: season.trim() || null,
           initialCoaches: coachEmail.trim() ?
             [
@@ -56,6 +61,24 @@ export function CreateTeamForm({ orgId, orgSlug }: Props) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+      <fieldset className="space-y-2 text-sm">
+        <legend className="font-medium">運動類型</legend>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">建立後不可變更，請謹慎選擇。</p>
+        <div className="flex flex-wrap gap-3">
+          {SPORT_CREATE_OPTIONS.map((s) => (
+            <label key={s} className="flex cursor-pointer items-center gap-2">
+              <input
+                type="radio"
+                name="sport"
+                value={s}
+                checked={sport === s}
+                onChange={() => setSport(s)}
+              />
+              <span>{getSportDisplayName(s)}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <label className="block space-y-1 text-sm">
         <span className="font-medium">球隊名稱</span>
         <input

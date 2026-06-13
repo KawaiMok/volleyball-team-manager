@@ -46,7 +46,8 @@ const sketchLineSchema = z.object({
 
 export const courtSketchSchema = z.object({
   version: z.literal(COURT_SKETCH_VERSION),
-  tokens: z.array(courtSketchTokenSchema).max(24),
+  /** 足球 11v11 最多 22 人 + 標記（註解：排球 24、籃球 16 亦在此上限內）。 */
+  tokens: z.array(courtSketchTokenSchema).max(28),
   lines: z.array(sketchLineSchema).max(40),
   notes: z.string().max(200).optional(),
 });

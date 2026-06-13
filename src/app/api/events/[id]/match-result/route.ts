@@ -2,43 +2,44 @@ import { EventType } from "@/generated/prisma/client";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { canManageMatchResult } from "@/lib/match-result-access";
 import { isPlayerReviewSubjectRole } from "@/lib/player-review-access";
-import {
-  compactPlayerStats,
-  hasAnyPlayerStats,
-  matchResultBodySchema,
-  normalizePlayerStats,
-  type MatchSetScore,
-  type MatchTeamStats,
-} from "@/lib/match-result-schema";
+import type { MatchResultBody } from "@/lib/sports/match/types";
+import type { SportMatchClientModule } from "@/lib/sports/match/types";
+import { sportFeatureUnavailableResponse } from "@/lib/sport-api-guard";
 import { getPrisma } from "@/lib/prisma";
+import { getSportMatchModule, prismaSportToId } from "@/lib/sports/registry-server";
+import { getSportModule } from "@/lib/sports/registry";
+import { getTeamSport } from "@/lib/team-sport";
 import { NextResponse } from "next/server";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-function serializeResult(row: {
-  id: string;
-  opponentName: string | null;
-  sets: unknown;
-  teamStats: unknown;
-  notes: string | null;
-  updatedAt: Date;
-  playerStats: Array<{
-    memberId: string;
-    stats: unknown;
-    member: { user: { name: string | null; email: string | null } | null };
-  }>;
-}) {
+function serializeResult(
+  row: {
+    id: string;
+    opponentName: string | null;
+    sets: unknown;
+    teamStats: unknown;
+    notes: string | null;
+    updatedAt: Date;
+    playerStats: Array<{
+      memberId: string;
+      stats: unknown;
+      member: { user: { name: string | null; email: string | null } | null };
+    }>;
+  },
+  matchMod: SportMatchClientModule,
+) {
   return {
     id: row.id,
     opponentName: row.opponentName,
-    sets: row.sets as MatchSetScore[],
-    teamStats: (row.teamStats as MatchTeamStats | null) ?? null,
+    sets: row.sets,
+    teamStats: (row.teamStats as Record<string, number | undefined> | null) ?? null,
     notes: row.notes,
     updatedAt: row.updatedAt.toISOString(),
     playerStats: row.playerStats.map((p) => ({
       memberId: p.memberId,
       displayName: p.member.user?.name ?? p.member.user?.email ?? p.memberId.slice(0, 8),
-      stats: normalizePlayerStats(p.stats),
+      stats: matchMod.normalizePlayerStats(p.stats),
     })),
   };
 }
@@ -63,6 +64,9 @@ export async function GET(_req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "僅比賽事件可登錄結果" }, { status: 400 });
   }
 
+  const sport = await getTeamSport(member.teamId);
+  const matchMod = sport ? getSportMatchModule(sport) : null;
+
   const result = await prisma.matchResult.findUnique({
     where: { eventId },
     include: {
@@ -73,7 +77,9 @@ export async function GET(_req: Request, ctx: Ctx) {
     },
   });
 
-  return NextResponse.json({ result: result ? serializeResult(result) : null });
+  return NextResponse.json({
+    result: result && matchMod ? serializeResult(result, matchMod) : null,
+  });
 }
 
 /** 教練：儲存比賽結果（註解：事件結束後；upsert）。 */
@@ -96,9 +102,16 @@ export async function PUT(req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "比賽結束後才可登錄結果" }, { status: 403 });
   }
 
-  let body: ReturnType<typeof matchResultBodySchema.parse>;
+  const sport = await getTeamSport(member.teamId);
+  const sportMod = sport ? getSportModule(prismaSportToId(sport)) : null;
+  const matchMod = sport ? getSportMatchModule(sport) : null;
+  if (!sportMod?.capabilities.matchStats || !matchMod) {
+    return sportFeatureUnavailableResponse("matchStats");
+  }
+
+  let body: MatchResultBody;
   try {
-    body = matchResultBodySchema.parse(await req.json());
+    body = matchMod.matchResultBodySchema.parse(await req.json()) as MatchResultBody;
   } catch {
     return NextResponse.json({ error: "請求內容格式錯誤" }, { status: 400 });
   }
@@ -115,11 +128,11 @@ export async function PUT(req: Request, ctx: Ctx) {
   /** 只存有資料的球員列。 */
   const playerStatsToSave = body.playerStats.filter((ps) => {
     if (!allowedIds.has(ps.memberId)) return false;
-    return hasAnyPlayerStats(ps.stats);
+    return matchMod.hasAnyPlayerStats(ps.stats);
   });
 
   for (const ps of body.playerStats) {
-    if (!allowedIds.has(ps.memberId) && hasAnyPlayerStats(ps.stats)) {
+    if (!allowedIds.has(ps.memberId) && matchMod.hasAnyPlayerStats(ps.stats)) {
       return NextResponse.json({ error: "個人數據含非參與球員" }, { status: 400 });
     }
   }
@@ -154,7 +167,7 @@ export async function PUT(req: Request, ctx: Ctx) {
         data: playerStatsToSave.map((p) => ({
           matchResultId: result.id,
           memberId: p.memberId,
-          stats: compactPlayerStats(p.stats),
+          stats: matchMod.compactPlayerStats(p.stats),
         })),
       });
     }
@@ -170,7 +183,7 @@ export async function PUT(req: Request, ctx: Ctx) {
     });
   });
 
-  return NextResponse.json({ result: serializeResult(saved) });
+  return NextResponse.json({ result: serializeResult(saved, matchMod) });
 }
 
 /** 教練：清除比賽結果。 */

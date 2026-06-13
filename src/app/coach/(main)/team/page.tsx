@@ -13,6 +13,9 @@ import { getDebugTeamMember } from "@/lib/debug-session";
 import { parseGroupConfig } from "@/lib/group-config";
 import { getPrisma } from "@/lib/prisma";
 import { parseTeamNotificationSettings } from "@/lib/team-notification-settings";
+import { getSportModule } from "@/lib/sports/registry";
+import { prismaSportToId } from "@/lib/sports/registry-server";
+import { getSportDisplayName } from "@/lib/sports/sport-options";
 
 /** 隊伍／隊員：列表 + 依 Email 建隊籍（註解：編輯隊員改為全螢幕對話框，避免表單擠在表格內）。 */
 export default async function CoachTeamPage() {
@@ -23,7 +26,7 @@ export default async function CoachTeamPage() {
   const [teamRow, rows, initialAttendanceStats] = await Promise.all([
     prisma.team.findUnique({
       where: { id: member.teamId },
-      select: { name: true, season: true, groupConfig: true, notificationSettings: true },
+      select: { name: true, season: true, sport: true, groupConfig: true, notificationSettings: true },
     }),
     prisma.teamMember.findMany({
       where: { teamId: member.teamId },
@@ -35,6 +38,8 @@ export default async function CoachTeamPage() {
     computeTeamAttendanceStats(member.teamId, "month"),
   ]);
   const squads = parseGroupConfig(teamRow?.groupConfig ?? null);
+  const positionPlaceholder =
+    teamRow ? getSportModule(prismaSportToId(teamRow.sport)).labels.positionPlaceholder : "位置（選填）";
   const notificationPrefs = parseTeamNotificationSettings(teamRow?.notificationSettings ?? null);
   const actorIsAdmin = member.role === TeamRole.ADMIN;
 
@@ -49,6 +54,11 @@ export default async function CoachTeamPage() {
         <Link href="/coach" className="text-sm text-blue-600 hover:underline">
           ← 總覽
         </Link>
+        {teamRow ?
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            運動：{getSportDisplayName(prismaSportToId(teamRow.sport))}（建立後不可變更）
+          </p>
+        : null}
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <h1 className="min-w-0 flex-1 text-2xl font-semibold tracking-tight">隊伍／隊員</h1>
           <HintExclamationToggle>
@@ -105,6 +115,7 @@ export default async function CoachTeamPage() {
         key={teamSettingsKey}
         initialRows={rosterRows}
         squads={squads}
+        positionPlaceholder={positionPlaceholder}
         currentMemberId={member.id}
         actorIsAdmin={actorIsAdmin}
       />

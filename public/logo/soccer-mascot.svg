@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 96" fill="none" aria-hidden="true">
+  <ellipse cx="28" cy="90" rx="7" ry="4" fill="#15803d"/>
+  <ellipse cx="52" cy="90" rx="7" ry="4" fill="#15803d"/>
+  <ellipse cx="14" cy="58" rx="5" ry="7" fill="#4ade80" transform="rotate(-20 14 58)"/>
+  <ellipse cx="66" cy="58" rx="5" ry="7" fill="#4ade80" transform="rotate(20 66 58)"/>
+  <circle cx="40" cy="50" r="28" fill="#ffffff" stroke="#15803d" stroke-width="3"/>
+  <defs>
+    <clipPath id="soccer-mascot-body-telstar-clip">
+      <circle cx="50" cy="50" r="48"/>
+    </clipPath>
+    <clipPath id="soccer-mascot-football-telstar-clip">
+      <circle cx="50" cy="50" r="48"/>
+    </clipPath>
+  </defs>
+  <g transform="translate(40 50) scale(0.52) translate(-50 -50)">
+    <g clip-path="url(#soccer-mascot-body-telstar-clip)">
+      <circle cx="50" cy="50" r="48" fill="#ffffff"/>
+      <path fill="#171717" d="M50 49 L55.6 52.4 L54 58.8 L46 58.8 L44.4 52.4 Z"/>
+      <path fill="#171717" d="M27.5 29.5 L32.8 25 L39 27.5 L37.5 34 L29 35 Z"/>
+      <path fill="#171717" d="M72.5 29.5 L67.2 25 L61 27.5 L62.5 34 L71 35 Z"/>
+      <path fill="#171717" d="M3.5 48 L10.5 43 L16.5 48 L14 56.5 L6.5 57.5 Z"/>
+      <path fill="#171717" d="M96.5 48 L89.5 43 L83.5 48 L86 56.5 L93.5 57.5 Z"/>
+      <g fill="none" stroke="#171717" stroke-width="1.05" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M32.8 25 Q50 17.5 67.2 25"/>
+        <path d="M39 27.5 L50 33 L61 27.5"/>
+        <path d="M39 27.5 L46.5 42 L53.5 42 L61 27.5"/>
+        <path d="M50 49 L50.5 38 L46.5 42"/>
+        <path d="M50 49 L50.5 38 L53.5 42"/>
+        <path d="M37.5 34 L44.4 52.4 L55.6 52.4 L62.5 34"/>
+        <path d="M44.4 52.4 L16.5 48 L29 35"/>
+        <path d="M55.6 52.4 L83.5 48 L71 35"/>
+        <path d="M10.5 43 Q22 36 44.4 52.4"/>
+        <path d="M89.5 43 Q78 36 55.6 52.4"/>
+        <path d="M46 58.8 Q36 70 14 56.5"/>
+        <path d="M54 58.8 Q64 70 86 56.5"/>
+      </g>
+    </g>
+    <circle cx="50" cy="50" r="48" fill="none" stroke="#171717" stroke-width="1.4"/>
+  </g>
+  <circle cx="32" cy="54" r="2.5" fill="#15803d"/>
+  <circle cx="48" cy="54" r="2.5" fill="#15803d"/>
+  <path d="M32 62 Q40 68 48 62" stroke="#15803d" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <g transform="translate(62 78) scale(0.2) translate(-50 -50)">
+    <g clip-path="url(#soccer-mascot-football-telstar-clip)">
+      <circle cx="50" cy="50" r="48" fill="#ffffff"/>
+      <path fill="#171717" d="M50 49 L55.6 52.4 L54 58.8 L46 58.8 L44.4 52.4 Z"/>
+      <path fill="#171717" d="M27.5 29.5 L32.8 25 L39 27.5 L37.5 34 L29 35 Z"/>
+      <path fill="#171717" d="M72.5 29.5 L67.2 25 L61 27.5 L62.5 34 L71 35 Z"/>
+      <path fill="#171717" d="M3.5 48 L10.5 43 L16.5 48 L14 56.5 L6.5 57.5 Z"/>
+      <path fill="#171717" d="M96.5 48 L89.5 43 L83.5 48 L86 56.5 L93.5 57.5 Z"/>
+      <g fill="none" stroke="#171717" stroke-width="1.05" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M32.8 25 Q50 17.5 67.2 25"/>
+        <path d="M39 27.5 L50 33 L61 27.5"/>
+        <path d="M39 27.5 L46.5 42 L53.5 42 L61 27.5"/>
+        <path d="M50 49 L50.5 38 L46.5 42"/>
+        <path d="M50 49 L50.5 38 L53.5 42"/>
+        <path d="M37.5 34 L44.4 52.4 L55.6 52.4 L62.5 34"/>
+        <path d="M44.4 52.4 L16.5 48 L29 35"/>
+        <path d="M55.6 52.4 L83.5 48 L71 35"/>
+        <path d="M10.5 43 Q22 36 44.4 52.4"/>
+        <path d="M89.5 43 Q78 36 55.6 52.4"/>
+        <path d="M46 58.8 Q36 70 14 56.5"/>
+        <path d="M54 58.8 Q64 70 86 56.5"/>
+      </g>
+    </g>
+    <circle cx="50" cy="50" r="48" fill="none" stroke="#171717" stroke-width="1.4"/>
+  </g>
+</svg>

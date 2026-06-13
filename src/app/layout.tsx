@@ -31,8 +31,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "排球隊管理",
-  description: "Volleyball team manager — MVP",
+  title: "隊伍管理",
+  description: "Team manager — 排球、足球、籃球",
 };
 
 export const viewport: Viewport = {

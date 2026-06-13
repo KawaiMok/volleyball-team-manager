@@ -42,13 +42,18 @@ npm run open:ios       # Xcode
 
 ## iOS 推播（APNs）
 
-1. Apple Developer：為 App ID 開啟 **Push Notifications**。
-2. 建立 APNs **金鑰（.p8）**，供**後端**發送使用（勿提交到 git）。
-3. Xcode 開啟 `ios/App/App.xcworkspace`（或 `.xcodeproj`），Target → **Signing & Capabilities** 加入 **Push Notifications**。
+完整步驟見 **[docs/PUSH-SETUP-IOS.md](../docs/PUSH-SETUP-IOS.md)**（Apple Developer、.p8 金鑰、Vercel 環境變數、驗收）。
+
+摘要：
+
+1. Apple Developer：為 App ID `com.volleyball.teammanager` 開啟 **Push Notifications**。
+2. 建立 APNs **金鑰（.p8）**，記下 Key ID、Team ID → 設 Vercel `APNS_*` 環境變數（勿提交 git）。
+3. Xcode → **Signing & Capabilities** 選 Team，確認 Push Notifications。
+4. **實機** Run（模擬器無法收 APNs）；Debug 建置時伺服端設 `APNS_USE_SANDBOX=true`。
 
 ## 與 Next 站台的銜接
 
-已在 Web 專案加入 `CapacitorPushBridge`：使用者於 App 內登入後會向 `POST /api/me/push-token` 回報 token。後端發送邏輯見 `src/lib/push/send.ts`（目前為 stub，需接上 FCM／APNs）。
+已在 Web 專案加入 `CapacitorPushBridge`：使用者於 App 內登入後會向 `POST /api/me/push-token` 回報 token。後端發送邏輯見 `src/lib/push/send.ts`（Android FCM + iOS APNs）。
 
 ## 三星／Android：一開 App 就跳系統瀏覽器
 

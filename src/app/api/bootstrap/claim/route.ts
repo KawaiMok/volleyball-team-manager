@@ -1,4 +1,4 @@
-import { MemberStatus, TeamRole } from "@/generated/prisma/client";
+import { MemberStatus, Sport, TeamRole } from "@/generated/prisma/client";
 import { isBootstrapAccessEnabled } from "@/lib/bootstrap-access";
 import { getPrisma } from "@/lib/prisma";
 import { getOrSyncPrismaUserFromClerk } from "@/lib/session";
@@ -62,6 +62,7 @@ export async function POST(req: Request) {
       data: {
         organizationId: defaultOrg.id,
         name: DEMO_TEAM_NAME,
+        sport: Sport.VOLLEYBALL,
         season: String(new Date().getFullYear()),
         groupConfig: ["A", "B"],
       },

@@ -7,22 +7,8 @@ import {
 import { DataViewModeToggle } from "@/components/data-view-mode-toggle";
 import { useDataViewMode } from "@/components/data-view-mode-provider";
 import { PersonalStatsChartGrid } from "@/components/match-stats-charts";
-import {
-  computeAttackRates,
-  computeBlockRating,
-  computeDefenseRate,
-  computePassRating,
-  computeServeRating,
-  formatPct,
-  formatRating,
-} from "@/lib/match-player-stats-metrics";
-import {
-  hasCategoryData,
-  STAT_CATEGORIES,
-  STAT_CATEGORY_LABELS,
-  type PlayerMatchStats,
-  type StatCategory,
-} from "@/lib/match-result-schema";
+import { useMatchModule } from "@/components/team-sport-provider";
+import type { PlayerStatsRecord } from "@/lib/sports/match/types";
 
 type Props = {
   data: MatchResultViewData;
@@ -30,115 +16,41 @@ type Props = {
   currentMemberId: string;
 };
 
-function PersonalStatCard({
-  category,
-  stats,
-}: {
-  category: StatCategory;
-  stats: PlayerMatchStats;
-}) {
-  if (!hasCategoryData(stats, category)) return null;
+function PersonalStatCard({ category, stats }: { category: string; stats: PlayerStatsRecord }) {
+  const match = useMatchModule();
+  if (!match.hasCategoryData(stats, category)) return null;
 
-  const label = STAT_CATEGORY_LABELS[category];
+  const label = match.categoryLabels[category] ?? category;
+  const fields = match.categoryFields[category] ?? [];
+  const cat = stats[category] as Record<string, number>;
 
-  if (category === "attack") {
-    const a = stats.attack!;
-    const rates = computeAttackRates(stats);
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-zinc-900">
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{label}</h4>
-        <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-          <div><dt className="text-slate-500">次數</dt><dd className="font-medium tabular-nums">{a.attempts}</dd></div>
-          <div><dt className="text-slate-500">得分</dt><dd className="font-medium tabular-nums">{a.points}</dd></div>
-          <div><dt className="text-slate-500">失誤</dt><dd className="font-medium tabular-nums">{a.errors}</dd></div>
-          <div><dt className="text-slate-500">得分率</dt><dd className="font-medium tabular-nums">{formatPct(rates.scoreRate)}</dd></div>
-          <div><dt className="text-slate-500">失誤率</dt><dd className="font-medium tabular-nums">{formatPct(rates.errorRate)}</dd></div>
-        </dl>
-      </div>
-    );
-  }
-
-  if (category === "block") {
-    const b = stats.block!;
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-zinc-900">
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{label}</h4>
-        <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-          <div><dt className="text-slate-500">次數</dt><dd className="font-medium tabular-nums">{b.attempts}</dd></div>
-          <div><dt className="text-slate-500">有效</dt><dd className="font-medium tabular-nums">{b.effective}</dd></div>
-          <div><dt className="text-slate-500">失誤</dt><dd className="font-medium tabular-nums">{b.errors}</dd></div>
-          <div><dt className="text-slate-500">得分</dt><dd className="font-medium tabular-nums">{b.points}</dd></div>
-          <div className="col-span-2"><dt className="text-slate-500">攔網 rating</dt><dd className="font-medium tabular-nums">{formatRating(computeBlockRating(stats))}</dd></div>
-        </dl>
-      </div>
-    );
-  }
-
-  if (category === "defense") {
-    const d = stats.defense!;
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-zinc-900">
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{label}</h4>
-        <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-          <div><dt className="text-slate-500">次數</dt><dd className="font-medium tabular-nums">{d.attempts}</dd></div>
-          <div><dt className="text-slate-500">成功</dt><dd className="font-medium tabular-nums">{d.success}</dd></div>
-          <div><dt className="text-slate-500">失誤</dt><dd className="font-medium tabular-nums">{d.errors}</dd></div>
-          <div><dt className="text-slate-500">有效防守%</dt><dd className="font-medium tabular-nums">{formatPct(computeDefenseRate(stats))}</dd></div>
-        </dl>
-      </div>
-    );
-  }
-
-  if (category === "pass") {
-    const p = stats.pass!;
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-zinc-900">
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{label}</h4>
-        <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-          <div><dt className="text-slate-500">A 完美</dt><dd className="font-medium tabular-nums">{p.perfect}</dd></div>
-          <div><dt className="text-slate-500">B 僅入3米</dt><dd className="font-medium tabular-nums">{p.good}</dd></div>
-          <div><dt className="text-slate-500">C 修正或更差</dt><dd className="font-medium tabular-nums">{p.poor}</dd></div>
-          <div><dt className="text-slate-500">被 ACE</dt><dd className="font-medium tabular-nums">{p.aced}</dd></div>
-          <div className="col-span-2"><dt className="text-slate-500">一傳 rating</dt><dd className="font-medium tabular-nums">{formatRating(computePassRating(stats))}</dd></div>
-        </dl>
-      </div>
-    );
-  }
-
-  if (category === "serve") {
-    const s = stats.serve!;
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-zinc-900">
-        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{label}</h4>
-        <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-          <div><dt className="text-slate-500">A 強</dt><dd className="font-medium tabular-nums">{s.strong}</dd></div>
-          <div><dt className="text-slate-500">B 一般</dt><dd className="font-medium tabular-nums">{s.normal}</dd></div>
-          <div><dt className="text-slate-500">C 菜</dt><dd className="font-medium tabular-nums">{s.weak}</dd></div>
-          <div><dt className="text-slate-500">失誤</dt><dd className="font-medium tabular-nums">{s.errors}</dd></div>
-          <div><dt className="text-slate-500">ACE</dt><dd className="font-medium tabular-nums">{s.aces}</dd></div>
-          <div className="col-span-2"><dt className="text-slate-500">發球 rating</dt><dd className="font-medium tabular-nums">{formatRating(computeServeRating(stats))}</dd></div>
-        </dl>
-      </div>
-    );
-  }
-
-  const o = stats.other!;
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-zinc-900">
       <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-50">{label}</h4>
-      <dl className="mt-2 text-sm">
-        <div><dt className="text-slate-500">失誤</dt><dd className="font-medium tabular-nums">{o.errors}</dd></div>
+      <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+        {fields.map((f) => (
+          <div key={f.key} className={f.derived ? "col-span-2" : undefined}>
+            <dt className="text-slate-500">{f.label}</dt>
+            <dd className="font-medium tabular-nums">
+              {f.derived ? match.derivedStatValue(stats, f.derived) : (cat[f.key] ?? 0)}
+            </dd>
+          </div>
+        ))}
       </dl>
     </div>
   );
 }
 
-/** 球員：僅顯示大比分與本人數據（註解：支援表格／圖表檢視）。 */
+/** 球員：僅顯示大比分與本人數據（註解：依運動模組動態分類）。 */
 export function MatchResultReadonly({ data, teamName, currentMemberId }: Props) {
+  const match = useMatchModule();
   const { mode } = useDataViewMode();
   const myRow = data.playerStats.find((p) => p.memberId === currentMemberId);
   const myStats = myRow?.stats;
-  const hasPersonalStats = myStats && STAT_CATEGORIES.some((c) => hasCategoryData(myStats, c));
+  const filledCategories = match.categories.filter(
+    (c) => myStats && match.hasCategoryData(myStats, c),
+  );
+  const hasPersonalStats = filledCategories.length > 0;
 
   return (
     <div className="space-y-6">
@@ -148,14 +60,14 @@ export function MatchResultReadonly({ data, teamName, currentMemberId }: Props) 
       </div>
       <MatchResultVisualization data={data} teamName={teamName} scoreOnly hideViewToggle />
 
-      {hasPersonalStats ?
+      {hasPersonalStats && myStats ?
         <section className="space-y-3">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-50">我的數據</h3>
           {mode === "chart" ?
-            <PersonalStatsChartGrid stats={myStats} />
+            <PersonalStatsChartGrid stats={myStats} teamRows={data.playerStats} />
           : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {STAT_CATEGORIES.map((c) => (
+              {filledCategories.map((c) => (
                 <PersonalStatCard key={c} category={c} stats={myStats} />
               ))}
             </div>

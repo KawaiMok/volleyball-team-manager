@@ -1,4 +1,5 @@
-import { TeamLifecycleStatus, TeamRole } from "@/generated/prisma/client";
+import { Sport, TeamLifecycleStatus, TeamRole } from "@/generated/prisma/client";
+import { sportFieldSchema } from "@/lib/sports/sport-schema";
 import { writePlatformAuditLog } from "@/lib/platform-audit";
 import { canManageOrganization } from "@/lib/platform-rbac";
 import { provisionTeamMember } from "@/lib/team-provisioning";
@@ -19,6 +20,7 @@ const coachSchema = z.object({
 
 const createTeamSchema = z.object({
   name: z.string().min(1).max(120),
+  sport: sportFieldSchema.default(Sport.VOLLEYBALL),
   season: z.string().max(32).optional().nullable(),
   timezone: z.string().max(64).optional(),
   groupConfig: z.array(z.string().max(32)).optional().nullable(),
@@ -78,6 +80,7 @@ export async function POST(req: Request, { params }: Params) {
     data: {
       organizationId: orgId,
       name: body.name.trim(),
+      sport: body.sport,
       season: body.season?.trim() || undefined,
       timezone: body.timezone?.trim() || "Asia/Taipei",
       groupConfig: body.groupConfig ?? undefined,

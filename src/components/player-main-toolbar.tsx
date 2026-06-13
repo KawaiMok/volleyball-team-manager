@@ -22,13 +22,14 @@ const NAV_LINKS = [
 
 type Props = {
   teamName: string;
+  sportLabel: string;
   teams: TeamOption[];
   currentTeamId: string;
   canAccessCoach: boolean;
 };
 
 /** 球員端頂部列：Web 漢堡選單；Capacitor 精簡為 logo + 標題 + 返回。 */
-export function PlayerMainToolbar({ teamName, teams, currentTeamId, canAccessCoach }: Props) {
+export function PlayerMainToolbar({ teamName, sportLabel, teams, currentTeamId, canAccessCoach }: Props) {
   const native = useCapacitorNative();
   const pathname = usePathname() ?? "";
   const showBack = native && isEventDetailPath(pathname);
@@ -69,7 +70,9 @@ export function PlayerMainToolbar({ teamName, teams, currentTeamId, canAccessCoa
             )}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{teamName}</p>
-              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">球員端</p>
+              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                球員端 · {sportLabel}
+              </p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -98,7 +101,9 @@ export function PlayerMainToolbar({ teamName, teams, currentTeamId, canAccessCoa
               </>
             : (
               <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">球員端</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  球員端 · {sportLabel}
+                </p>
                 <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{teamName}</p>
               </div>
             )}

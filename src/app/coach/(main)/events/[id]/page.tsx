@@ -21,8 +21,6 @@ import { coachMemberUserSelect } from "@/lib/event-response-sanitize";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
 import { MatchResultPanel } from "@/app/coach/(main)/events/[id]/match-result-panel";
 import { canManageMatchResult } from "@/lib/match-result-access";
-import type { MatchSetScore, MatchTeamStats } from "@/lib/match-result-schema";
-import { EMPTY_PLAYER_STATS, normalizePlayerStats } from "@/lib/match-result-schema";
 import { CoachEventDetailCollapsibleSection } from "@/components/coach-event-detail-collapsible-section";
 import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
 import { EventTitleWithMeta } from "@/components/event-title-with-meta";
@@ -31,6 +29,10 @@ import {
   EventStatusLegend,
 } from "@/components/domain-status-indicators";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
+import { SportFeatureComingSoon } from "@/components/sport-feature-coming-soon";
+import type { PeriodScore } from "@/lib/sports/match/types";
+import { getSportModule } from "@/lib/sports/registry";
+import { prismaSportToId } from "@/lib/sports/registry-server";
 import { getPrisma } from "@/lib/prisma";
 import { formatDateTimeZh } from "@/lib/format-datetime";
 import {
@@ -160,9 +162,12 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     : Promise.resolve([]),
     prisma.team.findUnique({
       where: { id: member.teamId },
-      select: { name: true, groupConfig: true },
+      select: { name: true, groupConfig: true, sport: true },
     }),
   ]);
+
+  const sportMod = teamRow ? getSportModule(prismaSportToId(teamRow.sport)) : null;
+  const matchMod = sportMod?.match ?? null;
 
   const participantMemberIds = event.participants.map((p) => p.memberId);
   const participantRuleKey = [...participantMemberIds].sort().join("|");
@@ -185,8 +190,11 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     id: r.id,
     displayName: r.user.name ?? r.user.email ?? r.id.slice(0, 8),
     squad: r.squad,
+    position: r.position,
     role: r.role,
   }));
+
+  const rosterMetaById = new Map(roster.map((r) => [r.id, r]));
 
   const tacticalLinks = mediaLinks
     .filter((a) => a.category === FileAssetCategory.TACTICAL_BOARD)
@@ -248,25 +256,32 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     .map((r) => ({
       memberId: r.id,
       displayName: r.displayName,
-      stats: { ...EMPTY_PLAYER_STATS },
+      stats: matchMod ? matchMod.emptyPlayerStats() : {},
     }));
 
   const initialMatchResult =
-    event.matchResult ?
+    event.matchResult && matchMod ?
       {
         opponentName: event.matchResult.opponentName,
-        sets: event.matchResult.sets as MatchSetScore[],
-        teamStats: (event.matchResult.teamStats as MatchTeamStats | null) ?? null,
+        periods: event.matchResult.sets as PeriodScore[],
+        teamStats: (event.matchResult.teamStats as Record<string, number | undefined> | null) ?? null,
         notes: event.matchResult.notes,
-        playerStats: event.matchResult.playerStats.map((p) => ({
-          memberId: p.memberId,
-          displayName: p.member.user?.name ?? p.member.user?.email ?? p.memberId.slice(0, 8),
-          stats: normalizePlayerStats(p.stats),
-        })),
+        playerStats: event.matchResult.playerStats.map((p) => {
+          const meta = rosterMetaById.get(p.memberId);
+          return {
+            memberId: p.memberId,
+            displayName: p.member.user?.name ?? p.member.user?.email ?? p.memberId.slice(0, 8),
+            position: meta?.position ?? null,
+            squad: meta?.squad ?? null,
+            stats: matchMod.normalizePlayerStats(p.stats),
+          };
+        }),
       }
     : null;
 
   const detailSections = COACH_EVENT_DETAIL_SECTIONS.filter((s) => {
+    if (!sportMod?.capabilities.courtSketch && s.id === "coach-ev-court") return false;
+    if (!sportMod?.capabilities.matchStats && s.id === "coach-ev-match") return false;
     if (!isMatchEvent && s.id === "coach-ev-match") return false;
     if (!eventEnded) {
       return s.id !== "coach-ev-reviews" && s.id !== "coach-ev-match";
@@ -313,13 +328,13 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     : null;
 
   const matchResultSection =
-    isMatchEvent ?
+    isMatchEvent && sportMod?.capabilities.matchStats ?
       <CoachEventDetailCollapsibleSection
         id="coach-ev-match"
         title="比賽結果"
         titleExtra={
           <HintExclamationToggle>
-            比賽結束後可登錄各局比分、球隊數據與個人數據（一傳、防守、進攻、攔網、發球）；儲存後以圖表檢視。
+            比賽結束後可登錄分段比分、球隊數據與個人數據；儲存後以圖表檢視。
           </HintExclamationToggle>
         }
       >
@@ -496,22 +511,28 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </CoachEventDetailCollapsibleSection>
       : null}
 
-      <CoachEventDetailCollapsibleSection
-        id="coach-ev-court"
-        title="場上企位"
-        titleExtra={
-          <HintExclamationToggle>
-            全場示意（左為對方、右為我方）：球員／排球標記、畫線；儲存後球員於本事件頁可唯讀檢視。
-          </HintExclamationToggle>
-        }
-      >
-        <CourtFormationEditor
-          variant="event"
-          eventId={event.id}
-          initial={parseCourtSketch(event.courtSketch)}
-          disabled={event.status === EventStatus.CANCELLED}
-        />
-      </CoachEventDetailCollapsibleSection>
+      {sportMod?.capabilities.courtSketch ?
+        <CoachEventDetailCollapsibleSection
+          id="coach-ev-court"
+          title="場上企位"
+          titleExtra={
+            <HintExclamationToggle>
+              全場示意（左為對方、右為我方）：球員／球標記、畫線；儲存後球員於本事件頁可唯讀檢視。
+            </HintExclamationToggle>
+          }
+        >
+          <CourtFormationEditor
+            variant="event"
+            eventId={event.id}
+            initial={parseCourtSketch(event.courtSketch)}
+            disabled={event.status === EventStatus.CANCELLED}
+          />
+        </CoachEventDetailCollapsibleSection>
+      : teamRow ?
+        <CoachEventDetailCollapsibleSection id="coach-ev-court" title="場上企位">
+          <SportFeatureComingSoon sport={prismaSportToId(teamRow.sport)} featureLabel="場上企位" />
+        </CoachEventDetailCollapsibleSection>
+      : null}
 
       <CoachEventDetailCollapsibleSection
         id="coach-ev-media"

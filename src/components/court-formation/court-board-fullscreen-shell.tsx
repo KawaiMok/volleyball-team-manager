@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 type Props = {
   title: string;
   children: React.ReactNode;
+  /** viewBox 寬／高（註解：預設 2＝排球；足球約 1.54、籃球約 1.87）。 */
+  aspectRatio?: number;
   /** 全屏浮動控制區（註解：預設收起；教練端傳入工具＋儲存）。 */
   fullscreenControls?: React.ReactNode;
   /** 全屏時永遠顯示的快捷按鈕（註解：例如「儲存」，不需展開工具列）。 */
@@ -12,11 +14,12 @@ type Props = {
 };
 
 /**
- * 戰術板橫向全屏外殼（註解：球場盡量填滿視窗；控制項為浮動可收起面板）。
+ * 戰術板橫向全屏外殼（註解：依運動場地比例填滿視窗，避免裁切）。
  */
 export function CourtBoardFullscreenShell({
   title,
   children,
+  aspectRatio = 2,
   fullscreenControls,
   fullscreenQuickActions,
 }: Props) {
@@ -65,6 +68,13 @@ export function CourtBoardFullscreenShell({
     paddingRight: "max(0.25rem, env(safe-area-inset-right))",
   } as const;
 
+  /** 在視窗內盡量放大且完整顯示場地 */
+  const boardFitStyle = {
+    aspectRatio,
+    width: `min(calc(100vw - 0.5rem), calc((100vh - 0.5rem) * ${aspectRatio}))`,
+    maxHeight: "calc(100vh - 0.5rem)",
+  } as const;
+
   return (
     <div className="space-y-2">
       {!open ?
@@ -75,15 +85,14 @@ export function CourtBoardFullscreenShell({
         className={
           open ?
             "fixed inset-0 z-[100] bg-zinc-950"
-          : "relative mx-auto max-w-md overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-inner dark:border-zinc-800 dark:bg-zinc-900 md:max-w-lg"
+          : "relative mx-auto w-full max-w-md overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-inner dark:border-zinc-800 dark:bg-zinc-900 md:max-w-2xl"
         }
         style={open ? safeStyle : undefined}
       >
         {open ?
           <>
-            {/* 戰術板：盡量填滿視窗（2:1），不受工具列擠壓 */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="aspect-[2/1] w-[min(calc(100vw-0.5rem),calc((100vh-0.5rem)*2))] max-h-[calc(100vh-0.5rem)] touch-none">
+              <div className="touch-none [&_svg]:h-full [&_svg]:w-full" style={boardFitStyle}>
                 {children}
               </div>
             </div>
@@ -133,7 +142,9 @@ export function CourtBoardFullscreenShell({
             : null}
           </>
         : (
-          <div className="w-full touch-none">{children}</div>
+          <div className="w-full touch-none [&_svg]:h-full [&_svg]:w-full" style={{ aspectRatio }}>
+            {children}
+          </div>
         )}
       </div>
     </div>

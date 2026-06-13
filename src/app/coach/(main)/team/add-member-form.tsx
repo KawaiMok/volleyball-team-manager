@@ -7,6 +7,8 @@ import { useState } from "react";
 type Props = {
   /** 隊伍分組標籤（註解：來自 `Team.groupConfig`，與行事曆／事件篩選一致）。 */
   squads: string[];
+  /** 位置欄位 placeholder（註解：依運動類型）。 */
+  positionPlaceholder: string;
   /** 是否可選「管理員」（註解：與 API 僅管理員可指派 ADMIN 一致）。 */
   actorIsAdmin: boolean;
   /** 新增／復籍成功後回傳 API 成員列（註解：供父層立即更新名單）。 */
@@ -34,7 +36,7 @@ function roleLabel(r: string) {
 }
 
 /** 依 Email 新增隊員／隊務（註解：POST /api/team/members；含預備姓名、位置、分組、聯絡與備註）。 */
-export function AddTeamMemberForm({ squads, actorIsAdmin, onMemberAdded }: Props) {
+export function AddTeamMemberForm({ squads, positionPlaceholder, actorIsAdmin, onMemberAdded }: Props) {
   const router = useRouter();
   const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
@@ -187,7 +189,7 @@ export function AddTeamMemberForm({ squads, actorIsAdmin, onMemberAdded }: Props
             name="position"
             type="text"
             maxLength={64}
-            placeholder="例如：舉球員、自由球員"
+            placeholder={positionPlaceholder}
             className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>

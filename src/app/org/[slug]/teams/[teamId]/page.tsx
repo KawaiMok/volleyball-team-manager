@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 
 import { AddCoachForm } from "@/components/admin/add-coach-form";
 import { getOrganizationBySlug } from "@/lib/platform-rbac";
+import { prismaSportToId } from "@/lib/sports/registry-server";
+import { getSportDisplayName } from "@/lib/sports/sport-options";
 import { getPrisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ slug: string; teamId: string }> };
@@ -40,7 +42,9 @@ export default async function OrgTeamDetailPage({ params }: Props) {
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">{team.name}</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          {team.season ?? "—"} · {team.lifecycleStatus} · {team._count.events} 場活動
+          {getSportDisplayName(prismaSportToId(team.sport))} · {team.season ?? "—"} ·{" "}
+          {team.lifecycleStatus} ·{" "}
+          {team._count.events} 場活動
         </p>
       </div>
 

@@ -1,3 +1,4 @@
+import { isApnsConfigured } from "@/lib/push/apns";
 import { isFcmConfigured } from "@/lib/push/fcm";
 import { buildPushPayload } from "@/lib/push/kinds";
 import { recordUserNotification } from "@/lib/push/record-notification";
@@ -7,7 +8,7 @@ import { getTeamMember } from "@/lib/session";
 import { NextResponse } from "next/server";
 
 /**
- * 對目前帳號已註冊裝置發送測試推播（註解：須已設定 Firebase Admin 且 App 已上傳 token）。
+ * 對目前帳號已註冊裝置發送測試推播（註解：須已設定 FCM 或 APNs，且 App 已上傳 token）。
  */
 export async function POST() {
   if (!isPushTestAccessEnabled()) {
@@ -19,9 +20,9 @@ export async function POST() {
     return NextResponse.json({ error: "未授權" }, { status: 401 });
   }
 
-  if (!isFcmConfigured()) {
+  if (!isFcmConfigured() && !isApnsConfigured()) {
     return NextResponse.json(
-      { error: "伺服端尚未設定 FCM（FIREBASE_* 環境變數）" },
+      { error: "伺服端尚未設定推播（FIREBASE_* 或 APNS_* 環境變數）" },
       { status: 503 },
     );
   }

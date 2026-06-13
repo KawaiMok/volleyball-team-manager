@@ -14,9 +14,9 @@ import { isEventDetailPath } from "@/hooks/use-navigation-direction";
 
 type TeamOption = { id: string; name: string };
 
-const NAV_LINKS = [
+const NAV_LINKS_BASE = [
   { href: "/coach", label: "總覽" },
-  { href: "/coach/live-tactical", label: "即時戰術版" },
+  { href: "/coach/live-tactical", label: "即時戰術版", requiresLiveTactical: true },
   { href: "/coach/events", label: "事件" },
   { href: "/coach/calendar", label: "行事曆" },
   { href: "/coach/team", label: "隊伍" },
@@ -25,12 +25,25 @@ const NAV_LINKS = [
 
 type Props = {
   teamName: string;
+  /** 運動繁中名（註解：顯示於隊名旁）。 */
+  sportLabel: string;
+  /** 是否顯示即時戰術版導覽 */
+  showLiveTactical: boolean;
   teams: TeamOption[];
   currentTeamId: string;
 };
 
 /** 教練端頂部列：Web 完整 nav；Capacitor 精簡為 logo + 標題 + 返回（註解：底部 Tab 負責主導覽）。 */
-export function CoachMainToolbar({ teamName, teams, currentTeamId }: Props) {
+export function CoachMainToolbar({
+  teamName,
+  sportLabel,
+  showLiveTactical,
+  teams,
+  currentTeamId,
+}: Props) {
+  const navLinks = NAV_LINKS_BASE.filter(
+    (item) => !("requiresLiveTactical" in item && item.requiresLiveTactical) || showLiveTactical,
+  );
   const native = useCapacitorNative();
   const pathname = usePathname() ?? "";
   const showBack = native && isEventDetailPath(pathname);
@@ -71,7 +84,9 @@ export function CoachMainToolbar({ teamName, teams, currentTeamId }: Props) {
             )}
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">{teamName}</p>
-              <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">教練端</p>
+              <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                教練端 · {sportLabel}
+              </p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -93,7 +108,9 @@ export function CoachMainToolbar({ teamName, teams, currentTeamId }: Props) {
               <ActiveTeamSwitcher teams={teams} currentTeamId={currentTeamId} variant="coach" />
             : (
               <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">教練端</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  教練端 · {sportLabel}
+                </p>
                 <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50 sm:text-base">{teamName}</p>
               </div>
             )}
@@ -103,7 +120,7 @@ export function CoachMainToolbar({ teamName, teams, currentTeamId }: Props) {
             className="hidden min-w-0 flex-nowrap items-center justify-end gap-3 text-sm lg:gap-4 md:flex"
             aria-label="教練端主選單"
           >
-            {NAV_LINKS.map((item) => (
+            {navLinks.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -161,7 +178,7 @@ export function CoachMainToolbar({ teamName, teams, currentTeamId }: Props) {
               className="absolute left-0 right-0 top-full z-50 border-b border-zinc-200 bg-white px-4 py-4 shadow-lg md:hidden dark:border-zinc-800 dark:bg-zinc-900"
             >
               <nav className="mx-auto flex max-w-5xl flex-col gap-1" aria-label="教練端—行動版">
-                {NAV_LINKS.map((item) => (
+                {navLinks.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}

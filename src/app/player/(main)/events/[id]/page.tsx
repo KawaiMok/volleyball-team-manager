@@ -8,8 +8,11 @@ import { PlayerEventTacticalVideoReadonly } from "@/app/player/(main)/events/[id
 import { PlayerCoachReviewSection } from "@/app/player/(main)/events/[id]/player-coach-review-section";
 import { PlayerEventComments } from "@/app/player/(main)/events/[id]/player-event-comments";
 import { EventStatus, EventType, FileAssetCategory, FileAssetKind } from "@/generated/prisma/client";
+import { SportFeatureComingSoon } from "@/components/sport-feature-coming-soon";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
-import { normalizePlayerStats, type MatchSetScore, type MatchTeamStats } from "@/lib/match-result-schema";
+import type { PeriodScore } from "@/lib/sports/match/types";
+import { getSportModule } from "@/lib/sports/registry";
+import { prismaSportToId } from "@/lib/sports/registry-server";
 import { getTeamMember } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
 
@@ -79,12 +82,20 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
       matchResult: {
         include: {
           playerStats: {
-            include: { member: { include: { user: { select: { name: true, email: true } } } } },
+            include: {
+              member: {
+                select: {
+                  position: true,
+                  squad: true,
+                  user: { select: { name: true, email: true } },
+                },
+              },
+            },
             orderBy: { member: { jerseyNumber: "asc" } },
           },
         },
       },
-      team: { select: { name: true } },
+      team: { select: { name: true, sport: true } },
     },
   });
 
@@ -170,23 +181,28 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
       />
     : null;
 
+  const sportMod = getSportModule(prismaSportToId(event.team.sport));
+  const matchMod = sportMod.match;
+
   const matchResultData =
-    afterEnd && event.type === EventType.MATCH && event.matchResult ?
+    afterEnd && event.type === EventType.MATCH && event.matchResult && matchMod ?
       {
         opponentName: event.matchResult.opponentName,
-        sets: event.matchResult.sets as MatchSetScore[],
-        teamStats: (event.matchResult.teamStats as MatchTeamStats | null) ?? null,
+        periods: event.matchResult.sets as PeriodScore[],
+        teamStats: (event.matchResult.teamStats as Record<string, number | undefined> | null) ?? null,
         notes: event.matchResult.notes,
         playerStats: event.matchResult.playerStats.map((p) => ({
           memberId: p.memberId,
           displayName: p.member.user?.name ?? p.member.user?.email ?? p.memberId.slice(0, 8),
-          stats: normalizePlayerStats(p.stats),
+          position: p.member.position,
+          squad: p.member.squad,
+          stats: matchMod.normalizePlayerStats(p.stats),
         })),
       }
     : null;
 
   const matchResultBlock =
-    matchResultData ?
+    sportMod.capabilities.matchStats && matchResultData ?
       <section id="player-ev-match-stats" className="space-y-3">
         <MatchResultReadonly
           data={matchResultData}
@@ -194,7 +210,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
           currentMemberId={member.id}
         />
       </section>
-    : afterEnd && event.type === EventType.MATCH ?
+    : afterEnd && event.type === EventType.MATCH && sportMod.capabilities.matchStats ?
       <section className="space-y-2">
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">比賽數據</h2>
         <p className="text-sm text-slate-600 dark:text-slate-400">教練尚未登錄比賽結果。</p>
@@ -360,10 +376,17 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
 
       <PlayerEventTacticalVideoReadonly tactical={tacticalForPlayer} video={videoForPlayer} />
 
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">場上企位</h2>
-        <CourtFormationReadonly data={courtSketchParsed} />
-      </section>
+      {sportMod.capabilities.courtSketch ?
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">場上企位</h2>
+          <CourtFormationReadonly data={courtSketchParsed} />
+        </section>
+      : (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">場上企位</h2>
+          <SportFeatureComingSoon sport={prismaSportToId(event.team.sport)} featureLabel="場上企位" />
+        </section>
+      )}
 
       <PlayerEventComments
         eventId={event.id}

@@ -9,14 +9,9 @@ import {
 } from "@/app/coach/(main)/events/[id]/match-result-visualization";
 import { MatchPlayerStatsInputSection } from "@/components/match-player-stats-input-section";
 import { MatchTeamStatsInputSection, type TeamStatsForm } from "@/components/match-team-stats-section";
+import { useMatchModule } from "@/components/team-sport-provider";
 import { useToast } from "@/components/toast-provider";
-import {
-  EMPTY_PLAYER_STATS,
-  normalizePlayerStats,
-  type MatchResultPlayerRow,
-  type MatchSetScore,
-  type StatCategory,
-} from "@/lib/match-result-schema";
+import type { MatchResultPlayerRow, PeriodScore, PlayerStatsRecord } from "@/lib/sports/match/types";
 import {
   parseNonNegativeInt,
   parseNonNegativeIntOrZero,
@@ -33,91 +28,94 @@ type Props = {
   roster: MatchResultPlayerRow[];
 };
 
-const EMPTY_TEAM: TeamStatsForm = {
-  points: "",
-  opponentPoints: "",
-  kills: "",
-  errors: "",
-  aces: "",
-  blocks: "",
-  digs: "",
-};
+/** 各段比分表單列（註解：字串欄位避免 number input 無法輸入）。 */
+type PeriodScoreForm = { our: string; opponent: string };
 
-function parseOptionalInt(s: string): number | undefined {
-  return parseNonNegativeInt(s);
+function defaultPeriodCount(match: ReturnType<typeof useMatchModule>): number {
+  return match.score.fixedPeriodCount ?? match.score.minPeriods;
 }
 
-/** 各局比分表單列（註解：字串欄位避免 number input 無法輸入）。 */
-type SetScoreForm = { our: string; opponent: string };
-
-function initSets(initial: MatchResultViewData | null): SetScoreForm[] {
-  if (initial?.sets?.length) {
-    return initial.sets.map((s) => ({
+function initPeriods(initial: MatchResultViewData | null, match: ReturnType<typeof useMatchModule>): PeriodScoreForm[] {
+  const count = defaultPeriodCount(match);
+  if (initial?.periods?.length) {
+    const forms = initial.periods.map((s) => ({
       our: s.our === 0 ? "" : String(s.our),
       opponent: s.opponent === 0 ? "" : String(s.opponent),
     }));
+    while (forms.length < count) forms.push({ our: "", opponent: "" });
+    return match.score.fixedPeriodCount ? forms.slice(0, count) : forms;
   }
-  return [{ our: "", opponent: "" }];
+  return Array.from({ length: count }, () => ({ our: "", opponent: "" }));
 }
 
-function setsFormToPayload(forms: SetScoreForm[]): MatchSetScore[] {
+function periodsFormToPayload(forms: PeriodScoreForm[]): PeriodScore[] {
   return forms.map((s) => ({
     our: parseNonNegativeIntOrZero(s.our),
     opponent: parseNonNegativeIntOrZero(s.opponent),
   }));
 }
 
-function initTeamStats(initial: MatchResultViewData | null): TeamStatsForm {
-  if (!initial?.teamStats) return { ...EMPTY_TEAM };
-  const t = initial.teamStats;
-  return {
-    points: t.points != null ? String(t.points) : "",
-    opponentPoints: t.opponentPoints != null ? String(t.opponentPoints) : "",
-    kills: t.kills != null ? String(t.kills) : "",
-    errors: t.errors != null ? String(t.errors) : "",
-    aces: t.aces != null ? String(t.aces) : "",
-    blocks: t.blocks != null ? String(t.blocks) : "",
-    digs: t.digs != null ? String(t.digs) : "",
-  };
+function emptyTeamForm(keys: readonly string[]): TeamStatsForm {
+  return Object.fromEntries(keys.map((k) => [k, ""])) as TeamStatsForm;
 }
 
-function initPlayerMap(initial: MatchResultViewData | null, roster: MatchResultPlayerRow[]) {
+function initTeamStats(
+  initial: MatchResultViewData | null,
+  keys: readonly string[],
+): TeamStatsForm {
+  const form = emptyTeamForm(keys);
+  if (!initial?.teamStats) return form;
+  for (const key of keys) {
+    const v = initial.teamStats[key];
+    form[key] = v != null ? String(v) : "";
+  }
+  return form;
+}
+
+function initPlayerMap(
+  initial: MatchResultViewData | null,
+  roster: MatchResultPlayerRow[],
+  match: ReturnType<typeof useMatchModule>,
+) {
   const map = new Map<string, MatchResultPlayerRow>();
   for (const r of roster) {
     const hit = initial?.playerStats.find((p) => p.memberId === r.memberId);
     map.set(r.memberId, {
       memberId: r.memberId,
       displayName: r.displayName,
-      stats: hit ? normalizePlayerStats(hit.stats) : { ...EMPTY_PLAYER_STATS },
+      stats: hit ? match.normalizePlayerStats(hit.stats) : match.emptyPlayerStats(),
     });
   }
   return map;
 }
 
-/** 教練：比賽結果登錄與可視化（註解：六大分類 tab）。 */
+/** 教練：比賽結果登錄與可視化（註解：依運動模組動態分類 tab）。 */
 export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }: Props) {
+  const match = useMatchModule();
   const router = useRouter();
   const { showError, showSuccess } = useToast();
   const [mode, setMode] = useState<"view" | "edit">(initial ? "view" : canEdit ? "edit" : "view");
   const [saved, setSaved] = useState<MatchResultViewData | null>(initial);
   const [opponentName, setOpponentName] = useState(initial?.opponentName ?? "");
-  const [sets, setSets] = useState<SetScoreForm[]>(() => initSets(initial));
-  const [teamStats, setTeamStats] = useState<TeamStatsForm>(() => initTeamStats(initial));
+  const [periods, setPeriods] = useState<PeriodScoreForm[]>(() => initPeriods(initial, match));
+  const [teamStats, setTeamStats] = useState<TeamStatsForm>(() =>
+    initTeamStats(initial, match.teamStatKeys),
+  );
   const [notes, setNotes] = useState(initial?.notes ?? "");
-  const [playerMap, setPlayerMap] = useState(() => initPlayerMap(initial, roster));
+  const [playerMap, setPlayerMap] = useState(() => initPlayerMap(initial, roster, match));
   const [pending, setPending] = useState(false);
 
   const viewData = saved;
   const playerRows = useMemo(() => Array.from(playerMap.values()), [playerMap]);
 
   const updateStat = useCallback(
-    (memberId: string, category: StatCategory, field: string, value: string) => {
+    (memberId: string, category: string, field: string, value: string) => {
       const n = parseNonNegativeIntOrZero(sanitizeNonNegativeIntInput(value));
       setPlayerMap((prev) => {
         const next = new Map(prev);
         const row = next.get(memberId);
         if (!row) return prev;
-        const catStats = { ...row.stats[category] } as Record<string, number>;
+        const catStats = { ...(row.stats[category] ?? {}) } as Record<string, number>;
         catStats[field] = n;
         next.set(memberId, {
           ...row,
@@ -131,15 +129,10 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
 
   async function save() {
     setPending(true);
-    const teamStatsPayload = {
-      points: parseOptionalInt(teamStats.points),
-      opponentPoints: parseOptionalInt(teamStats.opponentPoints),
-      kills: parseOptionalInt(teamStats.kills),
-      errors: parseOptionalInt(teamStats.errors),
-      aces: parseOptionalInt(teamStats.aces),
-      blocks: parseOptionalInt(teamStats.blocks),
-      digs: parseOptionalInt(teamStats.digs),
-    };
+    const teamStatsPayload: Record<string, number | undefined> = {};
+    for (const key of match.teamStatKeys) {
+      teamStatsPayload[key] = parseNonNegativeInt(teamStats[key]);
+    }
     const hasTeamStats = Object.values(teamStatsPayload).some((v) => v != null);
 
     const res = await fetch(`/api/events/${eventId}/match-result`, {
@@ -148,7 +141,7 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         opponentName: opponentName.trim() || null,
-        sets: setsFormToPayload(sets),
+        sets: periodsFormToPayload(periods),
         teamStats: hasTeamStats ? teamStatsPayload : null,
         notes: notes.trim() || null,
         playerStats: playerRows.map((p) => ({
@@ -163,8 +156,16 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
       showError((data as { error?: string }).error ?? "儲存失敗");
       return;
     }
-    const result = (data as { result: MatchResultViewData }).result;
-    setSaved(result);
+    const result = (data as { result: MatchResultViewData & { sets?: PeriodScore[] } }).result;
+    /** API 回傳鍵名仍為 sets，轉成 periods 供檢視 */
+    const normalized: MatchResultViewData = {
+      opponentName: result.opponentName,
+      periods: (result as { sets?: PeriodScore[] }).sets ?? result.periods,
+      teamStats: result.teamStats,
+      notes: result.notes,
+      playerStats: result.playerStats,
+    };
+    setSaved(normalized);
     setMode("view");
     showSuccess("比賽結果已儲存");
     router.refresh();
@@ -247,21 +248,21 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">各局比分</h3>
-            {sets.length < 5 ?
+            <h3 className="text-sm font-semibold">{match.score.periodsSectionTitle}</h3>
+            {match.score.canAddPeriod && periods.length < match.score.maxPeriods ?
               <button
                 type="button"
                 className="text-xs text-[var(--brand-primary)] hover:underline"
-                onClick={() => setSets((s) => [...s, { our: "", opponent: "" }])}
+                onClick={() => setPeriods((s) => [...s, { our: "", opponent: "" }])}
               >
-                + 新增一局
+                + 新增一段
               </button>
             : null}
           </div>
           <div className="space-y-2">
-            {sets.map((s, i) => (
+            {periods.map((s, i) => (
               <div key={i} className="flex flex-wrap items-center gap-2">
-                <span className="w-14 text-xs text-zinc-500">第 {i + 1} 局</span>
+                <span className="w-16 text-xs text-zinc-500">{match.score.periodLabel(i)}</span>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -269,7 +270,7 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
                   value={s.our}
                   placeholder="0"
                   onChange={(e) =>
-                    setSets((prev) =>
+                    setPeriods((prev) =>
                       prev.map((row, j) =>
                         j === i ?
                           { ...row, our: sanitizeNonNegativeIntInput(e.target.value) }
@@ -287,7 +288,7 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
                   value={s.opponent}
                   placeholder="0"
                   onChange={(e) =>
-                    setSets((prev) =>
+                    setPeriods((prev) =>
                       prev.map((row, j) =>
                         j === i ?
                           { ...row, opponent: sanitizeNonNegativeIntInput(e.target.value) }
@@ -297,11 +298,11 @@ export function MatchResultPanel({ eventId, teamName, canEdit, initial, roster }
                   }
                   className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
                 />
-                {sets.length > 1 ?
+                {match.score.canAddPeriod && periods.length > match.score.minPeriods ?
                   <button
                     type="button"
                     className="text-xs text-red-600 hover:underline"
-                    onClick={() => setSets((prev) => prev.filter((_, j) => j !== i))}
+                    onClick={() => setPeriods((prev) => prev.filter((_, j) => j !== i))}
                   >
                     移除
                   </button>

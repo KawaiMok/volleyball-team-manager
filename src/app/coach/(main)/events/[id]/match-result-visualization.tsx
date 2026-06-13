@@ -2,27 +2,13 @@
 
 import { DataViewModeToggle } from "@/components/data-view-mode-toggle";
 import { useDataViewMode } from "@/components/data-view-mode-provider";
-import { MatchPlayerStatsCharts, MatchSetScoreChart, MatchTeamStatsChart } from "@/components/match-stats-charts";
+import { MatchPlayerStatsCharts, MatchPeriodScoreChart, MatchTeamStatsChart } from "@/components/match-stats-charts";
 import { MatchPlayerStatsTables } from "@/components/match-player-stats-tables";
 import { MatchTeamStatsViewSection } from "@/components/match-team-stats-section";
-import {
-  computeSetWins,
-  type MatchSetScore,
-  type MatchTeamStats,
-  type PlayerMatchStats,
-} from "@/lib/match-result-schema";
+import { useMatchModule } from "@/components/team-sport-provider";
+import type { MatchResultViewData } from "@/lib/sports/match/types";
 
-export type MatchResultViewData = {
-  opponentName: string | null;
-  sets: MatchSetScore[];
-  teamStats: MatchTeamStats | null;
-  notes: string | null;
-  playerStats: Array<{
-    memberId: string;
-    displayName: string;
-    stats: PlayerMatchStats;
-  }>;
-};
+export type { MatchResultViewData };
 
 type Props = {
   data: MatchResultViewData;
@@ -35,7 +21,7 @@ type Props = {
   hideViewToggle?: boolean;
 };
 
-/** 比賽結果可視化（註解：支援表格／圖表檢視模式）。 */
+/** 比賽結果可視化（註解：依運動模組顯示局數／上下半場／四節比分）。 */
 export function MatchResultVisualization({
   data,
   teamName = "我方",
@@ -43,49 +29,65 @@ export function MatchResultVisualization({
   scoreOnly = false,
   hideViewToggle = false,
 }: Props) {
+  const match = useMatchModule();
   const { mode } = useDataViewMode();
-  const { our: setsWonOur, opponent: setsWonOpp } = computeSetWins(data.sets);
-  const won = setsWonOur > setsWonOpp;
-  const tied = setsWonOur === setsWonOpp;
   const opponentLabel = data.opponentName?.trim() || "對手";
+  const summary = match.computeScoreSummary(data.periods, teamName, opponentLabel);
+  const total =
+    match.score.summaryMode === "totalPoints" ?
+      match.sumPeriodScores(data.periods)
+    : null;
 
   return (
     <div className="space-y-6">
       {/* 比分總覽 */}
       <div className="rounded-xl border border-zinc-200 bg-gradient-to-br from-zinc-50 to-white p-5 dark:border-zinc-700 dark:from-zinc-900 dark:to-zinc-950">
-        <p className="text-center text-xs font-medium uppercase tracking-wide text-zinc-500">比賽結果</p>
+        <p className="text-center text-xs font-medium uppercase tracking-wide text-zinc-500">
+          {summary.headline}
+        </p>
         <div className="mt-3 flex items-center justify-center gap-4">
           <div className="text-center">
             <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{teamName}</p>
-            <p className="text-4xl font-bold tabular-nums text-[var(--brand-primary)]">{setsWonOur}</p>
+            <p className="text-4xl font-bold tabular-nums text-[var(--brand-primary)]">{summary.ourValue}</p>
           </div>
           <span className="text-2xl font-light text-zinc-400">:</span>
           <div className="text-center">
             <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">{opponentLabel}</p>
-            <p className="text-4xl font-bold tabular-nums text-zinc-700 dark:text-zinc-200">{setsWonOpp}</p>
+            <p className="text-4xl font-bold tabular-nums text-zinc-700 dark:text-zinc-200">
+              {summary.opponentValue}
+            </p>
           </div>
         </div>
-        {!tied ?
-          <p
-            className={`mt-2 text-center text-sm font-semibold ${won ? "text-emerald-600" : "text-amber-600"}`}
-          >
-            {won ? "勝" : "負"}
-          </p>
-        : (
+        {summary.won === null ?
           <p className="mt-2 text-center text-sm font-semibold text-zinc-500">平</p>
+        : (
+          <p
+            className={`mt-2 text-center text-sm font-semibold ${summary.won ? "text-emerald-600" : "text-amber-600"}`}
+          >
+            {summary.won ? "勝" : "負"}
+          </p>
         )}
+        {total && match.score.summaryMode === "totalPoints" ?
+          <p className="mt-1 text-center text-xs text-zinc-500">
+            全場合計 {total.our} : {total.opponent}
+          </p>
+        : null}
         {mode === "chart" ?
           <div className="mt-4">
-            <MatchSetScoreChart sets={data.sets} teamName={teamName} opponentName={opponentLabel} />
+            <MatchPeriodScoreChart
+              periods={data.periods}
+              teamName={teamName}
+              opponentName={opponentLabel}
+            />
           </div>
         : (
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {data.sets.map((s, i) => (
+            {data.periods.map((s, i) => (
               <span
                 key={i}
                 className="rounded-full bg-white px-3 py-1 text-xs font-medium tabular-nums shadow-sm ring-1 ring-zinc-200 dark:bg-zinc-800 dark:ring-zinc-700"
               >
-                第{i + 1}局 {s.our}-{s.opponent}
+                {match.score.periodLabel(i)} {s.our}-{s.opponent}
               </span>
             ))}
           </div>

@@ -3,45 +3,50 @@
 import { useState } from "react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { MATCH_TEAM_STAT_LABELS, type MatchTeamStats } from "@/lib/match-result-schema";
+import { useMatchModule } from "@/components/team-sport-provider";
 import { sanitizeNonNegativeIntInput } from "@/lib/numeric-input";
 
-export type TeamStatKey = keyof typeof MATCH_TEAM_STAT_LABELS;
-
-export type TeamStatsForm = Record<TeamStatKey, string>;
-
-const TEAM_STAT_KEYS = Object.keys(MATCH_TEAM_STAT_LABELS) as TeamStatKey[];
+export type TeamStatsForm = Record<string, string>;
 
 /** 手機列表一行摘要（註解：已填欄位）。 */
-export function teamStatsSummary(stats: TeamStatsForm | MatchTeamStats | null | undefined): string {
+export function teamStatsSummary(
+  stats: TeamStatsForm | Record<string, number | undefined> | null | undefined,
+  labels: Record<string, string>,
+  keys: readonly string[],
+): string {
   if (!stats) return "尚未填寫";
   const parts: string[] = [];
-  for (const key of TEAM_STAT_KEYS) {
-    const raw = typeof stats[key] === "number" ? String(stats[key]) : (stats as TeamStatsForm)[key]?.trim();
-    if (raw) parts.push(`${MATCH_TEAM_STAT_LABELS[key]} ${raw}`);
+  for (const key of keys) {
+    const raw =
+      typeof stats[key] === "number" ? String(stats[key]) : (stats as TeamStatsForm)[key]?.trim();
+    if (raw) parts.push(`${labels[key] ?? key} ${raw}`);
   }
   return parts.length > 0 ? parts.join(" · ") : "尚未填寫";
 }
 
 function TeamStatsFields({
   teamStats,
+  labels,
+  keys,
   onChange,
   readOnly = false,
 }: {
   teamStats: TeamStatsForm;
-  onChange?: (key: TeamStatKey, value: string) => void;
+  labels: Record<string, string>;
+  keys: readonly string[];
+  onChange?: (key: string, value: string) => void;
   readOnly?: boolean;
 }) {
   return (
     <div className="space-y-4">
-      {TEAM_STAT_KEYS.map((key) =>
+      {keys.map((key) =>
         readOnly ?
           teamStats[key]?.trim() ?
             <div
               key={key}
               className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 px-3 py-2.5 dark:bg-zinc-950"
             >
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">{MATCH_TEAM_STAT_LABELS[key]}</span>
+              <span className="text-sm text-zinc-600 dark:text-zinc-400">{labels[key]}</span>
               <span className="text-sm font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
                 {teamStats[key]}
               </span>
@@ -49,12 +54,12 @@ function TeamStatsFields({
           : null
         : (
           <label key={key} className="block space-y-1.5">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{MATCH_TEAM_STAT_LABELS[key]}</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{labels[key]}</span>
             <input
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              value={teamStats[key]}
+              value={teamStats[key] ?? ""}
               placeholder="選填"
               onChange={(e) => onChange?.(key, sanitizeNonNegativeIntInput(e.target.value))}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-base tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
@@ -68,13 +73,15 @@ function TeamStatsFields({
 
 type InputProps = {
   teamStats: TeamStatsForm;
-  onChange: (key: TeamStatKey, value: string) => void;
+  onChange: (key: string, value: string) => void;
 };
 
-/** 球隊數據輸入：桌機網格 + 手機 popup。 */
+/** 球隊數據輸入：桌機網格 + 手機 popup（註解：依運動模組動態欄位）。 */
 export function MatchTeamStatsInputSection({ teamStats, onChange }: InputProps) {
+  const match = useMatchModule();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const filled = teamStatsSummary(teamStats) !== "尚未填寫";
+  const filled =
+    teamStatsSummary(teamStats, match.teamStatLabels, match.teamStatKeys) !== "尚未填寫";
 
   return (
     <div>
@@ -82,14 +89,14 @@ export function MatchTeamStatsInputSection({ teamStats, onChange }: InputProps) 
 
       {/* 桌機 */}
       <div className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
-        {TEAM_STAT_KEYS.map((key) => (
+        {match.teamStatKeys.map((key) => (
           <label key={key} className="block space-y-1 text-sm">
-            <span className="text-zinc-600 dark:text-zinc-400">{MATCH_TEAM_STAT_LABELS[key]}</span>
+            <span className="text-zinc-600 dark:text-zinc-400">{match.teamStatLabels[key]}</span>
             <input
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              value={teamStats[key]}
+              value={teamStats[key] ?? ""}
               placeholder="選填"
               onChange={(e) => onChange(key, sanitizeNonNegativeIntInput(e.target.value))}
               className="w-full rounded border border-zinc-300 px-2 py-1 tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
@@ -108,7 +115,7 @@ export function MatchTeamStatsInputSection({ teamStats, onChange }: InputProps) 
           <div className="min-w-0 flex-1">
             <p className="font-medium text-zinc-900 dark:text-zinc-50">球隊整體數據</p>
             <p className={`mt-0.5 truncate text-xs ${filled ? "text-zinc-600 dark:text-zinc-400" : "text-zinc-400"}`}>
-              {teamStatsSummary(teamStats)}
+              {teamStatsSummary(teamStats, match.teamStatLabels, match.teamStatKeys)}
             </p>
           </div>
           <span className="shrink-0 text-xs font-medium text-[var(--brand-primary)]">
@@ -133,16 +140,24 @@ export function MatchTeamStatsInputSection({ teamStats, onChange }: InputProps) 
           </button>
         }
       >
-        <TeamStatsFields teamStats={teamStats} onChange={onChange} />
+        <TeamStatsFields
+          teamStats={teamStats}
+          labels={match.teamStatLabels}
+          keys={match.teamStatKeys}
+          onChange={onChange}
+        />
       </BottomSheet>
     </div>
   );
 }
 
 /** 將 API 球隊 stats 轉成表單字串（註解：檢視 popup 用）。 */
-export function matchTeamStatsToForm(stats: MatchTeamStats | null | undefined): TeamStatsForm {
+export function matchTeamStatsToForm(
+  stats: Record<string, number | undefined> | null | undefined,
+  keys: readonly string[],
+): TeamStatsForm {
   const form = {} as TeamStatsForm;
-  for (const key of TEAM_STAT_KEYS) {
+  for (const key of keys) {
     const v = stats?.[key];
     form[key] = v != null ? String(v) : "";
   }
@@ -150,18 +165,21 @@ export function matchTeamStatsToForm(stats: MatchTeamStats | null | undefined): 
 }
 
 type ViewProps = {
-  teamStats: MatchTeamStats | null;
+  teamStats: Record<string, number | undefined> | null;
 };
 
-/** 球隊數據檢視：桌機 StatBar + 手機 popup。 */
+/** 球隊數據檢視：桌機 StatBar + 手機 popup */
 export function MatchTeamStatsViewSection({ teamStats }: ViewProps) {
+  const match = useMatchModule();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const entries = TEAM_STAT_KEYS.map((key) => ({
-    key,
-    label: MATCH_TEAM_STAT_LABELS[key],
-    value: teamStats?.[key],
-  })).filter((e) => typeof e.value === "number" && e.value > 0) as Array<{
-    key: TeamStatKey;
+  const entries = match.teamStatKeys
+    .map((key) => ({
+      key,
+      label: match.teamStatLabels[key],
+      value: teamStats?.[key],
+    }))
+    .filter((e) => typeof e.value === "number" && e.value > 0) as Array<{
+    key: string;
     label: string;
     value: number;
   }>;
@@ -169,7 +187,7 @@ export function MatchTeamStatsViewSection({ teamStats }: ViewProps) {
   if (entries.length === 0) return null;
 
   const max = Math.max(...entries.map((e) => e.value), 1);
-  const form = matchTeamStatsToForm(teamStats);
+  const form = matchTeamStatsToForm(teamStats, match.teamStatKeys);
 
   return (
     <div>
@@ -203,7 +221,7 @@ export function MatchTeamStatsViewSection({ teamStats }: ViewProps) {
           <div className="min-w-0 flex-1">
             <p className="font-medium text-zinc-900 dark:text-zinc-50">球隊整體數據</p>
             <p className="mt-0.5 truncate text-xs text-zinc-600 dark:text-zinc-400">
-              {teamStatsSummary(form)}
+              {teamStatsSummary(form, match.teamStatLabels, match.teamStatKeys)}
             </p>
           </div>
           <span className="shrink-0 text-xs text-zinc-400">詳情</span>
@@ -225,7 +243,12 @@ export function MatchTeamStatsViewSection({ teamStats }: ViewProps) {
           </button>
         }
       >
-        <TeamStatsFields teamStats={form} readOnly />
+        <TeamStatsFields
+          teamStats={form}
+          labels={match.teamStatLabels}
+          keys={match.teamStatKeys}
+          readOnly
+        />
       </BottomSheet>
     </div>
   );

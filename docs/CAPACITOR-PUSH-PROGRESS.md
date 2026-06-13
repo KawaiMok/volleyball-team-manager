@@ -12,11 +12,12 @@
 |------|------|------|
 | Prisma `PushDevice` + `PushPlatform` | [x] | [`prisma/schema.prisma`](../prisma/schema.prisma)、migration `20260516200000_add_push_device` |
 | `POST` / `DELETE` `/api/me/push-token` | [x] | [`src/app/api/me/push-token/route.ts`](../src/app/api/me/push-token/route.ts)；以 `getOrSyncPrismaUserFromClerk` 驗證（無須已有隊籍） |
-| 推播發送 FCM（Android） | [x] | [`src/lib/push/fcm.ts`](../src/lib/push/fcm.ts)、[`send.ts`](../src/lib/push/send.ts)；iOS APNs 仍待做 |
+| 推播發送 FCM（Android） | [x] | [`src/lib/push/fcm.ts`](../src/lib/push/fcm.ts) |
+| 推播發送 APNs（iOS） | [x] | [`src/lib/push/apns.ts`](../src/lib/push/apns.ts)、[`send.ts`](../src/lib/push/send.ts) |
 | 測試 API `POST /api/me/push-test` | [x] | 對目前帳號已註冊裝置發測試推播 |
 | 多種推播種類 | [x] | 見 [`docs/PUSH-NOTIFICATIONS.md`](./PUSH-NOTIFICATIONS.md) |
 | 發布／更新／留言／RSVP 推播 | [x] | [`notify-events.ts`](../src/lib/push/notify-events.ts) |
-| 設定指南 | [x] | [`docs/PUSH-SETUP.md`](./PUSH-SETUP.md) |
+| 設定指南 | [x] | Android [`docs/PUSH-SETUP.md`](./PUSH-SETUP.md)、iOS [`docs/PUSH-SETUP-IOS.md`](./PUSH-SETUP-IOS.md) |
 | Web 橋接（Capacitor 內註冊推播並上傳 token） | [x] | [`src/components/capacitor-push-bridge.tsx`](../src/components/capacitor-push-bridge.tsx)，已掛於 [`src/app/layout.tsx`](../src/app/layout.tsx) |
 | 依賴 | [x] | 主專案 `package.json`：`@capacitor/core`、`@capacitor/push-notifications` |
 | `mobile/` Capacitor 專案 | [x] | [`mobile/`](../mobile/)、已 `cap add android` / `ios`、`@capacitor/push-notifications` |
@@ -44,12 +45,12 @@
 | # | 步驟 | 狀態 |
 |---|------|------|
 | 9 | Firebase 專案、`google-services.json` 放入 Android 專案 | [ ] | 見 [`mobile/README.md`](../mobile/README.md) |
-| 10 | Apple Push、APNs 金鑰、Xcode capability | [ ] | |
+| 10 | Apple Push、APNs 金鑰、Xcode capability | [~] | 程式已就緒；見 [`docs/PUSH-SETUP-IOS.md`](./PUSH-SETUP-IOS.md) 完成 Apple Developer 與 Vercel |
 | 11 | 裝置取得推播 token（外掛已整合） | [ ] | 須完成 9、10 與實機權限 |
 | 12 | Token 寫入後端 | [x] | API 已就緒；依賴使用者已登入 |
 | 13 | DB migration 上線 | [ ] | 正式環境執行 `db:deploy` |
 | 14 | API 驗證行為 | [ ] | 可自行用已登入 session `POST` 測試 |
-| 15 | 實作 `send.ts`（FCM + APNs） | [~] | Android FCM 已完成；iOS APNs 待做 |
+| 15 | 實作 `send.ts`（FCM + APNs） | [x] | Android FCM + iOS APNs HTTP/2 |
 | 16 | 業務事件觸發推播 | [x] | 發布、更新、公告／留言、RSVP |
 
 ---
@@ -58,7 +59,7 @@
 
 | # | 步驟 | 狀態 |
 |---|------|------|
-| 17 | 開發者帳號、Bundle ID 與 Firebase／APNs 一致 | [ ] | |
+| 17 | 開發者帳號、Bundle ID 與 Firebase／APNs 一致 | [~] | 已訂 Apple Developer；待完成 App ID / APNs 金鑰 / Xcode 簽署 |
 | 18 | 隱私政策（推播／第三方） | [ ] | |
 | 19 | TestFlight／內測 → 送審 | [ ] | |
 

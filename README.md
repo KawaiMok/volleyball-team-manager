@@ -4,7 +4,7 @@
 
 Next.js 16（App Router）+ Prisma 7 + Postgres。規格見工作區 `docs/volleyball-team-manager/`。
 
-**正式環境部署**（Vercel + Neon、選用 Render、Clerk、Prisma、安全檢查）：見 [docs/PRODUCTION-DEPLOY.md](docs/PRODUCTION-DEPLOY.md)。
+**正式環境部署**（Vercel + Neon、選用 Render、Clerk、Prisma、安全檢查）：見 [docs/PRODUCTION-DEPLOY.md](docs/PRODUCTION-DEPLOY.md)。**自訂網域**（Cloudflare Registrar + Clerk Production）：見 [docs/CUSTOM-DOMAIN.md](docs/CUSTOM-DOMAIN.md)。
 
 ## 環境
 

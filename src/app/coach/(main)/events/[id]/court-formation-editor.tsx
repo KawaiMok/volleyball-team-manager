@@ -4,30 +4,12 @@ import { useToast } from "@/components/toast-provider";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  COURT_VIEWBOX,
-  CourtFullSurface,
-  courtNormToSvg,
-  isOpponentHalfByLengthNorm,
-} from "@/components/court-formation/court-full-surface";
 import { CourtBoardFullscreenShell } from "@/components/court-formation/court-board-fullscreen-shell";
+import { useTeamSport } from "@/components/team-sport-provider";
 import type { CourtSketchData, CourtSketchToken } from "@/lib/court-sketch-schema";
 import { COURT_SKETCH_VERSION, emptyCourtSketch } from "@/lib/court-sketch-schema";
-
-function clamp01(n: number) {
-  return Math.min(1, Math.max(0, n));
-}
-
-/** 螢幕 → 儲存座標：x=場寬、y=場長（註解：橫向 viewBox 200×100，水平為長度）。 */
-function screenToNorm(clientX: number, clientY: number, svg: SVGSVGElement): { x: number; y: number } | null {
-  const pt = svg.createSVGPoint();
-  pt.x = clientX;
-  pt.y = clientY;
-  const ctm = svg.getScreenCTM();
-  if (!ctm) return null;
-  const p = pt.matrixTransform(ctm.inverse());
-  return { x: clamp01(p.y / 100), y: clamp01(p.x / 200) };
-}
+import { clampCourtNorm } from "@/lib/sports/court/coords";
+import type { SportCourtModule } from "@/lib/sports/court/types";
 
 type EditorTool = "select" | "player" | "ball" | "line";
 
@@ -48,12 +30,32 @@ export type CourtFormationEditorProps =
 const R_PLAYER = 8;
 const R_BALL = 7;
 const dragThresholdPx = 10;
-const maxTokens = 24;
-const maxLines = 40;
 
-/** 教練端：全場企位或即時戰術版（註解：企位 PATCH 事件 API；戰術版 PATCH `/api/team/live-tactical-sketch`）。 */
+/** 教練端：全場企位或即時戰術版（註解：場地由 TeamSportProvider 注入）。 */
 export function CourtFormationEditor(props: CourtFormationEditorProps) {
+  const court = useTeamSport().court;
+  if (!court) {
+    return <p className="text-sm text-zinc-600 dark:text-zinc-400">此運動尚未支援內建戰術板。</p>;
+  }
+  return <CourtFormationEditorInner {...props} court={court} />;
+}
+
+function CourtFormationEditorInner({
+  court,
+  ...props
+}: CourtFormationEditorProps & { court: SportCourtModule }) {
   const { initial, disabled } = props;
+  const {
+    viewBox,
+    displayAspectRatio,
+    courtNormToSvg,
+    screenToNorm,
+    isOpponentHalf,
+    maxTokens,
+    maxLines,
+    labels,
+    Surface: CourtSurface,
+  } = court;
   const formId = props.variant === "event" ? props.eventId : "live-tactical";
   const router = useRouter();
   const { showError, showSuccess } = useToast();
@@ -71,7 +73,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
   const moveToken = useCallback((id: string, x: number, y: number) => {
     setData((d) => ({
       ...d,
-      tokens: d.tokens.map((t) => (t.id === id ? { ...t, x: clamp01(x), y: clamp01(y) } : t)),
+      tokens: d.tokens.map((t) => (t.id === id ? { ...t, x: clampCourtNorm(x), y: clampCourtNorm(y) } : t)),
     }));
   }, []);
 
@@ -170,7 +172,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
       const newTok: CourtSketchToken = {
         id,
         kind: "BALL",
-        label: "球",
+        label: labels.ballDefault,
         x: n.x,
         y: n.y,
       };
@@ -214,7 +216,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
 
   function clearAllMarkersAndLines() {
     if (disabled) return;
-    if (!window.confirm("確定刪除場上所有球員／排球標記與畫線？（備註文字會保留）")) return;
+    if (!window.confirm(labels.clearConfirm)) return;
     setData((d) => ({ ...d, tokens: [], lines: [] }));
     setSelectedId(null);
     setLineDraft(null);
@@ -256,22 +258,32 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
   }
 
   const isLiveTactical = props.variant === "liveTactical";
-  const savedToastLabel = isLiveTactical ? "已儲存即時戰術版" : "已儲存企位圖";
-  const saveButtonLabel = isLiveTactical ? "儲存戰術版" : "儲存企位圖";
-  const boardAriaLabel = isLiveTactical ? "即時戰術排球場圖" : "排球全場企位圖";
-  const fullscreenTitle = isLiveTactical ? "即時戰術版" : "場上企位";
+  const savedToastLabel = isLiveTactical ? labels.saveToastLiveTactical : labels.saveToastEvent;
+  const saveButtonLabel = isLiveTactical ? labels.saveButtonLiveTactical : labels.saveButtonEvent;
+  const boardAriaLabel = isLiveTactical ? labels.boardAriaLiveTactical : labels.boardAriaEvent;
+  const fullscreenTitle = isLiveTactical ? labels.fullscreenTitleLiveTactical : labels.fullscreenTitleEvent;
 
   const toolDefs = [
-    ["select", "選取／拖曳"],
-    ["player", "點擊放球員"],
-    ["ball", "點擊放排球"],
-    ["line", "畫線（點兩下）"],
+    ["select", labels.selectTool],
+    ["player", labels.playerTool],
+    ["ball", labels.ballTool],
+    ["line", labels.lineTool],
   ] as const;
 
   function renderToolButtons(compact: boolean) {
-    const labels = compact ?
-      { select: "選", player: "員", ball: "球", line: "線" }
-    : { select: "選取／拖曳", player: "點擊放球員", ball: "點擊放排球", line: "畫線（點兩下）" };
+    const toolLabels = compact ?
+      {
+        select: labels.selectToolCompact,
+        player: labels.playerToolCompact,
+        ball: labels.ballToolCompact,
+        line: labels.lineToolCompact,
+      }
+    : {
+        select: labels.selectTool,
+        player: labels.playerTool,
+        ball: labels.ballTool,
+        line: labels.lineTool,
+      };
     return (
       <div className={`flex flex-wrap gap-1.5 ${compact ? "" : "rounded-lg border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-950"}`}>
         {!compact ?
@@ -298,7 +310,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
             }
             title={labelKey}
           >
-            {labels[k]}
+            {toolLabels[k]}
           </button>
         ))}
       </div>
@@ -329,8 +341,8 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
             }));
           }}
           className="h-9 w-full rounded-md border border-zinc-600 bg-zinc-800 px-2.5 text-sm text-zinc-100 focus:border-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-400 disabled:opacity-50"
-          placeholder={selectedToken.kind === "PLAYER" ? "球員標籤" : "球"}
-          aria-label={selectedToken.kind === "PLAYER" ? "選中球員標籤" : "排球標籤"}
+          placeholder={selectedToken.kind === "PLAYER" ? "球員標籤" : labels.ballDefault}
+          aria-label={selectedToken.kind === "PLAYER" ? "選中球員標籤" : labels.ballLabelAria}
         />
       : null}
       <div className="flex flex-wrap gap-1.5">
@@ -375,18 +387,19 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
 
       <CourtBoardFullscreenShell
         title={fullscreenTitle}
+        aspectRatio={displayAspectRatio}
         fullscreenControls={fullscreenControlsPanel}
         fullscreenQuickActions={fullscreenSaveButton}
       >
         <svg
           ref={svgRef}
-          viewBox={COURT_VIEWBOX}
-          className="block h-auto max-h-full w-full touch-none"
+          viewBox={viewBox}
+          className="block h-full w-full touch-none"
           onPointerDown={handleSvgPointerDown}
           role="img"
           aria-label={boardAriaLabel}
         >
-          <CourtFullSurface variant="coach" />
+          <CourtSurface variant="coach" />
 
           <g style={{ pointerEvents: "none" }}>
             {data.lines.map((ln) => {
@@ -456,12 +469,12 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
                     fill="white"
                     className="pointer-events-none select-none font-semibold"
                   >
-                    {t.label?.trim() || "球"}
+                    {t.label?.trim() || labels.ballDefault}
                   </text>
                 </g>
               );
             }
-            const opp = isOpponentHalfByLengthNorm(t.y);
+            const opp = isOpponentHalf(t.y);
             return (
               <g key={t.id} data-token="1">
                 <circle
@@ -510,7 +523,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
           <label htmlFor={`court-token-label-${formId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {selectedToken.kind === "PLAYER" ?
               "選中球員標籤（最多 8 字）"
-            : "排球標籤（最多 4 字，可簡寫）"}
+            : `${labels.ballLabelAria}（最多 4 字，可簡寫）`}
           </label>
           <input
             ref={labelInputRef}
@@ -533,7 +546,7 @@ export function CourtFormationEditor(props: CourtFormationEditorProps) {
               }));
             }}
             className="mt-1 w-full max-w-md rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 disabled:bg-zinc-100 dark:bg-zinc-800"
-            placeholder={selectedToken.kind === "PLAYER" ? "例如：7、舉…" : "球"}
+            placeholder={selectedToken.kind === "PLAYER" ? "例如：7、舉…" : labels.ballDefault}
           />
         </div>
       : null}
