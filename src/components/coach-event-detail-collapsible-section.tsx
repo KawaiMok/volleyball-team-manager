@@ -76,7 +76,7 @@ export function CoachEventDetailCollapsibleSection({
         : null}
       </div>
       {open ?
-        <div id={panelId} className="border-t border-zinc-100 px-4 pb-4 pt-3 dark:border-zinc-800">
+        <div id={panelId} className="min-w-0 border-t border-zinc-100 px-4 pb-4 pt-3 dark:border-zinc-800">
           {children}
         </div>
       : null}

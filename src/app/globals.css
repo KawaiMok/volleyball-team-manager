@@ -80,6 +80,23 @@ html {
   select {
     font-size: 16px !important;
   }
+
+  /* iOS：date / time / datetime-local 內建最小寬度易撐破窄版面 */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper,
+  input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+    min-width: 0;
+  }
 }
 
 /** Capacitor 原生殼：避免縮放後版面錯位（註解：見 `capacitor-native-bridge.tsx`） */

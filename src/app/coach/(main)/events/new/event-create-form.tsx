@@ -6,8 +6,9 @@ import {
   type EventRosterRow,
   validateParticipantRuleForSubmit,
 } from "@/app/coach/(main)/events/event-participant-rule-fields";
+import { DatetimeLocalInput } from "@/components/datetime-local-input";
 import type { ParticipantRule } from "@/lib/participant-rule-types";
-import { datetimeInputProps, parseDatetimeLocalToIso } from "@/lib/datetime-local";
+import { parseDatetimeLocalToIso } from "@/lib/datetime-local";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -72,7 +73,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
   }
 
   return (
-    <form onSubmit={(e) => void onSubmit(e)} className="max-w-lg space-y-5">
+    <form onSubmit={(e) => void onSubmit(e)} className="max-w-lg min-w-0 space-y-5">
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           標題
@@ -105,43 +106,26 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
         </select>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
+      <div className="grid min-w-0 gap-4 md:grid-cols-2">
+        <div className="min-w-0">
           <label htmlFor="startsAt" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             開始
           </label>
-          <input
-            id="startsAt"
-            name="startsAt"
-            {...datetimeInputProps}
-            required
-            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-          />
+          <DatetimeLocalInput id="startsAt" name="startsAt" required />
         </div>
-        <div>
+        <div className="min-w-0">
           <label htmlFor="endsAt" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             結束
           </label>
-          <input
-            id="endsAt"
-            name="endsAt"
-            {...datetimeInputProps}
-            required
-            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-          />
+          <DatetimeLocalInput id="endsAt" name="endsAt" required />
         </div>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <label htmlFor="rsvpDeadlineAt" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           出席意願截止（選填）
         </label>
-        <input
-          id="rsvpDeadlineAt"
-          name="rsvpDeadlineAt"
-          {...datetimeInputProps}
-          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-        />
+        <DatetimeLocalInput id="rsvpDeadlineAt" name="rsvpDeadlineAt" />
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           須早於或等於「開始」時間；未填則球員可隨時更新出席意願（至事件結束前皆無強制截止）。
         </p>

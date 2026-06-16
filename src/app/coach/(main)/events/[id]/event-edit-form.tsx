@@ -6,8 +6,9 @@ import {
   type EventRosterRow,
   validateParticipantRuleForSubmit,
 } from "@/app/coach/(main)/events/event-participant-rule-fields";
+import { DatetimeLocalInput } from "@/components/datetime-local-input";
 import type { ParticipantRule } from "@/lib/participant-rule-types";
-import { datetimeInputProps, isoToDatetimeLocal, parseDatetimeLocalToIso } from "@/lib/datetime-local";
+import { isoToDatetimeLocal, parseDatetimeLocalToIso } from "@/lib/datetime-local";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -89,7 +90,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
   }
 
   return (
-    <form onSubmit={(e) => void onSubmit(e)} className="space-y-5">
+    <form onSubmit={(e) => void onSubmit(e)} className="min-w-0 space-y-5">
       <div>
         <label htmlFor={`edit-title-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           標題
@@ -135,45 +136,39 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
+      <div className="grid min-w-0 gap-4 md:grid-cols-2">
+        <div className="min-w-0">
           <label htmlFor={`edit-starts-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             開始
           </label>
-          <input
+          <DatetimeLocalInput
             id={`edit-starts-${eventId}`}
             name="startsAt"
-            {...datetimeInputProps}
             required
             defaultValue={isoToDatetimeLocal(initial.startsAtIso)}
-            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
-        <div>
+        <div className="min-w-0">
           <label htmlFor={`edit-ends-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
             結束
           </label>
-          <input
+          <DatetimeLocalInput
             id={`edit-ends-${eventId}`}
             name="endsAt"
-            {...datetimeInputProps}
             required
             defaultValue={isoToDatetimeLocal(initial.endsAtIso)}
-            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <label htmlFor={`edit-meet-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           集合（選填）
         </label>
-        <input
+        <DatetimeLocalInput
           id={`edit-meet-${eventId}`}
           name="meetAt"
-          {...datetimeInputProps}
           defaultValue={initial.meetAtIso ? isoToDatetimeLocal(initial.meetAtIso) : ""}
-          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
       </div>
 
@@ -190,16 +185,14 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
         />
       </div>
 
-      <div>
+      <div className="min-w-0">
         <label htmlFor={`edit-rsvp-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
           出席意願截止（選填）
         </label>
-        <input
+        <DatetimeLocalInput
           id={`edit-rsvp-${eventId}`}
           name="rsvpDeadlineAt"
-          {...datetimeInputProps}
           defaultValue={initial.rsvpDeadlineIso ? isoToDatetimeLocal(initial.rsvpDeadlineIso) : ""}
-          className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         />
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">須早於或等於「開始」時間；清空表示不強制截止。</p>
       </div>

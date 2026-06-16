@@ -1,11 +1,15 @@
 /** `datetime-local` 的 step（秒）：15 分鐘一格（註解：減少拖曳選分鐘時間）。 */
 export const DATETIME_LOCAL_STEP_SECONDS = 15 * 60;
 
-/** 事件表單時間欄位共用屬性（註解：建立／編輯一致）。 */
+/** 事件表單時間欄位共用屬性（註解：建立／編輯一致；窄螢幕請用 `DatetimeLocalInput` 元件）。 */
 export const datetimeInputProps = {
   type: "datetime-local" as const,
   step: DATETIME_LOCAL_STEP_SECONDS,
 };
+
+/** 日期時間輸入框共用樣式（註解：含 min-w-0 避免 iOS 撐破版面）。 */
+export const datetimeInputClassName =
+  "mt-1 w-full min-w-0 max-w-full box-border rounded-md border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-600";
 
 const LOCAL_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 

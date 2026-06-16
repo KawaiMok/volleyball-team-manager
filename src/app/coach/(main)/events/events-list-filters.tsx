@@ -45,22 +45,22 @@ export function CoachEventsListFilters({ values, squads, hasActiveFilters }: Pro
             autoComplete="off"
           />
         </label>
-        <label className="space-y-1">
+        <label className="min-w-0 w-full flex-1 space-y-1 sm:min-w-[12rem] sm:w-auto">
           <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">開始日起</span>
           <input
             name="from"
             type="date"
             defaultValue={values.fromYmd}
-            className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-2 text-sm outline-none ring-zinc-400 focus:ring-2"
+            className="w-full min-w-0 max-w-full box-border rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-900"
           />
         </label>
-        <label className="space-y-1">
+        <label className="min-w-0 w-full space-y-1 sm:w-auto">
           <span className="text-xs font-medium text-zinc-600 dark:text-zinc-400">開始日迄</span>
           <input
             name="to"
             type="date"
             defaultValue={values.toYmd}
-            className="rounded-md border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3 py-2 text-sm outline-none ring-zinc-400 focus:ring-2"
+            className="w-full min-w-0 max-w-full box-border rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm outline-none ring-zinc-400 focus:ring-2 dark:border-zinc-600 dark:bg-zinc-900"
           />
         </label>
         <button
