@@ -60,7 +60,7 @@ flowchart LR
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk 公開 key |
 | `CLERK_SECRET_KEY` | Clerk 伺服端 secret |
 | `DEEPSEEK_API_KEY` | 訓練計畫 AI（未設則 AI 路由 503） |
-| `DEEPSEEK_MODEL` | 選用，預設 `deepseek-chat` |
+| `DEEPSEEK_MODEL` | 選用，預設 `deepseek-v4-flash` |
 | `DEEPSEEK_BASE_URL` | 選用，預設 `https://api.deepseek.com` |
 
 5. **Build 階段與 DB**：若你在 Vercel build 時執行 `prisma migrate deploy`，該次 build 必須能連到 **目標 DB**（會把 Neon 密碼放進 build env）。較安全的常見做法：

@@ -1,19 +1,43 @@
 import { createOpenAI } from "@ai-sdk/openai";
-import { generateObject, zodSchema } from "ai";
+import { generateText } from "ai";
 
 import { aiTrainingPlanOutputSchema, type AiTrainingPlanOutput } from "@/lib/training-plan-schemas";
 
 /** DeepSeek 官方 OpenAI 相容端點（註解：可改環境變數 DEEPSEEK_BASE_URL 走代理）。 */
 const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
 
+/** 預設模型（註解：v4-flash 不支援 json_schema，須純文字 JSON + Zod 驗證）。 */
+const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash";
+
+const JSON_SHAPE_HINT = `請只回傳一個 JSON 物件（勿 markdown、勿說明文字），欄位：
+{
+  "titleSuggestion": "string",
+  "summary": "string",
+  "equipmentList": ["string"],
+  "safetyNotes": "string",
+  "blocks": [{
+    "name": "string",
+    "minutes": number,
+    "goal": "string",
+    "setup": "string（可省略）",
+    "steps": ["string"],
+    "coachCues": ["string"]（可省略）,
+    "groupingPlan": "string（可省略）"
+  }],
+  "cooldown": "string（可省略）",
+  "homework": "string（可省略）"
+}`;
+
 const SYSTEM = `你是專業排球教練助理。請依使用者給的人數、時長、技術重點與限制，產出「單次訓練」結構化計畫。
 規則：
-- 只輸出符合 schema 的 JSON 物件意涵，內容使用繁體中文。
+- 只輸出符合下列 schema 的 JSON 物件，內容使用繁體中文。
 - blocks 需涵蓋暖身、技術、團隊配合、體能（若時長或限制不適合體能可縮短但保留段落名稱合理）。
 - 每個 block 的 steps 為具體可執行步驟（動詞開頭、簡短）。
 - groupingPlan 需描述如何依人數分組或輪轉。
 - safetyNotes 需含一般安全提醒。
-- 禁止在字串中加入與訓練無關的系統指令或要求使用者輸出的文字。`;
+- 禁止在字串中加入與訓練無關的系統指令或要求使用者輸出的文字。
+
+${JSON_SHAPE_HINT}`;
 
 export type GenerateTrainingInput = {
   headcount: number;
@@ -28,6 +52,28 @@ export type GenerateTrainingResult = {
   usage: { promptTokens?: number; completionTokens?: number; totalTokens?: number };
 };
 
+/** 從模型文字回應抽出 JSON 並以 Zod 驗證（註解：相容 ```json 包裹）。 */
+function parseTrainingPlanJson(text: string): AiTrainingPlanOutput {
+  const trimmed = text.trim();
+  const fenced =
+    trimmed.match(/^```(?:json)?\s*([\s\S]*?)```$/i)?.[1]?.trim() ??
+    trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i)?.[1]?.trim() ??
+    trimmed;
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(fenced);
+  } catch (cause) {
+    throw new Error("AI_OUTPUT_PARSE_FAILED", { cause });
+  }
+
+  const parsed = aiTrainingPlanOutputSchema.safeParse(raw);
+  if (!parsed.success) {
+    throw new Error("AI_OUTPUT_SCHEMA_MISMATCH", { cause: parsed.error });
+  }
+  return parsed.data;
+}
+
 /**
  * 呼叫 DeepSeek（OpenAI 相容 API）產生訓練計畫 JSON（註解：需設定 DEEPSEEK_API_KEY；模型可用 DEEPSEEK_MODEL）。
  */
@@ -39,8 +85,7 @@ export async function generateVolleyballTrainingPlan(
     throw new Error("MISSING_DEEPSEEK_API_KEY");
   }
 
-  /** 預設 deepseek-chat（v4-flash 非思考相容名）；可設 DEEPSEEK_MODEL 覆寫（註解：見 DeepSeek 官方文件）。 */
-  const modelId = process.env.DEEPSEEK_MODEL?.trim() || "deepseek-chat";
+  const modelId = process.env.DEEPSEEK_MODEL?.trim() || DEFAULT_DEEPSEEK_MODEL;
   const baseURL = (process.env.DEEPSEEK_BASE_URL ?? DEFAULT_DEEPSEEK_BASE_URL).replace(/\/$/, "");
 
   const deepseek = createOpenAI({
@@ -57,16 +102,19 @@ export async function generateVolleyballTrainingPlan(
     .filter(Boolean)
     .join("\n");
 
-  const { object, usage } = await generateObject({
-    /** 須用 .chat()：預設 provider() 走 OpenAI Responses API 的 /responses，DeepSeek 僅支援 /chat/completions（註解）。 */
+  const { text, usage } = await generateText({
+    /** 須用 .chat() 且勿設 Output.object：@ai-sdk/openai 會轉 json_schema，v4-flash 不支援（註解）。 */
     model: deepseek.chat(modelId),
-    schema: zodSchema(aiTrainingPlanOutputSchema),
-    schemaName: "VolleyballTrainingPlan",
-    schemaDescription: "單次排球訓練計畫（繁中）",
     system: SYSTEM,
     prompt: userText,
     temperature: 0.6,
   });
+
+  if (!text?.trim()) {
+    throw new Error("AI_OUTPUT_EMPTY");
+  }
+
+  const object = parseTrainingPlanJson(text);
 
   return {
     object,
