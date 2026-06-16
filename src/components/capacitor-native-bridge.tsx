@@ -37,6 +37,8 @@ export function CapacitorNativeBridge() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
+    document.documentElement.classList.add("capacitor-native");
+
     void syncStatusBar();
 
     const observer = new MutationObserver(() => {
@@ -59,6 +61,7 @@ export function CapacitorNativeBridge() {
     });
 
     return () => {
+      document.documentElement.classList.remove("capacitor-native");
       observer.disconnect();
       void backSub.then((h) => h.remove());
     };

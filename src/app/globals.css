@@ -67,6 +67,29 @@ html.theme-ciyou {
 
 html {
   color-scheme: light dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+/**
+ * iOS Safari / WKWebView：input 字級 < 16px 時聚焦會自動放大整頁，且常無法還原。
+ * 觸控裝置統一 ≥16px（註解：!important 覆寫 Tailwind text-sm 等 utility）。
+ */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+/** Capacitor 原生殼：避免縮放後版面錯位（註解：見 `capacitor-native-bridge.tsx`） */
+html.capacitor-native {
+  overflow-x: hidden;
+}
+
+html.capacitor-native body {
+  min-height: 100%;
+  min-height: 100dvh;
 }
 
 body {

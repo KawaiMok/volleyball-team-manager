@@ -54,7 +54,10 @@ export async function sendPushToUserDevices(userId: string, payload: PushNotific
     if (result.ok) {
       sent += 1;
     } else if (result.error) {
-      errors.push(result.error);
+      // 註解：附上平台方便對照 APNs／FCM 錯誤（例如 BadDeviceToken）
+      errors.push(`${device.platform}:${result.error}`);
+    } else if (result.skipped) {
+      errors.push(`${device.platform}:${result.skipped}`);
     }
   }
 

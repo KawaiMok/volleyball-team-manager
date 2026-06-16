@@ -38,6 +38,20 @@ export function isApnsConfigured(): boolean {
   return resolveApnsConfig() !== null;
 }
 
+/** 診斷用：回傳 APNs 是否就緒及 sandbox／production 端點（註解：Xcode Debug 須對應 sandbox）。 */
+export function getApnsDiagnostics(): {
+  configured: boolean;
+  useSandbox: boolean;
+  bundleId: string;
+} {
+  const config = resolveApnsConfig();
+  return {
+    configured: config !== null,
+    useSandbox: config?.useSandbox ?? false,
+    bundleId: config?.bundleId ?? "com.volleyball.teammanager",
+  };
+}
+
 /** 建立 ES256 JWT（註解：供 APNs HTTP/2 Authorization header 使用） */
 function createApnsJwt(config: ApnsConfig): string {
   const now = Math.floor(Date.now() / 1000);

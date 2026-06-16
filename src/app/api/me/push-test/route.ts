@@ -1,10 +1,12 @@
-import { isApnsConfigured } from "@/lib/push/apns";
+import { MemberStatus } from "@/generated/prisma/client";
+import { getApnsDiagnostics, isApnsConfigured } from "@/lib/push/apns";
 import { isFcmConfigured } from "@/lib/push/fcm";
 import { buildPushPayload } from "@/lib/push/kinds";
 import { recordUserNotification } from "@/lib/push/record-notification";
 import { sendPushToUserDevices } from "@/lib/push/send";
 import { isPushTestAccessEnabled } from "@/lib/push-test-access";
-import { getTeamMember } from "@/lib/session";
+import { getPrisma } from "@/lib/prisma";
+import { getOrSyncPrismaUserFromClerk } from "@/lib/session";
 import { NextResponse } from "next/server";
 
 /**
@@ -12,11 +14,17 @@ import { NextResponse } from "next/server";
  */
 export async function POST() {
   if (!isPushTestAccessEnabled()) {
-    return NextResponse.json({ error: "推播測試未開放（正式環境已關閉）" }, { status: 403 });
+    return NextResponse.json(
+      {
+        error: "推播測試未開放（正式環境預設關閉）",
+        hint: "於 Vercel 設 ALLOW_PUSH_TEST=1 後 redeploy",
+      },
+      { status: 403 },
+    );
   }
 
-  const member = await getTeamMember();
-  if (!member) {
+  const user = await getOrSyncPrismaUserFromClerk();
+  if (!user) {
     return NextResponse.json({ error: "未授權" }, { status: 401 });
   }
 
@@ -27,12 +35,36 @@ export async function POST() {
     );
   }
 
+  const prisma = getPrisma();
+  const devices = await prisma.pushDevice.findMany({ where: { userId: user.id } });
+  const deviceCounts = {
+    ios: devices.filter((d) => d.platform === "IOS").length,
+    android: devices.filter((d) => d.platform === "ANDROID").length,
+  };
+
+  const member = await prisma.teamMember.findFirst({
+    where: { userId: user.id, status: MemberStatus.ACTIVE },
+  });
+  const teamId = member?.teamId ?? "none";
+
   const payload = buildPushPayload({
     kind: "push_test",
-    teamId: member.teamId,
+    teamId,
   });
-  await recordUserNotification(member.userId, payload);
-  const result = await sendPushToUserDevices(member.userId, payload);
+  await recordUserNotification(user.id, payload);
+  const result = await sendPushToUserDevices(user.id, payload);
 
-  return NextResponse.json(result);
+  return NextResponse.json({
+    ...result,
+    diagnostics: {
+      nativePushBridgeEnabled: process.env.NEXT_PUBLIC_ENABLE_NATIVE_PUSH === "true",
+      apns: getApnsDiagnostics(),
+      fcmConfigured: isFcmConfigured(),
+      deviceCounts,
+      hint:
+        deviceCounts.ios > 0 && getApnsDiagnostics().configured && !getApnsDiagnostics().useSandbox
+          ? "Xcode Debug 裝的 App 須設 APNS_USE_SANDBOX=true"
+          : undefined,
+    },
+  });
 }
