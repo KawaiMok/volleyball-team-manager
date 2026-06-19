@@ -96,6 +96,23 @@ export function computeAdjustedOverallIndicator(
   return Math.round((parts.reduce((s, x) => s + x, 0) / parts.length) * 1000) / 10;
 }
 
+/** rating 圖表比例尺：以 0 為下界、normMax 為上界（註解：避免 -1~1 全區間壓縮 0.2 vs 0.5 的視覺差異）。 */
+export function ratingChartBounds(def: Pick<RatingDef, "normMax">): { min: number; max: number } {
+  return { min: 0, max: def.normMax };
+}
+
+/** rating 橫條寬度百分比 */
+export function ratingChartBarWidth(
+  value: number | null,
+  def: Pick<RatingDef, "normMax">,
+): string {
+  if (value == null || !Number.isFinite(value)) return "0%";
+  const { min, max } = ratingChartBounds(def);
+  if (max <= min) return "0%";
+  const x = (value - min) / (max - min);
+  return `${Math.round(clamp01(x) * 100)}%`;
+}
+
 /** 合併多場個人 stats（累加計數） */
 export function mergePlayerStats(
   categories: readonly string[],

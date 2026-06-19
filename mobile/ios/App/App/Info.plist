@@ -47,6 +47,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- 註解：僅用 HTTPS 等標準加密；免每年填出口合規（TestFlight／App Store） -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<!-- 註解：允許背景接收 remote notification -->
 	<key>UIBackgroundModes</key>
 	<array>

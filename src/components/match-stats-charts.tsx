@@ -214,28 +214,25 @@ function isPercentDerived(derived?: string): boolean {
   return derived === "attackScore" || derived === "attackError" || derived === "defenseRate" || derived === "trueShooting";
 }
 
-/** 圖表基準線：次數／百分比從 0 起算，rating 用模組定義下限（註解：不以球員最小值為基準）。 */
-function chartBaseline(
+/** 衍生 rating 欄位對應的 rating 定義 */
+function derivedRatingDef(
   match: ReturnType<typeof useMatchModule>,
-  field: { derived?: string },
-): number {
-  if (field.derived && !isPercentDerived(field.derived)) {
-    const derivedToRating: Record<string, string> = {
-      blockRating: "blockRating",
-      passRating: "passRating",
-      serveRating: "serveRating",
-      reboundRating: "reboundRating",
-      playmakingRating: "playmakingRating",
-      defenseRating: "defenseRating",
-      attackRating: "attackRating",
-      passingRating: "passingRating",
-      goalkeepingRating: "goalkeepingRating",
-    };
-    const ratingKey = derivedToRating[field.derived];
-    const def = ratingKey ? match.ratings.find((r) => r.key === ratingKey) : undefined;
-    if (def) return def.normMin;
-  }
-  return 0;
+  derived?: string,
+) {
+  if (!derived || isPercentDerived(derived)) return undefined;
+  const derivedToRating: Record<string, string> = {
+    blockRating: "blockRating",
+    passRating: "passRating",
+    serveRating: "serveRating",
+    reboundRating: "reboundRating",
+    playmakingRating: "playmakingRating",
+    defenseRating: "defenseRating",
+    attackRating: "attackRating",
+    passingRating: "passingRating",
+    goalkeepingRating: "goalkeepingRating",
+  };
+  const ratingKey = derivedToRating[derived];
+  return ratingKey ? match.ratings.find((r) => r.key === ratingKey) : undefined;
 }
 
 /** 單一分類：把所有球員合在同一區塊比較。 */
@@ -279,17 +276,19 @@ function CombinedCategoryComparisonChart({
         const nums = values.map((v) => v.value).filter((n) => n > 0);
         if (nums.length === 0) return null;
 
-        const max = Math.max(...nums);
-        const baseline = chartBaseline(match, f);
-        const sorted = [...values].sort((a, b) => b.value - a.value);
+        const ratingDef = derivedRatingDef(match, f.derived);
+        const dataMax = Math.max(...nums);
         const asPercent = f.derived ? isPercentDerived(f.derived) : false;
+        const max = ratingDef ? ratingDef.normMax : asPercent ? 1 : dataMax;
+        const baseline = 0;
+        const sorted = [...values].sort((a, b) => b.value - a.value);
 
         return (
           <div key={f.key} className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
             <div className="mb-2 flex items-baseline justify-between gap-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{f.label}</p>
               <p className="text-[10px] text-zinc-400">
-                最高 {formatMetricChartValue(max, asPercent)}
+                最高 {formatMetricChartValue(dataMax, asPercent)}
               </p>
             </div>
             <div className="space-y-1.5">
@@ -426,15 +425,21 @@ function PlayerMetricComparisonChart({
   });
 
   const nums = bars.map((b) => b.value);
-  const max = nums.length > 0 ? Math.max(...nums, 1) : 1;
-  let baseline = 0;
+  const dataMax = nums.length > 0 ? Math.max(...nums) : 0;
+  let max = Math.max(dataMax, 1);
+  const baseline = 0;
+
   if (metric.id.startsWith("rating:")) {
-    baseline = match.ratings.find((r) => r.key === metric.fieldKey)?.normMin ?? 0;
+    const def = match.ratings.find((r) => r.key === metric.fieldKey);
+    if (def) max = def.normMax;
   } else if (metric.isPercent) {
-    baseline = 0;
+    max = 1;
   } else if (metric.isRating) {
     const fieldDef = match.categoryFields[metric.category]?.find((f) => f.key === metric.fieldKey);
-    baseline = fieldDef ? chartBaseline(match, fieldDef) : 0;
+    const def = derivedRatingDef(match, fieldDef?.derived);
+    if (def) max = def.normMax;
+  } else {
+    max = Math.max(dataMax, 1);
   }
 
   function togglePlayer(id: string) {

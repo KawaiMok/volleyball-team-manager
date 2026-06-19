@@ -7,7 +7,7 @@ import { useDataViewMode } from "@/components/data-view-mode-provider";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useMatchModule } from "@/components/team-sport-provider";
-import { computeAdjustedRating } from "@/lib/sports/match/metrics";
+import { computeAdjustedRating, ratingChartBarWidth } from "@/lib/sports/match/metrics";
 import type { PlayerStatsRecord } from "@/lib/sports/match/types";
 
 export type QuickIndicatorRow = {
@@ -269,7 +269,7 @@ function OverallIndicatorCompareSheet({
                           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                             <div
                               className={`h-full rounded-full ${x.barClass}`}
-                              style={{ width: barWidth(x.adjusted, x.def.normMin, x.def.normMax) }}
+                              style={{ width: ratingChartBarWidth(x.adjusted, x.def) }}
                             />
                           </div>
                         </div>
@@ -365,8 +365,7 @@ export function MatchQuickIndicators({
                   key: def.key,
                   label: def.label,
                   value: adjusted,
-                  min: def.normMin,
-                  max: def.normMax,
+                  def,
                   barClass: BAR_COLORS[i % BAR_COLORS.length],
                   lowSample,
                   sampleSize,
@@ -417,7 +416,7 @@ export function MatchQuickIndicators({
                         <div className="mt-1 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
                           <div
                             className={`h-full rounded-full ${x.barClass}`}
-                            style={{ width: barWidth(x.value, x.min, x.max) }}
+                            style={{ width: ratingChartBarWidth(x.value, x.def) }}
                           />
                         </div>
                       </div>
