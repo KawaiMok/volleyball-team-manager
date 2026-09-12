@@ -15,7 +15,7 @@ import { useState } from "react";
 type Props = { teamId: string; squads: string[]; roster: EventRosterRow[] };
 
 /** 與 Prisma EventType 一致（註解：client 不直接 import generated prisma）。 */
-const EVENT_TYPES = ["TRAINING", "MATCH", "OTHER"] as const;
+const EVENT_TYPES = ["TRAINING", "MATCH", "FITNESS_TEST", "OTHER"] as const;
 
 /** 建立草稿事件表單（註解：含完整參與者規則 ALL／SQUADS／MEMBERS）。 */
 export function EventCreateForm({ teamId, squads, roster }: Props) {
@@ -100,7 +100,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
         >
           {EVENT_TYPES.map((t) => (
             <option key={t} value={t}>
-              {t === "TRAINING" ? "訓練" : t === "MATCH" ? "比賽" : "其他"}
+              {t === "TRAINING" ? "訓練" : t === "MATCH" ? "比賽" : t === "FITNESS_TEST" ? "體能測試" : "其他"}
             </option>
           ))}
         </select>

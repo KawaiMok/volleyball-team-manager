@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { MatchResultReadonly } from "@/app/player/(main)/events/[id]/match-result-readonly";
+import { FitnessTestReadonly } from "@/app/player/(main)/events/[id]/fitness-test-readonly";
 import { EventTitleWithMeta } from "@/components/event-title-with-meta";
 import { CourtFormationReadonly } from "@/app/player/(main)/events/[id]/court-formation-readonly";
 import { PlayerEventTacticalVideoReadonly } from "@/app/player/(main)/events/[id]/event-tactical-video-readonly";
@@ -13,6 +14,7 @@ import { parseCourtSketch } from "@/lib/court-sketch-schema";
 import type { PeriodScore } from "@/lib/sports/match/types";
 import { getSportModule } from "@/lib/sports/registry";
 import { prismaSportToId } from "@/lib/sports/registry-server";
+import { normalizeFitnessStats } from "@/lib/fitness/test-schema";
 import { getTeamMember } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
 
@@ -27,6 +29,8 @@ function typeLabel(t: EventType) {
       return "訓練";
     case EventType.MATCH:
       return "比賽";
+    case EventType.FITNESS_TEST:
+      return "體能測試";
     default:
       return "其他";
   }
@@ -95,6 +99,14 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
           },
         },
       },
+      fitnessTestSession: {
+        include: {
+          results: {
+            where: { memberId: member.id },
+            take: 1,
+          },
+        },
+      },
       team: { select: { name: true, sport: true } },
     },
   });
@@ -115,6 +127,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
   const rsvp = att?.rsvpStatus ?? "UNANSWERED";
   const now = new Date();
   const afterEnd = now.getTime() >= event.endsAt.getTime();
+  const isFitnessEvent = event.type === EventType.FITNESS_TEST;
   /** 有設定截止且已過期則鎖定出席意願（註解：與 PATCH /api/events/[id]/rsvp 一致）。 */
   const rsvpDeadlineAt = event.rsvpDeadlineAt;
   const rsvpLocked =
@@ -172,7 +185,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
   const feedbackReadOnly = afterEnd && feedback != null && !canEditFeedback;
 
   const coachReviewBlock =
-    afterEnd && coachReview ?
+    !isFitnessEvent && afterEnd && coachReview ?
       <PlayerCoachReviewSection
         content={coachReview.content}
         authorName={coachReview.author.user?.name?.trim() || "教練"}
@@ -215,6 +228,25 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">比賽數據</h2>
         <p className="text-sm text-slate-600 dark:text-slate-400">教練尚未登錄比賽結果。</p>
       </section>
+    : null;
+
+  const myFitnessResult = event.fitnessTestSession?.results[0];
+  const fitnessTestBlock =
+    afterEnd && event.type === EventType.FITNESS_TEST ?
+      myFitnessResult ?
+        <section id="player-ev-fitness" className="space-y-3">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">體能測試</h2>
+          <FitnessTestReadonly
+            stats={normalizeFitnessStats(myFitnessResult.stats)}
+            protocolNote={event.fitnessTestSession?.protocolNote ?? null}
+            equipmentNote={event.fitnessTestSession?.equipmentNote ?? null}
+            notes={event.fitnessTestSession?.notes ?? null}
+          />
+        </section>
+      : <section className="space-y-2">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">體能測試</h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400">教練尚未登錄你的體能測試數據。</p>
+        </section>
     : null;
 
   const feedbackBlock = (
@@ -311,9 +343,11 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
 
       {matchResultBlock}
 
-      {afterEnd ? feedbackBlock : null}
+      {fitnessTestBlock}
 
-      {!afterEnd ?
+      {!isFitnessEvent && afterEnd ? feedbackBlock : null}
+
+      {!afterEnd && !isFitnessEvent ?
         <>
           <section className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950/80 p-4">
             <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">我的狀態</h2>
@@ -341,7 +375,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
         </>
       : null}
 
-      {event.type === EventType.TRAINING && event.trainingPlan ?
+      {!isFitnessEvent && event.type === EventType.TRAINING && event.trainingPlan ?
         <section className="space-y-3">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">訓練計畫</h2>
           {event.trainingPlan.summary ?
@@ -370,31 +404,39 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
             ))}
           </ul>
         </section>
-      : event.type === EventType.TRAINING ?
+      : !isFitnessEvent && event.type === EventType.TRAINING ?
         <p className="text-sm text-slate-500 dark:text-slate-400">教練尚未發布訓練計畫。</p>
       : null}
 
-      <PlayerEventTacticalVideoReadonly tactical={tacticalForPlayer} video={videoForPlayer} />
+      {!isFitnessEvent ?
+        <>
+          <PlayerEventTacticalVideoReadonly tactical={tacticalForPlayer} video={videoForPlayer} />
 
-      {sportMod.capabilities.courtSketch ?
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">場上企位</h2>
-          <CourtFormationReadonly data={courtSketchParsed} />
-        </section>
-      : (
-        <section className="space-y-3">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">場上企位</h2>
-          <SportFeatureComingSoon sport={prismaSportToId(event.team.sport)} featureLabel="場上企位" />
-        </section>
-      )}
+          {sportMod.capabilities.courtSketch ?
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">場上企位</h2>
+              <CourtFormationReadonly data={courtSketchParsed} />
+            </section>
+          : (
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">場上企位</h2>
+              <SportFeatureComingSoon sport={prismaSportToId(event.team.sport)} featureLabel="場上企位" />
+            </section>
+          )}
 
-      <PlayerEventComments
-        eventId={event.id}
-        currentMemberId={member.id}
-        initialComments={initialPlayerComments}
-      />
+          <PlayerEventComments
+            eventId={event.id}
+            currentMemberId={member.id}
+            initialComments={initialPlayerComments}
+          />
 
-      {!afterEnd ? feedbackBlock : null}
+          {!afterEnd ? feedbackBlock : null}
+        </>
+      : !afterEnd && isFitnessEvent ?
+        <p className="text-sm text-slate-600 dark:text-slate-400">
+          體能測試進行中；結束後可在此查看你的測試成績。
+        </p>
+      : null}
     </div>
   );
 }

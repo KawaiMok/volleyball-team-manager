@@ -53,6 +53,17 @@ export async function getCoachSideUserIds(teamId: string): Promise<string[]> {
   return [...new Set(rows.map((r) => r.userId))];
 }
 
+/** 依 memberId 查 userId（註解：體能成績推播等）。 */
+export async function getUserIdsForMemberIds(memberIds: string[]): Promise<string[]> {
+  if (memberIds.length === 0) return [];
+  const prisma = getPrisma();
+  const rows = await prisma.teamMember.findMany({
+    where: { id: { in: memberIds } },
+    select: { userId: true },
+  });
+  return [...new Set(rows.map((r) => r.userId))];
+}
+
 /** 事件參與者的 userId。 */
 export async function getEventParticipantUserIds(eventId: string): Promise<string[]> {
   const prisma = getPrisma();

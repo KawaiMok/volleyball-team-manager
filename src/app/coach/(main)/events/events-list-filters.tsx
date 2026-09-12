@@ -21,6 +21,7 @@ type Props = {
 const ETYPE_OPTIONS: { value: EventType; label: string }[] = [
   { value: EventType.TRAINING, label: "訓練" },
   { value: EventType.MATCH, label: "比賽" },
+  { value: EventType.FITNESS_TEST, label: "體能測試" },
   { value: EventType.OTHER, label: "其他" },
 ];
 

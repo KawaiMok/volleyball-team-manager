@@ -3,12 +3,19 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+/** Migration／CLI 用連線（註解：Neon 須 direct，不可用 -pooler，否則 P1002 advisory lock）。 */
+const migrationDatabaseUrl = process.env["DIRECT_URL"] ?? process.env["DATABASE_URL"];
+
+if (!migrationDatabaseUrl) {
+  throw new Error("缺少 DIRECT_URL 或 DATABASE_URL（Prisma migrate 需要）");
+}
+
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: migrationDatabaseUrl,
   },
 });

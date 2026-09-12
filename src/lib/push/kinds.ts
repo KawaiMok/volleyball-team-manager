@@ -10,7 +10,8 @@ export type PushKind =
   | "event_comment"
   | "coach_player_review"
   | "rsvp_updated"
-  | "rsvp_reminder";
+  | "rsvp_reminder"
+  | "fitness_results_published";
 
 export type PushPayloadInput = {
   kind: PushKind;
@@ -105,6 +106,14 @@ export function buildPushPayload(input: PushPayloadInput): PushNotificationPaylo
       return {
         title: "請回覆出席意願",
         body: input.eventTitle ? `教練提醒你回覆「${input.eventTitle}」的出席意願` : "教練提醒你回覆活動出席意願",
+        data,
+      };
+    case "fitness_results_published":
+      return {
+        title: "體能成績已登錄",
+        body: input.eventTitle ?
+          `教練已登錄「${input.eventTitle}」的體能測試成績，請查看`
+        : "教練已登錄體能測試成績，請查看",
         data,
       };
   }

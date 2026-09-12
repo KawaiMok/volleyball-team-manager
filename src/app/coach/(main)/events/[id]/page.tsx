@@ -20,7 +20,10 @@ import { isPlayerReviewSubjectRole } from "@/lib/player-review-access";
 import { coachMemberUserSelect } from "@/lib/event-response-sanitize";
 import { parseCourtSketch } from "@/lib/court-sketch-schema";
 import { MatchResultPanel } from "@/app/coach/(main)/events/[id]/match-result-panel";
+import { FitnessTestPanel } from "@/app/coach/(main)/events/[id]/fitness-test-panel";
 import { canManageMatchResult } from "@/lib/match-result-access";
+import { canManageFitnessTest } from "@/lib/fitness-test-access";
+import { emptyFitnessStats, normalizeFitnessStats } from "@/lib/fitness/test-schema";
 import { CoachEventDetailCollapsibleSection } from "@/components/coach-event-detail-collapsible-section";
 import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
 import { EventTitleWithMeta } from "@/components/event-title-with-meta";
@@ -49,6 +52,8 @@ function typeLabel(t: EventType) {
       return "訓練";
     case EventType.MATCH:
       return "比賽";
+    case EventType.FITNESS_TEST:
+      return "體能測試";
     default:
       return "其他";
   }
@@ -64,6 +69,7 @@ const COACH_EVENT_DETAIL_SECTIONS = [
   { id: "coach-ev-comments", label: "公告留言" },
   { id: "coach-ev-reviews", label: "球員評語" },
   { id: "coach-ev-match", label: "比賽結果" },
+  { id: "coach-ev-fitness", label: "體能測試" },
   { id: "coach-ev-feedback", label: "身體回饋" },
 ] as const;
 
@@ -89,6 +95,14 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
       matchResult: {
         include: {
           playerStats: {
+            include: { member: { include: { user: coachMemberUserSelect } } },
+            orderBy: { member: { jerseyNumber: "asc" } },
+          },
+        },
+      },
+      fitnessTestSession: {
+        include: {
+          results: {
             include: { member: { include: { user: coachMemberUserSelect } } },
             orderBy: { member: { jerseyNumber: "asc" } },
           },
@@ -248,7 +262,9 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     });
 
   const isMatchEvent = event.type === EventType.MATCH;
+  const isFitnessEvent = event.type === EventType.FITNESS_TEST;
   const canManageMatch = canManageMatchResult(member, event);
+  const canManageFitness = canManageFitnessTest(member, event);
 
   const matchPlayerRoster = roster
     .filter((r) => isPlayerReviewSubjectRole(r.role))
@@ -257,6 +273,15 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
       memberId: r.id,
       displayName: r.displayName,
       stats: matchMod ? matchMod.emptyPlayerStats() : {},
+    }));
+
+  const fitnessPlayerRoster = roster
+    .filter((r) => isPlayerReviewSubjectRole(r.role))
+    .filter((r) => participantMemberIds.includes(r.id))
+    .map((r) => ({
+      memberId: r.id,
+      displayName: r.displayName,
+      stats: emptyFitnessStats(),
     }));
 
   const initialMatchResult =
@@ -279,37 +304,62 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
       }
     : null;
 
+  const initialFitnessTest =
+    event.fitnessTestSession ?
+      {
+        protocolNote: event.fitnessTestSession.protocolNote,
+        equipmentNote: event.fitnessTestSession.equipmentNote,
+        notes: event.fitnessTestSession.notes,
+        playerResults: event.fitnessTestSession.results.map((p) => ({
+          memberId: p.memberId,
+          displayName: p.member.user?.name ?? p.member.user?.email ?? p.memberId.slice(0, 8),
+          stats: normalizeFitnessStats(p.stats),
+        })),
+      }
+    : null;
+
   const detailSections = COACH_EVENT_DETAIL_SECTIONS.filter((s) => {
+    /** 體能測試：僅保留「編輯事件」與「體能測試」區塊（註解：不顯示點名／企位／留言等）。 */
+    if (isFitnessEvent) {
+      if (s.id === "coach-ev-edit" && eventEnded) return false;
+      if (s.id === "coach-ev-fitness" && !eventEnded) return false;
+      return s.id === "coach-ev-edit" || s.id === "coach-ev-fitness";
+    }
     if (!sportMod?.capabilities.courtSketch && s.id === "coach-ev-court") return false;
     if (!sportMod?.capabilities.matchStats && s.id === "coach-ev-match") return false;
     if (!isMatchEvent && s.id === "coach-ev-match") return false;
+    if (!isFitnessEvent && s.id === "coach-ev-fitness") return false;
     if (!eventEnded) {
-      return s.id !== "coach-ev-reviews" && s.id !== "coach-ev-match";
+      return s.id !== "coach-ev-reviews" && s.id !== "coach-ev-match" && s.id !== "coach-ev-fitness";
     }
     return s.id !== "coach-ev-edit" && s.id !== "coach-ev-training";
   });
 
-  /** 已結束場次：身體回饋、球員評語、比賽結果置頂（註解：段落導覽順序同步）。 */
+  /** 已結束場次：置頂區塊順序（註解：體能測試僅體能區塊）。 */
   const orderedDetailSections =
-    eventEnded ?
+    isFitnessEvent ?
+      [...detailSections]
+    : eventEnded ?
       [
         ...detailSections.filter(
           (s) =>
             s.id === "coach-ev-feedback" ||
             s.id === "coach-ev-reviews" ||
-            s.id === "coach-ev-match",
+            s.id === "coach-ev-match" ||
+            s.id === "coach-ev-fitness",
         ),
         ...detailSections.filter(
           (s) =>
             s.id !== "coach-ev-feedback" &&
             s.id !== "coach-ev-reviews" &&
-            s.id !== "coach-ev-match",
+            s.id !== "coach-ev-match" &&
+            s.id !== "coach-ev-fitness",
         ),
       ]
     : detailSections;
 
   const playerReviewsSection =
-    eventEnded && event.status === EventStatus.PUBLISHED ?
+    !isFitnessEvent && eventEnded && event.status === EventStatus.PUBLISHED ?
       <CoachEventDetailCollapsibleSection
         id="coach-ev-reviews"
         title="球員評語"
@@ -348,15 +398,40 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
       </CoachEventDetailCollapsibleSection>
     : null;
 
-  const feedbackSummarySection = (
-    <CoachEventDetailCollapsibleSection id="coach-ev-feedback" title="身體回饋">
-      <EventFeedbackSummarySection
-        eventEndsAt={event.endsAt}
-        entries={feedbackEntries}
-        embedded
-      />
-    </CoachEventDetailCollapsibleSection>
-  );
+  const fitnessTestSection =
+    isFitnessEvent ?
+      <CoachEventDetailCollapsibleSection
+        id="coach-ev-fitness"
+        title="體能測試"
+        titleExtra={
+          <HintExclamationToggle>
+            測試結束後可登錄深蹲跳、CMJ、助跑跳、深度跳、折返跑與藥球投擲；每項跳類與藥球最多 3 次，折返跑 1 次。
+          </HintExclamationToggle>
+        }
+      >
+        <FitnessTestPanel
+          eventId={event.id}
+          eventTitle={event.title}
+          eventDateLabel={formatDateTimeZh(event.startsAt)}
+          canEdit={canManageFitness}
+          initial={initialFitnessTest}
+          roster={fitnessPlayerRoster}
+        />
+      </CoachEventDetailCollapsibleSection>
+    : null;
+
+  const feedbackSummarySection =
+    !isFitnessEvent ?
+      (
+        <CoachEventDetailCollapsibleSection id="coach-ev-feedback" title="身體回饋">
+          <EventFeedbackSummarySection
+            eventEndsAt={event.endsAt}
+            entries={feedbackEntries}
+            embedded
+          />
+        </CoachEventDetailCollapsibleSection>
+      )
+    : null;
 
   const initialEventComments = commentRows.map((c) => ({
     id: c.id,
@@ -440,13 +515,21 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         <CoachEventDetailSectionNav sections={[...orderedDetailSections]} />
         {eventEnded ?
           <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-            此場次已結束，可檢視點名、企位、留言
-            {isMatchEvent ? "、比賽結果" : ""}
-            、球員評語與身體回饋。
+            {isFitnessEvent ?
+              "此場體能測試已結束，可登錄各隊員數據。"
+            : <>
+                此場次已結束，可檢視點名、企位、留言
+                {isMatchEvent ? "、比賽結果" : ""}
+                、球員評語與身體回饋。
+              </>}
           </p>
         : isMatchEvent && !eventEnded ?
           <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
             比賽結束後可登錄比分與數據。
+          </p>
+        : isFitnessEvent && !eventEnded ?
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            體能測試結束後可登錄各隊員數據。
           </p>
         : null}
       </div>
@@ -454,7 +537,8 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         {eventEnded ?
           <>
             {isMatchEvent ? matchResultSection : null}
-            {feedbackSummarySection}
+            {isFitnessEvent ? fitnessTestSection : null}
+            {!isFitnessEvent ? feedbackSummarySection : null}
             {playerReviewsSection}
           </>
         : null}
@@ -493,15 +577,17 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </CoachEventDetailCollapsibleSection>
       : null}
 
-      <CoachEventDetailCollapsibleSection id="coach-ev-attendance" title="出席點名">
-        <AttendanceTable
-          eventId={event.id}
-          rows={attendanceRows}
-          isPublished={event.status === EventStatus.PUBLISHED}
-        />
-      </CoachEventDetailCollapsibleSection>
+      {!isFitnessEvent ?
+        <CoachEventDetailCollapsibleSection id="coach-ev-attendance" title="出席點名">
+          <AttendanceTable
+            eventId={event.id}
+            rows={attendanceRows}
+            isPublished={event.status === EventStatus.PUBLISHED}
+          />
+        </CoachEventDetailCollapsibleSection>
+      : null}
 
-      {!eventEnded ?
+      {!eventEnded && event.type !== EventType.FITNESS_TEST ?
         <CoachEventDetailCollapsibleSection id="coach-ev-training" title="訓練計畫">
           <TrainingPlanPanel
             eventId={event.id}
@@ -511,7 +597,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         </CoachEventDetailCollapsibleSection>
       : null}
 
-      {sportMod?.capabilities.courtSketch ?
+      {!isFitnessEvent && sportMod?.capabilities.courtSketch ?
         <CoachEventDetailCollapsibleSection
           id="coach-ev-court"
           title="場上企位"
@@ -528,47 +614,51 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
             disabled={event.status === EventStatus.CANCELLED}
           />
         </CoachEventDetailCollapsibleSection>
-      : teamRow ?
+      : !isFitnessEvent && teamRow ?
         <CoachEventDetailCollapsibleSection id="coach-ev-court" title="場上企位">
           <SportFeatureComingSoon sport={prismaSportToId(teamRow.sport)} featureLabel="場上企位" />
         </CoachEventDetailCollapsibleSection>
       : null}
 
-      <CoachEventDetailCollapsibleSection
-        id="coach-ev-media"
-        title="戰術板與影片"
-        titleExtra={
-          <HintExclamationToggle>
-            外部白板、錄影連結集中管理；球員在已發布事件中可見（唯讀）。
-          </HintExclamationToggle>
-        }
-      >
-        <CoachEventTacticalVideoPanel
-          eventId={event.id}
-          canEdit={event.status !== EventStatus.CANCELLED}
-          tactical={tacticalLinks}
-          video={videoLinks}
-        />
-      </CoachEventDetailCollapsibleSection>
+      {!isFitnessEvent ?
+        <>
+          <CoachEventDetailCollapsibleSection
+            id="coach-ev-media"
+            title="戰術板與影片"
+            titleExtra={
+              <HintExclamationToggle>
+                外部白板、錄影連結集中管理；球員在已發布事件中可見（唯讀）。
+              </HintExclamationToggle>
+            }
+          >
+            <CoachEventTacticalVideoPanel
+              eventId={event.id}
+              canEdit={event.status !== EventStatus.CANCELLED}
+              tactical={tacticalLinks}
+              video={videoLinks}
+            />
+          </CoachEventDetailCollapsibleSection>
 
-      <CoachEventDetailCollapsibleSection
-        id="coach-ev-comments"
-        title="公告與留言"
-        titleExtra={
-          <HintExclamationToggle>
-            發布公告或討論；球員在「我的行程」對應事件頁可見（事件須已發布且對方為參與者）。
-          </HintExclamationToggle>
-        }
-      >
-        <CoachEventCommentsPanel
-          eventId={event.id}
-          currentMemberId={member.id}
-          canManageAll={canManageEventCommentsAsStaff(member)}
-          initialComments={initialEventComments}
-        />
-      </CoachEventDetailCollapsibleSection>
+          <CoachEventDetailCollapsibleSection
+            id="coach-ev-comments"
+            title="公告與留言"
+            titleExtra={
+              <HintExclamationToggle>
+                發布公告或討論；球員在「我的行程」對應事件頁可見（事件須已發布且對方為參與者）。
+              </HintExclamationToggle>
+            }
+          >
+            <CoachEventCommentsPanel
+              eventId={event.id}
+              currentMemberId={member.id}
+              canManageAll={canManageEventCommentsAsStaff(member)}
+              initialComments={initialEventComments}
+            />
+          </CoachEventDetailCollapsibleSection>
+        </>
+      : null}
 
-      {!eventEnded ? feedbackSummarySection : null}
+      {!eventEnded && !isFitnessEvent ? feedbackSummarySection : null}
     </div>
   );
 }

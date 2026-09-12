@@ -26,6 +26,8 @@ function typeLabel(t: EventType) {
       return "訓練";
     case EventType.MATCH:
       return "比賽";
+    case EventType.FITNESS_TEST:
+      return "體能測試";
     default:
       return "其他";
   }

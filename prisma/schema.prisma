@@ -60,6 +60,8 @@ enum EventType {
   TRAINING
   MATCH
   OTHER
+  /** 體能測試日（註解：教練登錄各隊員跳高／折返跑／藥球等數據）。 */
+  FITNESS_TEST
 }
 
 enum EventStatus {
@@ -284,6 +286,8 @@ model TeamMember {
   matchPlayerStats MatchPlayerStat[]
   /** 登錄的比賽結果（註解：recordedBy）。 */
   matchResultsRecorded MatchResult[] @relation("MatchResultRecordedBy")
+  /** 體能測試個人數據（註解：FITNESS_TEST 事件）。 */
+  fitnessTestResults FitnessTestResult[]
 
   @@unique([teamId, userId])
   @@unique([teamId, jerseyNumber])
@@ -324,6 +328,8 @@ model Event {
   playerReviews EventPlayerReview[]
   /** 比賽結果（註解：僅 MATCH 類型；一事件一筆）。 */
   matchResult   MatchResult?
+  /** 體能測試場次（註解：僅 FITNESS_TEST 類型；一事件一筆）。 */
+  fitnessTestSession FitnessTestSession?
 
   @@index([teamId, startsAt])
   @@index([teamId, status, startsAt])
@@ -469,6 +475,36 @@ model MatchPlayerStat {
   member      TeamMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([matchResultId, memberId])
+  @@index([memberId])
+}
+
+/** 體能測試場次（註解：事件須為 FITNESS_TEST；含協議／器材備註）。 */
+model FitnessTestSession {
+  id             String   @id @default(cuid())
+  eventId        String   @unique
+  protocolNote   String?
+  equipmentNote  String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  event   Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  results FitnessTestResult[]
+}
+
+/** 體能測試個人數據（註解：六項測試 attempts + best；JSON 見 fitness/test-schema）。 */
+model FitnessTestResult {
+  id        String   @id @default(cuid())
+  sessionId String
+  memberId  String
+  stats     Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session FitnessTestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  member  TeamMember         @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, memberId])
   @@index([memberId])
 }
 

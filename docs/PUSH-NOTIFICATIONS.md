@@ -11,6 +11,7 @@
 | `event_comment` | 球員 **留言** | 教練端（教練／管理／隊務等） | 留言：{活動名} |
 | `event_comment`（公告型） | 教練發公告時亦用 announcement 文案 | 同上 | 見 `event_announcement` |
 | `rsvp_updated` | 球員 **RSVP** | 教練端（不含本人） | RSVP 更新 |
+| `fitness_results_published` | 教練 **登錄體能成績** | 有數據的球員（不含登錄者） | 體能成績已登錄 |
 
 ## 如何測試
 

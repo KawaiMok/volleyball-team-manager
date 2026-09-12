@@ -16,6 +16,7 @@ type TeamOption = { id: string; name: string };
 
 const NAV_LINKS = [
   { href: "/player", label: "我的行程" },
+  { href: "/player/fitness", label: "我的體能" },
   { href: "/player/feedback", label: "我的回饋" },
   { href: "/player/notifications", label: "通知" },
 ] as const;

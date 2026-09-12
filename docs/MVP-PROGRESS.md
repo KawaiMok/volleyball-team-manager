@@ -2,9 +2,10 @@
 
 > 對照規格：`docs/volleyball-team-manager/01-mvp-pages.md`（若規格在 monorepo 其他路徑請自行調整連結）。  
 > 多運動擴展進度見 [MULTI-SPORT-PROGRESS.md](./MULTI-SPORT-PROGRESS.md)。  
+> 體能測試設計與進度見 [FITNESS-TEST-DESIGN.md](./FITNESS-TEST-DESIGN.md)。  
 > 使用方式：完成項目改為 `[x]`，進行中可在文字後標註「進行中」。
 
-**最後更新**：2026-05-09（A7 隊伍設定／通知偏好已接上 `/coach/team`）
+**最後更新**：2026-09-11（體能測試 Phase 1 MVP）
 
 ---
 
@@ -84,6 +85,7 @@
 | [ ] | RSVP 快捷：全到、依 RSVP 一鍵轉實到 |
 | [x] | 戰術板、影片整理（FileAsset 連結分類；教練增刪／球員唯讀） |
 | [x] | 場上企位示意（`Event.courtSketch` JSON；半場 SVG、拖曳標記；教練編輯／球員唯讀） |
+| [x] | 體能測試（`FITNESS_TEST` 事件；6 項測試；教練登錄／球員唯讀） |
 
 ### A6 隊員管理
 
@@ -128,6 +130,7 @@
 | [ ] | 集合時間顯著展示（若資料有 `meetAt` 可再強調） |
 | [x] | 公告／留言 |
 | [x] | 場上企位示意（唯讀；與教練儲存之 `courtSketch` 同步） |
+| [x] | 體能測試成績唯讀（`FITNESS_TEST` 事件結束後） |
 | [ ] | 附件連結 |
 
 ### B3 回饋提交

@@ -5,6 +5,7 @@ import {
   getActiveTeamUserIds,
   getCoachSideUserIds,
   getEventParticipantUserIds,
+  getUserIdsForMemberIds,
   notifyUserIds,
 } from "@/lib/push/dispatch";
 
@@ -138,6 +139,29 @@ export function notifyRsvpReminder(args: {
       eventTitle: args.eventTitle,
     });
     return notifyUserIds(args.userIds, payload);
+  });
+}
+
+/** 教練登錄體能成績 → 有數據的球員（註解：不含登錄者本人）。 */
+export function notifyFitnessResultsPublished(args: {
+  teamId: string;
+  eventId: string;
+  eventTitle: string;
+  memberIds: string[];
+  authorUserId: string;
+}) {
+  if (args.memberIds.length === 0) return;
+
+  dispatchPush(async () => {
+    const userIds = await getUserIdsForMemberIds(args.memberIds);
+    const payload = buildPushPayload({
+      kind: "fitness_results_published",
+      teamId: args.teamId,
+      eventId: args.eventId,
+      eventTitle: args.eventTitle,
+      path: `/player/events/${args.eventId}`,
+    });
+    return notifyUserIds(userIds, payload, { excludeUserId: args.authorUserId });
   });
 }
 

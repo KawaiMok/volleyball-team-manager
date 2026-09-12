@@ -29,6 +29,11 @@ function playerTabs(): TabDef[] {
       isActive: (p) => p === "/player" || /^\/player\/events\/[^/]+$/.test(p),
     },
     {
+      href: "/player/fitness",
+      label: "體能",
+      isActive: (p) => p.startsWith("/player/fitness"),
+    },
+    {
       href: "/player/feedback",
       label: "回饋",
       isActive: (p) => p.startsWith("/player/feedback"),

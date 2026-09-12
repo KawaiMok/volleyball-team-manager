@@ -10,13 +10,15 @@ import { prismaSportToId } from "@/lib/sports/registry-server";
 import { fatigueLabel, fatigueLevelIndex, painLabel, painLevelIndex } from "@/lib/feedback-display";
 import { getPrisma } from "@/lib/prisma";
 import { formatDateTimeZh } from "@/lib/format-datetime";
-import { EventStatus, MemberStatus } from "@/generated/prisma/client";
+import { EventStatus, EventType, MemberStatus } from "@/generated/prisma/client";
 import { MemberStatsTable, type MemberStatsTableRow } from "@/app/coach/(main)/team/stats/member-stats-table";
 import { MatchStatsTotalsToggle } from "@/app/coach/(main)/team/stats/match-stats-totals-toggle";
 import { MatchQuickIndicators, type QuickIndicatorRow } from "@/app/coach/(main)/team/stats/match-quick-indicators";
 import { MatchStandoutCards } from "@/app/coach/(main)/team/stats/match-standout-cards";
+import { FitnessStatsSection } from "@/app/coach/(main)/team/stats/fitness-stats-section";
 import type { PlayerStatsRecord } from "@/lib/sports/match/types";
 import { computeStandoutWinners } from "@/lib/sports/match/standout";
+import { buildMemberFitnessTrends } from "@/lib/fitness/aggregate";
 
 type MemberRow = {
   memberId: string;
@@ -123,7 +125,7 @@ export default async function CoachTeamStatsPage() {
 
   const now = new Date();
 
-  const [members, events, matchEvents] = await Promise.all([
+  const [members, events, matchEvents, fitnessEvents] = await Promise.all([
     prisma.teamMember.findMany({
       where: { teamId: member.teamId, status: MemberStatus.ACTIVE },
       include: { user: { select: { name: true, email: true } } },
@@ -178,6 +180,28 @@ export default async function CoachTeamStatsPage() {
       },
       orderBy: { endsAt: "desc" },
       take: 200,
+    }),
+    prisma.event.findMany({
+      where: {
+        teamId: member.teamId,
+        status: EventStatus.PUBLISHED,
+        endsAt: { lte: now },
+        type: EventType.FITNESS_TEST,
+      },
+      select: {
+        id: true,
+        title: true,
+        startsAt: true,
+        fitnessTestSession: {
+          select: {
+            results: {
+              select: { memberId: true, stats: true },
+            },
+          },
+        },
+      },
+      orderBy: { startsAt: "desc" },
+      take: 50,
     }),
   ]);
 
@@ -264,6 +288,19 @@ export default async function CoachTeamStatsPage() {
 
   const totalEndedPublishedEvents = events.length;
   const totalEndedPublishedMatches = matchEvents.length;
+  const totalFitnessTestSessions = fitnessEvents.length;
+
+  const fitnessTrendRows = buildMemberFitnessTrends(
+    members,
+    fitnessEvents
+      .filter((ev) => ev.fitnessTestSession)
+      .map((ev) => ({
+        id: ev.id,
+        title: ev.title,
+        startsAt: ev.startsAt,
+        results: ev.fitnessTestSession!.results,
+      })),
+  );
 
   const byAttendance = [...rows].sort((a, b) => (b.attendanceRatePct ?? -1) - (a.attendanceRatePct ?? -1));
   const attendanceTop = topN(byAttendance.filter((r) => r.attendanceRatePct != null), 1)[0];
@@ -388,6 +425,19 @@ export default async function CoachTeamStatsPage() {
         }
       >
         <MemberStatsTable rows={tableRows} />
+      </CoachEventDetailCollapsibleSection>
+
+      <CoachEventDetailCollapsibleSection
+        id="coach-team-stats-fitness"
+        title="體能測試趨勢"
+        defaultOpen={totalFitnessTestSessions > 0}
+        titleExtra={
+          <HintExclamationToggle>
+            依已結束的體能測試場次；顯示各隊員最新 best 與相對上一場的 Δ（正值代表進步）。
+          </HintExclamationToggle>
+        }
+      >
+        <FitnessStatsSection rows={fitnessTrendRows} sessionCount={totalFitnessTestSessions} />
       </CoachEventDetailCollapsibleSection>
 
       <CoachEventDetailCollapsibleSection id="coach-team-stats-next" title="下一步（比賽個人數據）" defaultOpen={false}>
