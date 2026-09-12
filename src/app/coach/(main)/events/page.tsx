@@ -22,20 +22,8 @@ import {
   EventDuplicateButton,
 } from "@/components/event-duplicate-actions";
 import { isEventEnded } from "@/lib/event-timing";
-import { formatDateTimeZh } from "@/lib/format-datetime";
-
-function typeLabel(t: EventType) {
-  switch (t) {
-    case EventType.TRAINING:
-      return "訓練";
-    case EventType.MATCH:
-      return "比賽";
-    case EventType.FITNESS_TEST:
-      return "體能測試";
-    default:
-      return "其他";
-  }
-}
+import { eventTypeLabel, formatEventListTimeCompact } from "@/lib/event-display";
+import { CoachEventsListMobile } from "@/app/coach/(main)/events/coach-events-list-mobile";
 
 type PageProps = {
   searchParams: Promise<{
@@ -112,7 +100,22 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
 
       <EventStatusLegend />
 
-      <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+      <CoachEventsListMobile
+        events={events.map((ev) => ({
+          id: ev.id,
+          title: ev.title,
+          type: ev.type,
+          status: ev.status,
+          startsAt: ev.startsAt,
+          endsAt: ev.endsAt,
+          locationName: ev.locationName,
+        }))}
+        emptyMessage={
+          filterActive ? "沒有符合條件的事件，請調整篩選或重設" : "尚無事件，請新增一場訓練或比賽"
+        }
+      />
+
+      <div className="hidden overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900 md:block">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-400">
             <tr>
@@ -150,17 +153,13 @@ export default async function CoachEventsPage({ searchParams }: PageProps) {
                       <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">{ev.locationName}</span>
                     : null}
                   </td>
-                  <td className="px-4 py-3 text-zinc-700 dark:text-zinc-300">{typeLabel(ev.type)}</td>
-                  <td className="px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
+                  <td className="whitespace-nowrap px-4 py-3 text-zinc-700 dark:text-zinc-300">
+                    {eventTypeLabel(ev.type)}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 tabular-nums text-zinc-700 dark:text-zinc-300">
                     {ended ?
                       <span className="text-zinc-400">—</span>
-                    : formatDateTimeZh(ev.startsAt, {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    : formatEventListTimeCompact(ev.startsAt)}
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-center">
                     <EventStatusIndicator status={ev.status} />

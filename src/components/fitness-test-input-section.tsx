@@ -31,13 +31,13 @@ function ItemTabs({
   onChange: (key: FitnessTestItemKey) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="hidden flex-wrap gap-1.5 md:flex">
       {FITNESS_TEST_ITEMS.map((item) => (
         <button
           key={item.key}
           type="button"
           onClick={() => onChange(item.key)}
-          className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
             active === item.key ?
               "bg-[var(--brand-primary)] text-white"
             : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300"
@@ -46,6 +46,103 @@ function ItemTabs({
           {item.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+/** 手機：大按鈕 + 左右切換 + 展開選單（註解：取代難按的藥丸 tabs）。 */
+function FitnessItemSwitcher({
+  active,
+  onChange,
+}: {
+  active: FitnessTestItemKey;
+  onChange: (key: FitnessTestItemKey) => void;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const activeIndex = FITNESS_TEST_ITEMS.findIndex((item) => item.key === active);
+  const activeDef = FITNESS_TEST_ITEM_BY_KEY[active];
+  const canPrev = activeIndex > 0;
+  const canNext = activeIndex >= 0 && activeIndex < FITNESS_TEST_ITEMS.length - 1;
+
+  function goPrev() {
+    if (!canPrev) return;
+    onChange(FITNESS_TEST_ITEMS[activeIndex - 1]!.key);
+  }
+
+  function goNext() {
+    if (!canNext) return;
+    onChange(FITNESS_TEST_ITEMS[activeIndex + 1]!.key);
+  }
+
+  return (
+    <div className="space-y-2 md:hidden">
+      <div className="flex items-stretch gap-2">
+        <button
+          type="button"
+          aria-label="上一項"
+          disabled={!canPrev}
+          onClick={goPrev}
+          className="flex h-12 w-11 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-lg text-zinc-700 disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          onClick={() => setPickerOpen((v) => !v)}
+          className="flex min-h-12 min-w-0 flex-1 items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2 text-left dark:border-zinc-700 dark:bg-zinc-950"
+          aria-expanded={pickerOpen}
+        >
+          <span className="min-w-0">
+            <span className="block truncate text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              {activeDef.label}
+            </span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {activeIndex + 1}/{FITNESS_TEST_ITEMS.length} · 點選展開
+            </span>
+          </span>
+          <span className="shrink-0 text-zinc-400" aria-hidden>
+            {pickerOpen ? "▴" : "▾"}
+          </span>
+        </button>
+        <button
+          type="button"
+          aria-label="下一項"
+          disabled={!canNext}
+          onClick={goNext}
+          className="flex h-12 w-11 shrink-0 items-center justify-center rounded-xl border border-zinc-200 bg-white text-lg text-zinc-700 disabled:opacity-30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-200"
+        >
+          ›
+        </button>
+      </div>
+
+      {pickerOpen ?
+        <ul className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-950">
+          {FITNESS_TEST_ITEMS.map((item) => {
+            const selected = item.key === active;
+            return (
+              <li key={item.key} className="border-b border-zinc-100 last:border-b-0 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange(item.key);
+                    setPickerOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between px-4 py-3.5 text-left text-sm ${
+                    selected ?
+                      "bg-[var(--brand-primary)]/10 font-semibold text-[var(--brand-primary)]"
+                    : "text-zinc-800 active:bg-zinc-50 dark:text-zinc-100 dark:active:bg-zinc-900"
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {selected ?
+                    <span className="text-xs">目前</span>
+                  : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      : null}
     </div>
   );
 }
@@ -67,6 +164,7 @@ function PlayerFitnessSheetForm({
 
   return (
     <div className="space-y-4">
+      <FitnessItemSwitcher active={itemKey} onChange={onItemChange} />
       <ItemTabs active={itemKey} onChange={onItemChange} />
       <div className="space-y-3 pt-1">
         {Array.from({ length: def.attemptCount }, (_, i) => (
@@ -184,7 +282,7 @@ export function FitnessTestInputSection({ playerRows, onUpdateAttempt }: Props) 
       {/* 手機：列表 + BottomSheet */}
       <div className="space-y-2 md:hidden">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-zinc-500">點選球員，在 popup 內切換測試項目</p>
+          <p className="text-xs text-zinc-500">點選球員，用下方切換器選測試項目</p>
           <p className="text-xs text-zinc-500">
             已填 {mobileDoneCount}/{playerRows.length}
           </p>
@@ -247,7 +345,7 @@ export function FitnessTestInputSection({ playerRows, onUpdateAttempt }: Props) 
         open={sheetPlayer !== null}
         onClose={() => setSheetMemberId(null)}
         title={sheetPlayer?.displayName ?? ""}
-        subtitle="體能測試 · 切換上方項目"
+        subtitle={`體能測試 · ${FITNESS_TEST_ITEM_BY_KEY[sheetItemKey].label}`}
         tall
         footer={
           <button
