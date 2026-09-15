@@ -4,6 +4,8 @@ import { useToast } from "@/components/toast-provider";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { TeamPositionField, derivePositionState } from "@/components/team-position-field";
+
 const ROLES = ["ADMIN", "COACH", "COACH_PLAYER", "STAFF", "PLAYER"] as const;
 
 function roleLabel(r: string) {
@@ -38,6 +40,7 @@ export type TeamMemberEditInitial = {
 type Props = {
   memberId: string;
   squads: string[];
+  positionOptions: readonly string[];
   isSelf: boolean;
   /** 目前登入者是否為隊伍管理員（註解：非管理員不可變更「管理員」角色）。 */
   actorIsAdmin: boolean;
@@ -70,6 +73,7 @@ function deriveSquadState(squads: string[], squad: string | null) {
 export function TeamMemberEditForm({
   memberId,
   squads,
+  positionOptions,
   isSelf,
   actorIsAdmin,
   clerkLinked,
@@ -87,6 +91,9 @@ export function TeamMemberEditForm({
   const squadInit = deriveSquadState(squads, initial.squad);
   const [squadChoice, setSquadChoice] = useState(squadInit.choice);
   const [squadCustom, setSquadCustom] = useState(squadInit.custom);
+  const positionInit = derivePositionState(positionOptions, initial.position);
+  const [positionChoice, setPositionChoice] = useState(positionInit.choice);
+  const [positionCustom, setPositionCustom] = useState(positionInit.custom);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -97,7 +104,8 @@ export function TeamMemberEditForm({
     const displayName = String(fd.get("displayName") ?? "");
     const role = String(fd.get("role") ?? "PLAYER");
     const status = String(fd.get("status") ?? "ACTIVE");
-    const position = String(fd.get("position") ?? "").trim();
+    const position =
+      positionChoice === "__custom" ? positionCustom.trim() || null : positionChoice.trim() || null;
     const phone = String(fd.get("phone") ?? "").trim();
     const notes = String(fd.get("notes") ?? "").trim();
     const jerseyRaw = String(fd.get("jerseyNumber") ?? "").trim();
@@ -275,16 +283,14 @@ export function TeamMemberEditForm({
             className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">位置</label>
-          <input
-            name="position"
-            type="text"
-            maxLength={64}
-            defaultValue={initial.position ?? ""}
-            className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-          />
-        </div>
+        <TeamPositionField
+          options={positionOptions}
+          choice={positionChoice}
+          custom={positionCustom}
+          onChoiceChange={setPositionChoice}
+          onCustomChange={setPositionCustom}
+          className="[&_select]:mt-1.5 [&_input]:mt-2"
+        />
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">分組</label>
           {squads.length > 0 ?

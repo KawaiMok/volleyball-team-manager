@@ -38,8 +38,8 @@ export default async function CoachTeamPage() {
     computeTeamAttendanceStats(member.teamId, "month"),
   ]);
   const squads = parseGroupConfig(teamRow?.groupConfig ?? null);
-  const positionPlaceholder =
-    teamRow ? getSportModule(prismaSportToId(teamRow.sport)).labels.positionPlaceholder : "位置（選填）";
+  const sportModule = teamRow ? getSportModule(prismaSportToId(teamRow.sport)) : null;
+  const positionOptions = sportModule?.labels.positionOptions ?? [];
   const notificationPrefs = parseTeamNotificationSettings(teamRow?.notificationSettings ?? null);
   const actorIsAdmin = member.role === TeamRole.ADMIN;
 
@@ -115,7 +115,7 @@ export default async function CoachTeamPage() {
         key={teamSettingsKey}
         initialRows={rosterRows}
         squads={squads}
-        positionPlaceholder={positionPlaceholder}
+        positionOptions={positionOptions}
         currentMemberId={member.id}
         actorIsAdmin={actorIsAdmin}
       />

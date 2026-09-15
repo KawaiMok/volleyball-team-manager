@@ -14,7 +14,7 @@ import { parseCourtSketch } from "@/lib/court-sketch-schema";
 import type { PeriodScore } from "@/lib/sports/match/types";
 import { getSportModule } from "@/lib/sports/registry";
 import { prismaSportToId } from "@/lib/sports/registry-server";
-import { normalizeFitnessStats } from "@/lib/fitness/test-schema";
+import { normalizeFitnessStats, normalizeFitnessTestItemKeys } from "@/lib/fitness/test-schema";
 import { getTeamMember } from "@/lib/session";
 import { getPrisma } from "@/lib/prisma";
 
@@ -128,6 +128,7 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
   const now = new Date();
   const afterEnd = now.getTime() >= event.endsAt.getTime();
   const isFitnessEvent = event.type === EventType.FITNESS_TEST;
+  const fitnessSelectedItemKeys = normalizeFitnessTestItemKeys(event.fitnessTestItemKeys);
   /** 有設定截止且已過期則鎖定出席意願（註解：與 PATCH /api/events/[id]/rsvp 一致）。 */
   const rsvpDeadlineAt = event.rsvpDeadlineAt;
   const rsvpLocked =
@@ -238,9 +239,12 @@ export default async function PlayerEventDetailPage({ params }: PageProps) {
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50">體能測試</h2>
           <FitnessTestReadonly
             stats={normalizeFitnessStats(myFitnessResult.stats)}
+            heightCm={myFitnessResult.heightCm ?? null}
+            weightKg={myFitnessResult.weightKg ?? null}
             protocolNote={event.fitnessTestSession?.protocolNote ?? null}
             equipmentNote={event.fitnessTestSession?.equipmentNote ?? null}
             notes={event.fitnessTestSession?.notes ?? null}
+            selectedItemKeys={fitnessSelectedItemKeys}
           />
         </section>
       : <section className="space-y-2">

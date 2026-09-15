@@ -3,9 +3,13 @@ import { getDebugTeamMember } from "@/lib/debug-session";
 import { canManageFitnessTest } from "@/lib/fitness-test-access";
 import {
   compactFitnessStats,
+  compactHeightCm,
+  compactWeightKg,
+  filterStatsToSelectedKeys,
   fitnessTestPutBodySchema,
-  hasAnyFitnessStats,
+  hasAnyFitnessResultRow,
   normalizeFitnessStats,
+  normalizeFitnessTestItemKeys,
   parseFitnessStatsInput,
   type FitnessTestStats,
 } from "@/lib/fitness/test-schema";
@@ -27,6 +31,8 @@ function serializeSession(
     results: Array<{
       memberId: string;
       stats: unknown;
+      heightCm: number | null;
+      weightKg: number | null;
       member: { user: { name: string | null; email: string | null } | null };
     }>;
   },
@@ -38,6 +44,8 @@ function serializeSession(
       memberId: r.memberId,
       displayName: r.member.user?.name ?? r.member.user?.email ?? r.memberId.slice(0, 8),
       stats: normalizeFitnessStats(r.stats),
+      heightCm: r.heightCm ?? null,
+      weightKg: r.weightKg ?? null,
     }));
 
   return {
@@ -88,7 +96,7 @@ export async function GET(_req: Request, ctx: Ctx) {
   });
 }
 
-/** 教練：儲存體能測試（註解：事件結束後 upsert）。 */
+/** 教練：儲存體能測試（註解：發布且開始後可 upsert）。 */
 export async function PUT(req: Request, ctx: Ctx) {
   const { id: eventId } = await ctx.params;
   const member = await getDebugTeamMember();
@@ -99,7 +107,16 @@ export async function PUT(req: Request, ctx: Ctx) {
   const prisma = getPrisma();
   const event = await prisma.event.findFirst({
     where: { id: eventId, teamId: member.teamId },
-    select: { id: true, type: true, status: true, endsAt: true, title: true, teamId: true },
+    select: {
+      id: true,
+      type: true,
+      status: true,
+      startsAt: true,
+      endsAt: true,
+      title: true,
+      teamId: true,
+      fitnessTestItemKeys: true,
+    },
   });
   if (!event) {
     return NextResponse.json({ error: "找不到事件" }, { status: 404 });
@@ -108,8 +125,10 @@ export async function PUT(req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "僅體能測試事件可登錄數據" }, { status: 400 });
   }
   if (!canManageFitnessTest(member, event)) {
-    return NextResponse.json({ error: "事件尚未結束，無法登錄體能數據" }, { status: 403 });
+    return NextResponse.json({ error: "事件尚未發布或尚未開始，無法登錄體能數據" }, { status: 403 });
   }
+
+  const selectedItemKeys = normalizeFitnessTestItemKeys(event.fitnessTestItemKeys);
 
   let body: ReturnType<typeof fitnessTestPutBodySchema.parse>;
   try {
@@ -126,19 +145,35 @@ export async function PUT(req: Request, ctx: Ctx) {
     participants.filter((p) => isPlayerReviewSubjectRole(p.member.role)).map((p) => p.memberId),
   );
 
-  const playerResultsToSave: { memberId: string; stats: FitnessTestStats }[] = [];
+  const playerResultsToSave: {
+    memberId: string;
+    stats: FitnessTestStats;
+    heightCm: number | null;
+    weightKg: number | null;
+  }[] = [];
+  const playerResultsToDelete: string[] = [];
 
   for (const row of body.playerResults) {
     const parsedStats = parseFitnessStatsInput(row.stats);
     if (!parsedStats) {
       return NextResponse.json({ error: "無效的隊員或數據格式" }, { status: 400 });
     }
-    const compact = compactFitnessStats(parsedStats);
-    if (!allowedIds.has(row.memberId) && hasAnyFitnessStats(compact)) {
+    const compact = filterStatsToSelectedKeys(compactFitnessStats(parsedStats), selectedItemKeys);
+    const heightCm = compactHeightCm(row.heightCm ?? null);
+    const weightKg = compactWeightKg(row.weightKg ?? null);
+    const resultRow = { stats: compact, heightCm, weightKg };
+    if (!allowedIds.has(row.memberId) && hasAnyFitnessResultRow(resultRow, selectedItemKeys)) {
       return NextResponse.json({ error: "個人數據含非參與球員" }, { status: 400 });
     }
-    if (hasAnyFitnessStats(compact)) {
-      playerResultsToSave.push({ memberId: row.memberId, stats: compact });
+    if (hasAnyFitnessResultRow(resultRow, selectedItemKeys)) {
+      playerResultsToSave.push({
+        memberId: row.memberId,
+        stats: compact,
+        heightCm,
+        weightKg,
+      });
+    } else {
+      playerResultsToDelete.push(row.memberId);
     }
   }
 
@@ -162,15 +197,30 @@ export async function PUT(req: Request, ctx: Ctx) {
       },
     });
 
-    await tx.fitnessTestResult.deleteMany({ where: { sessionId: session.id } });
+    await tx.fitnessTestResult.deleteMany({
+      where: {
+        sessionId: session.id,
+        memberId: { in: playerResultsToDelete },
+      },
+    });
 
-    if (playerResultsToSave.length > 0) {
-      await tx.fitnessTestResult.createMany({
-        data: playerResultsToSave.map((p) => ({
+    for (const p of playerResultsToSave) {
+      await tx.fitnessTestResult.upsert({
+        where: {
+          sessionId_memberId: { sessionId: session.id, memberId: p.memberId },
+        },
+        create: {
           sessionId: session.id,
           memberId: p.memberId,
           stats: p.stats,
-        })),
+          heightCm: p.heightCm,
+          weightKg: p.weightKg,
+        },
+        update: {
+          stats: p.stats,
+          heightCm: p.heightCm,
+          weightKg: p.weightKg,
+        },
       });
     }
 
@@ -209,7 +259,7 @@ export async function DELETE(_req: Request, ctx: Ctx) {
   const prisma = getPrisma();
   const event = await prisma.event.findFirst({
     where: { id: eventId, teamId: member.teamId },
-    select: { id: true, type: true, status: true, endsAt: true },
+    select: { id: true, type: true, status: true, startsAt: true, endsAt: true },
   });
   if (!event) {
     return NextResponse.json({ error: "找不到事件" }, { status: 404 });

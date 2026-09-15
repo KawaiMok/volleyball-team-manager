@@ -29,6 +29,7 @@ export type TeamRosterRow = {
 
 type Props = {
   squads: string[];
+  positionOptions: readonly string[];
   currentMemberId: string;
   rows: TeamRosterRow[];
   actorIsAdmin: boolean;
@@ -55,7 +56,7 @@ function roleLabel(r: string) {
 const ROSTER_EDIT_FORM_ID = "roster-edit-form";
 
 /** 隊員表格 + 詳情唯讀彈窗 + 編輯對話框（註解：主表僅列必要欄，其餘於「詳情」查看）。 */
-export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin }: Props) {
+export function TeamRosterSection({ squads, positionOptions, currentMemberId, rows, actorIsAdmin }: Props) {
   const [editing, setEditing] = useState<TeamRosterRow | null>(null);
   const [detail, setDetail] = useState<TeamRosterRow | null>(null);
   const [editPending, setEditPending] = useState(false);
@@ -277,6 +278,7 @@ export function TeamRosterSection({ squads, currentMemberId, rows, actorIsAdmin 
             key={`${editing.id}-${editing.updatedAt}`}
             memberId={editing.id}
             squads={squads}
+            positionOptions={positionOptions}
             isSelf={editing.id === currentMemberId}
             actorIsAdmin={actorIsAdmin}
             clerkLinked={editing.clerkLinked}

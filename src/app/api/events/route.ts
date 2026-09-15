@@ -5,6 +5,7 @@ import { isMemberParticipantRuleFullyValid, resolveParticipantMemberIds } from "
 import type { ParticipantRule } from "@/lib/participant-rule-types";
 import { participantRuleSchema } from "@/lib/participant-rule-schema";
 import { isCoachLike } from "@/lib/rbac";
+import { fitnessTestItemKeysSchema } from "@/lib/fitness/test-schema";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -19,6 +20,8 @@ const createBodySchema = z.object({
   locationName: z.string().optional().nullable(),
   rsvpDeadlineAt: z.string().optional().nullable(),
   participantRule: participantRuleSchema,
+  /** 體能測試所選項目（註解：僅 FITNESS_TEST；未填則 null＝全部 6 項）。 */
+  fitnessTestItemKeys: fitnessTestItemKeysSchema.optional(),
 });
 
 const COACH_EVENTS_LIST_MAX = 500;
@@ -133,6 +136,10 @@ export async function POST(req: Request) {
     );
   }
 
+  if (body.type !== EventType.FITNESS_TEST && body.fitnessTestItemKeys != null) {
+    return NextResponse.json({ error: "僅體能測試事件可指定測試項目" }, { status: 400 });
+  }
+
   const prisma = getPrisma();
   const event = await prisma.$transaction(async (tx) => {
     const ev = await tx.event.create({
@@ -148,6 +155,10 @@ export async function POST(req: Request) {
         status: EventStatus.DRAFT,
         rsvpDeadlineAt: rsvpDeadlineAt ?? undefined,
         createdByMemberId: member.id,
+        fitnessTestItemKeys:
+          body.type === EventType.FITNESS_TEST && body.fitnessTestItemKeys ?
+            body.fitnessTestItemKeys
+          : undefined,
       },
     });
 

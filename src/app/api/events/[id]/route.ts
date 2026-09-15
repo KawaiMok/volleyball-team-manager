@@ -1,4 +1,4 @@
-import { EventStatus, EventType } from "@/generated/prisma/client";
+import { EventStatus, EventType, Prisma } from "@/generated/prisma/client";
 import { syncEventParticipantsToMemberIds } from "@/lib/event-participant-sync";
 import { eventDetailInclude } from "@/lib/event-response-sanitize";
 import { getDebugTeamMember } from "@/lib/debug-session";
@@ -8,6 +8,7 @@ import { participantRuleSchema } from "@/lib/participant-rule-schema";
 import { notifyEventUpdated, shouldNotifyEventUpdated } from "@/lib/push/notify-events";
 import { getPrisma } from "@/lib/prisma";
 import { isCoachLike, isStaff } from "@/lib/rbac";
+import { fitnessTestItemKeysSchema } from "@/lib/fitness/test-schema";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -24,6 +25,8 @@ const patchBodySchema = z.object({
   rsvpDeadlineAt: z.string().optional().nullable(),
   /** 若提供則重算參與者並同步 EventParticipant／Attendance（註解：移除者一併刪除 Feedback）。 */
   participantRule: participantRuleSchema.optional(),
+  /** 體能測試所選項目（註解：僅 FITNESS_TEST）。 */
+  fitnessTestItemKeys: fitnessTestItemKeysSchema.optional(),
 });
 
 /** 單一事件詳情（註解：含 participants / attendance；球員僅能看已發布且自己有參與）。 */
@@ -120,6 +123,10 @@ export async function PATCH(req: Request, ctx: Ctx) {
     );
   }
 
+  if (body.type !== EventType.FITNESS_TEST && body.fitnessTestItemKeys != null) {
+    return NextResponse.json({ error: "僅體能測試事件可指定測試項目" }, { status: 400 });
+  }
+
   let newMemberIds: string[] | null = null;
   if (body.participantRule !== undefined) {
     const rule = body.participantRule as ParticipantRule;
@@ -153,6 +160,10 @@ export async function PATCH(req: Request, ctx: Ctx) {
         meetAt,
         locationName: body.locationName?.trim() || null,
         rsvpDeadlineAt,
+        fitnessTestItemKeys:
+          body.type === EventType.FITNESS_TEST ?
+            body.fitnessTestItemKeys ?? existing.fitnessTestItemKeys ?? undefined
+          : Prisma.DbNull,
       },
     });
     if (newMemberIds !== null) {

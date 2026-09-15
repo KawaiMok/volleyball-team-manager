@@ -7,8 +7,13 @@ import {
   validateParticipantRuleForSubmit,
 } from "@/app/coach/(main)/events/event-participant-rule-fields";
 import { DatetimeLocalInput } from "@/components/datetime-local-input";
+import { FitnessTestItemPicker } from "@/components/fitness-test-item-picker";
 import type { ParticipantRule } from "@/lib/participant-rule-types";
 import { isoToDatetimeLocal, parseDatetimeLocalToIso } from "@/lib/datetime-local";
+import {
+  DEFAULT_FITNESS_TEST_ITEM_KEYS,
+  type FitnessTestItemKey,
+} from "@/lib/fitness/test-schema";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -26,6 +31,7 @@ type Props = {
     meetAtIso: string | null;
     locationName: string | null;
     rsvpDeadlineIso: string | null;
+    fitnessTestItemKeys: FitnessTestItemKey[];
   };
   squads: string[];
   roster: EventRosterRow[];
@@ -38,6 +44,10 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
   const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
   const [participantRule, setParticipantRule] = useState<ParticipantRule>(initialParticipantRule);
+  const [eventType, setEventType] = useState(initial.type);
+  const [fitnessTestItemKeys, setFitnessTestItemKeys] = useState<FitnessTestItemKey[]>(
+    initial.fitnessTestItemKeys,
+  );
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,7 +60,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
     setPending(true);
     const fd = new FormData(e.currentTarget);
     const title = String(fd.get("title") ?? "").trim();
-    const type = String(fd.get("type") ?? "");
+    const type = eventType;
     const descriptionRaw = String(fd.get("description") ?? "").trim();
     const startsAt = String(fd.get("startsAt") ?? "");
     const endsAt = String(fd.get("endsAt") ?? "");
@@ -73,6 +83,7 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
           locationName: locationName || null,
           rsvpDeadlineAt: rsvpDeadlineRaw ? parseDatetimeLocalToIso(rsvpDeadlineRaw) : null,
           participantRule,
+          ...(type === "FITNESS_TEST" ? { fitnessTestItemKeys } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -112,7 +123,14 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
         <select
           id={`edit-type-${eventId}`}
           name="type"
-          defaultValue={initial.type}
+          value={eventType}
+          onChange={(e) => {
+            const next = e.target.value;
+            setEventType(next);
+            if (next === "FITNESS_TEST" && eventType !== "FITNESS_TEST") {
+              setFitnessTestItemKeys([...DEFAULT_FITNESS_TEST_ITEM_KEYS]);
+            }
+          }}
           className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         >
           {EVENT_TYPES.map((t) => (
@@ -122,6 +140,10 @@ export function EventEditForm({ eventId, initial, squads, roster, initialPartici
           ))}
         </select>
       </div>
+
+      {eventType === "FITNESS_TEST" ?
+        <FitnessTestItemPicker value={fitnessTestItemKeys} onChange={setFitnessTestItemKeys} />
+      : null}
 
       <div>
         <label htmlFor={`edit-desc-${eventId}`} className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">

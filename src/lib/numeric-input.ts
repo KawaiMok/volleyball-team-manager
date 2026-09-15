@@ -44,6 +44,15 @@ export function sanitizeDecimalInput(raw: string, maxDecimalPlaces: number): str
   return cleaned;
 }
 
+/** 編輯中小數欄的初始字串（註解：不補 .0，避免只能輸入個位數）。 */
+export function formatDecimalDraftValue(n: number | null | undefined, decimalPlaces: number): string {
+  if (n == null) return "";
+  if (n === 0) return "";
+  const fixed = n.toFixed(decimalPlaces);
+  if (!fixed.includes(".")) return fixed;
+  return fixed.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+}
+
 /** 解析可空小數；空白回傳 null（註解：體能測試 attempts）。 */
 export function parseDecimalOrNull(raw: string, maxDecimalPlaces: number): number | null {
   const t = raw.trim();

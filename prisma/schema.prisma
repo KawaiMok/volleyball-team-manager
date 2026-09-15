@@ -311,6 +311,8 @@ model Event {
   publishedByMemberId String?
   /** 場上企位示意 JSON（註解：正規化座標 tokens；教練編輯、球員唯讀）。 */
   courtSketch         Json?
+  /** 體能測試項目 key 陣列（註解：null＝全部 6 項；僅 FITNESS_TEST 使用）。 */
+  fitnessTestItemKeys Json?
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
@@ -498,6 +500,10 @@ model FitnessTestResult {
   sessionId String
   memberId  String
   stats     Json     @default("{}")
+  /** 當場身高 cm（註解：每次體能測驗獨立紀錄）。 */
+  heightCm  Float?
+  /** 當場體重 kg（註解：每次體能測驗獨立紀錄）。 */
+  weightKg  Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

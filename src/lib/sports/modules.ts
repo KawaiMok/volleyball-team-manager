@@ -12,6 +12,7 @@ export const volleyballSportModule: SportModule = {
   labels: {
     name: "排球",
     positionPlaceholder: "例如：舉球員、自由球員",
+    positionOptions: ["舉球", "主攻", "副攻", "接應二傳", "自由"],
   },
   capabilities: {
     courtSketch: true,
@@ -28,6 +29,7 @@ export const soccerSportModule: SportModule = {
   labels: {
     name: "足球",
     positionPlaceholder: "例如：前鋒、中場、後衛、守門",
+    positionOptions: ["守門", "後衛", "中場", "前鋒"],
   },
   capabilities: {
     courtSketch: true,
@@ -44,6 +46,7 @@ export const basketballSportModule: SportModule = {
   labels: {
     name: "籃球",
     positionPlaceholder: "例如：控球、得分後衛、小前鋒、中鋒",
+    positionOptions: ["控球後衛", "得分後衛", "小前鋒", "大前鋒", "中鋒"],
   },
   capabilities: {
     courtSketch: true,

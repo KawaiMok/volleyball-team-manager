@@ -3,7 +3,7 @@
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { ActiveTeamSwitcher } from "@/components/active-team-switcher";
 import { AppLogo } from "@/components/brand/app-logo";
@@ -11,8 +11,12 @@ import { NativeBackButton } from "@/components/native-back-button";
 import { ToolbarUtilityDropdown } from "@/components/toolbar-utility-dropdown";
 import { useCapacitorNative } from "@/hooks/use-capacitor-native";
 import { isEventDetailPath } from "@/hooks/use-navigation-direction";
-
-type TeamOption = { id: string; name: string };
+import {
+  formatActiveTeamHeaderSubtitle,
+  formatActiveTeamHeaderTitle,
+  shouldShowOrgInTeamLabels,
+  type ActiveTeamOption,
+} from "@/lib/active-team-options";
 
 const NAV_LINKS = [
   { href: "/player", label: "我的行程" },
@@ -24,17 +28,21 @@ const NAV_LINKS = [
 type Props = {
   teamName: string;
   sportLabel: string;
-  teams: TeamOption[];
+  teams: ActiveTeamOption[];
   currentTeamId: string;
   canAccessCoach: boolean;
 };
 
-/** 球員端頂部列：Web 漢堡選單；Capacitor 精簡為 logo + 標題 + 返回。 */
+/** 球員端頂部列：Web 漢堡選單；Capacitor 精簡 + 可切換多隊／多組織。 */
 export function PlayerMainToolbar({ teamName, sportLabel, teams, currentTeamId, canAccessCoach }: Props) {
   const native = useCapacitorNative();
   const pathname = usePathname() ?? "";
   const showBack = native && isEventDetailPath(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
+  const showOrg = useMemo(() => shouldShowOrgInTeamLabels(teams), [teams]);
+  const currentTeam = teams.find((t) => t.id === currentTeamId);
+  const multiTeam = teams.length > 1;
+  const playerSuffix = `球員端 · ${sportLabel}`;
 
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => {
@@ -69,10 +77,21 @@ export function PlayerMainToolbar({ teamName, sportLabel, teams, currentTeamId, 
             : (
               <AppLogo variant="badge" size={32} className="shrink-0" />
             )}
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{teamName}</p>
-              <p className="text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                球員端 · {sportLabel}
+            <div className="min-w-0 flex-1">
+              {multiTeam ?
+                <ActiveTeamSwitcher
+                  teams={teams}
+                  currentTeamId={currentTeamId}
+                  variant="player"
+                  display="header"
+                />
+              : (
+                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  {formatActiveTeamHeaderTitle(currentTeam, teamName)}
+                </p>
+              )}
+              <p className="truncate text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {formatActiveTeamHeaderSubtitle(currentTeam, playerSuffix, showOrg)}
               </p>
             </div>
           </div>
@@ -91,7 +110,7 @@ export function PlayerMainToolbar({ teamName, sportLabel, teams, currentTeamId, 
         <div className="flex items-center justify-between gap-2 px-4 py-2.5 sm:py-3">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <AppLogo variant="badge" size={28} className="shrink-0" />
-            {teams.length > 1 ?
+            {multiTeam ?
               <>
                 <ActiveTeamSwitcher teams={teams} currentTeamId={currentTeamId} variant="player" />
                 <div className="hidden min-w-0 flex-col justify-center border-l border-slate-200 pl-2 dark:border-slate-700 sm:flex">
@@ -103,9 +122,11 @@ export function PlayerMainToolbar({ teamName, sportLabel, teams, currentTeamId, 
             : (
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  球員端 · {sportLabel}
+                  {formatActiveTeamHeaderSubtitle(currentTeam, playerSuffix, showOrg)}
                 </p>
-                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">{teamName}</p>
+                <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
+                  {formatActiveTeamHeaderTitle(currentTeam, teamName)}
+                </p>
               </div>
             )}
           </div>
@@ -146,6 +167,12 @@ export function PlayerMainToolbar({ teamName, sportLabel, teams, currentTeamId, 
               id="player-mobile-menu"
               className="absolute left-0 right-0 top-full z-50 border-b border-slate-200 bg-white px-4 py-4 shadow-lg dark:border-slate-700 dark:bg-slate-900"
             >
+              {multiTeam ?
+                <div className="mb-4 border-b border-slate-100 pb-4 dark:border-slate-800">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">切換隊伍</p>
+                  <ActiveTeamSwitcher teams={teams} currentTeamId={currentTeamId} variant="player" />
+                </div>
+              : null}
               <nav className="flex flex-col gap-1" aria-label="球員端主選單">
                 {NAV_LINKS.map((item) => (
                   <Link

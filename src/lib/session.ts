@@ -4,6 +4,7 @@ import { cache } from "react";
 
 import type { TeamMember, User } from "@/generated/prisma/client";
 import { MemberStatus } from "@/generated/prisma/client";
+import type { ActiveTeamOption } from "@/lib/active-team-options";
 import { isDebugAuthEnabled } from "@/lib/debug-auth-access";
 import { getPrisma } from "@/lib/prisma";
 
@@ -53,12 +54,20 @@ const loadActiveMemberships = cache(async (userId: string) => {
   });
 });
 
-/** 同一請求內依 userId 載入可切換隊伍（註解：header 下拉用）。 */
+/** 同一請求內依 userId 載入可切換隊伍（註解：含組織名，供多隊／多組織切換）。 */
 const loadActiveTeamsWithNames = cache(async (userId: string) => {
   return getPrisma().teamMember.findMany({
     where: { userId, status: MemberStatus.ACTIVE },
-    include: { team: { select: { id: true, name: true } } },
-    orderBy: { createdAt: "asc" },
+    include: {
+      team: {
+        select: {
+          id: true,
+          name: true,
+          organization: { select: { name: true } },
+        },
+      },
+    },
+    orderBy: [{ team: { organization: { name: "asc" } } }, { team: { name: "asc" } }],
   });
 });
 
@@ -177,14 +186,18 @@ export const getTeamMember = cache(async (): Promise<TeamMember | null> => {
 });
 
 /**
- * 目前帳號可切換的作用中隊伍列表（註解：多隊 header 下拉選單）。
+ * 目前帳號可切換的作用中隊伍列表（註解：教練／球員頂欄切換；可跨組織）。
  */
-export const listActiveTeamsForSwitcher = cache(async (): Promise<{ id: string; name: string }[]> => {
+export const listActiveTeamsForSwitcher = cache(async (): Promise<ActiveTeamOption[]> => {
   const debug = await getDebugTeamMemberFallback();
 
   if (debug) {
     const rows = await loadActiveTeamsWithNames(debug.userId);
-    return rows.map((r) => ({ id: r.team.id, name: r.team.name }));
+    return rows.map((r) => ({
+      id: r.team.id,
+      name: r.team.name,
+      organizationName: r.team.organization.name,
+    }));
   }
 
   const { userId: clerkUserId } = await getCachedClerkAuth();
@@ -192,5 +205,9 @@ export const listActiveTeamsForSwitcher = cache(async (): Promise<{ id: string; 
 
   const user = await syncClerkUserToDb(clerkUserId);
   const rows = await loadActiveTeamsWithNames(user.id);
-  return rows.map((r) => ({ id: r.team.id, name: r.team.name }));
+  return rows.map((r) => ({
+    id: r.team.id,
+    name: r.team.name,
+    organizationName: r.team.organization.name,
+  }));
 });

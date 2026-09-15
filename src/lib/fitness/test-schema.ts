@@ -23,7 +23,70 @@ export type FitnessTestPlayerRow = {
   memberId: string;
   displayName: string;
   stats: FitnessTestStats;
+  /** 當場身高 cm（註解：每次體能測驗獨立紀錄）。 */
+  heightCm: number | null;
+  /** 當場體重 kg（註解：每次體能測驗獨立紀錄）。 */
+  weightKg: number | null;
 };
+
+/** 身高／體重小數位（註解：cm、kg 各 1 位）。 */
+export const FITNESS_HEIGHT_DECIMAL_PLACES = 1;
+export const FITNESS_WEIGHT_DECIMAL_PLACES = 1;
+
+export const fitnessHeightCmSchema = z.number().min(100).max(250).nullable();
+export const fitnessWeightKgSchema = z.number().min(25).max(200).nullable();
+
+/** 正規化身高／體重（註解：無效值回 null）。 */
+export function compactBodyMetric(
+  value: number | null | undefined,
+  decimalPlaces: number,
+): number | null {
+  if (value == null || !Number.isFinite(value)) return null;
+  const rounded = Number(value.toFixed(decimalPlaces));
+  if (!Number.isFinite(rounded)) return null;
+  return rounded;
+}
+
+export function compactHeightCm(value: number | null | undefined): number | null {
+  const n = compactBodyMetric(value, FITNESS_HEIGHT_DECIMAL_PLACES);
+  if (n == null) return null;
+  return fitnessHeightCmSchema.safeParse(n).success ? n : null;
+}
+
+export function compactWeightKg(value: number | null | undefined): number | null {
+  const n = compactBodyMetric(value, FITNESS_WEIGHT_DECIMAL_PLACES);
+  if (n == null) return null;
+  return fitnessWeightKgSchema.safeParse(n).success ? n : null;
+}
+
+/** 顯示身高／體重（註解：null 顯示 —）。 */
+export function formatBodyMetric(value: number | null, unit: "cm" | "kg"): string {
+  if (value == null) return "—";
+  const places = unit === "cm" ? FITNESS_HEIGHT_DECIMAL_PLACES : FITNESS_WEIGHT_DECIMAL_PLACES;
+  return `${value.toFixed(places)}${unit}`;
+}
+
+/** 是否至少有一筆可儲存數據（註解：含身高／體重或所選測試項目）。 */
+export function hasAnyFitnessResultRow(
+  row: Pick<FitnessTestPlayerRow, "stats" | "heightCm" | "weightKg">,
+  itemKeys: readonly FitnessTestItemKey[] = DEFAULT_FITNESS_TEST_ITEM_KEYS,
+): boolean {
+  return (
+    hasAnyFitnessStats(row.stats, itemKeys) ||
+    row.heightCm != null ||
+    row.weightKg != null
+  );
+}
+
+export function emptyFitnessPlayerRow(memberId: string, displayName: string): FitnessTestPlayerRow {
+  return {
+    memberId,
+    displayName,
+    stats: emptyFitnessStats(),
+    heightCm: null,
+    weightKg: null,
+  };
+}
 
 /** 各項目定義（註解：attemptCount 固定；best 由 server 計算）。 */
 export const FITNESS_TEST_ITEMS: readonly {
@@ -36,7 +99,7 @@ export const FITNESS_TEST_ITEMS: readonly {
   decimalPlaces: number;
 }[] = [
   { key: "squatJump", label: "深蹲跳", unit: "cm", attemptCount: 3, higherIsBetter: true, decimalPlaces: 1 },
-  { key: "cmj", label: "CMJ", unit: "cm", attemptCount: 3, higherIsBetter: true, decimalPlaces: 1 },
+  { key: "cmj", label: "停頓跳", unit: "cm", attemptCount: 3, higherIsBetter: true, decimalPlaces: 1 },
   { key: "approachJump", label: "助跑跳", unit: "cm", attemptCount: 3, higherIsBetter: true, decimalPlaces: 1 },
   { key: "depthJump", label: "深度跳", unit: "cm", attemptCount: 3, higherIsBetter: true, decimalPlaces: 1 },
   {
@@ -60,6 +123,56 @@ export const FITNESS_TEST_ITEMS: readonly {
 export const FITNESS_TEST_ITEM_BY_KEY = Object.fromEntries(
   FITNESS_TEST_ITEMS.map((item) => [item.key, item]),
 ) as Record<FitnessTestItemKey, (typeof FITNESS_TEST_ITEMS)[number]>;
+
+/** 預設全部 6 項（註解：fitnessTestItemKeys 為 null 時視同此列表）。 */
+export const DEFAULT_FITNESS_TEST_ITEM_KEYS: FitnessTestItemKey[] = FITNESS_TEST_ITEMS.map(
+  (item) => item.key,
+);
+
+const fitnessTestItemKeySchema = z.enum([
+  "squatJump",
+  "cmj",
+  "approachJump",
+  "depthJump",
+  "courtShuttle",
+  "medicineBallThrow",
+]);
+
+/** API／表單：至少選 1 項體能測試。 */
+export const fitnessTestItemKeysSchema = z.array(fitnessTestItemKeySchema).min(1);
+
+/** 正規化事件所選項目（註解：無效或空陣列時回退為全部 6 項；順序依 FITNESS_TEST_ITEMS）。 */
+export function normalizeFitnessTestItemKeys(raw: unknown): FitnessTestItemKey[] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return [...DEFAULT_FITNESS_TEST_ITEM_KEYS];
+  }
+  const valid = new Set<FitnessTestItemKey>(DEFAULT_FITNESS_TEST_ITEM_KEYS);
+  const picked = raw.filter(
+    (k): k is FitnessTestItemKey => typeof k === "string" && valid.has(k as FitnessTestItemKey),
+  );
+  if (picked.length === 0) {
+    return [...DEFAULT_FITNESS_TEST_ITEM_KEYS];
+  }
+  return DEFAULT_FITNESS_TEST_ITEM_KEYS.filter((k) => picked.includes(k));
+}
+
+/** 依 key 列表取得項目定義（註解：供 UI 只顯示所選測試）。 */
+export function resolveFitnessTestItems(keys?: FitnessTestItemKey[] | null) {
+  const normalized = keys?.length ? normalizeFitnessTestItemKeys(keys) : DEFAULT_FITNESS_TEST_ITEM_KEYS;
+  return FITNESS_TEST_ITEMS.filter((item) => normalized.includes(item.key));
+}
+
+/** 僅保留所選項目的 stats（註解：儲存前剔除未選項目數據）。 */
+export function filterStatsToSelectedKeys(
+  stats: FitnessTestStats,
+  keys: FitnessTestItemKey[],
+): FitnessTestStats {
+  const result = emptyFitnessStats();
+  for (const key of keys) {
+    result[key] = stats[key];
+  }
+  return result;
+}
 
 /** v1 預設折返跑協議文案（註解：可由 session.protocolNote 覆寫）。 */
 export const DEFAULT_SHUTTLE_PROTOCOL =
@@ -110,6 +223,8 @@ export const fitnessTestPutBodySchema = z.object({
     z.object({
       memberId: z.string().min(1),
       stats: fitnessTestStatsInputSchema,
+      heightCm: fitnessHeightCmSchema.optional(),
+      weightKg: fitnessWeightKgSchema.optional(),
     }),
   ),
 });
@@ -180,14 +295,21 @@ export function normalizeFitnessStats(raw: unknown): FitnessTestStats {
   return base;
 }
 
-/** 是否至少有一項有紀錄。 */
-export function hasAnyFitnessStats(stats: FitnessTestStats): boolean {
-  return FITNESS_TEST_ITEMS.some((item) => stats[item.key].best != null);
+/** 是否至少有一項有紀錄（註解：可限定只檢查所選項目）。 */
+export function hasAnyFitnessStats(
+  stats: FitnessTestStats,
+  itemKeys: readonly FitnessTestItemKey[] = DEFAULT_FITNESS_TEST_ITEM_KEYS,
+): boolean {
+  return itemKeys.some((key) => stats[key].best != null);
 }
 
-/** 列表摘要（註解：手機 roster 列 preview）。 */
-export function fitnessOverallSummary(stats: FitnessTestStats): string {
-  const parts = FITNESS_TEST_ITEMS.filter((item) => stats[item.key].best != null).map((item) => {
+/** 列表摘要（註解：手機 roster 列 preview；可限定所選項目）。 */
+export function fitnessOverallSummary(
+  stats: FitnessTestStats,
+  itemKeys: readonly FitnessTestItemKey[] = DEFAULT_FITNESS_TEST_ITEM_KEYS,
+): string {
+  const items = resolveFitnessTestItems([...itemKeys]);
+  const parts = items.filter((item) => stats[item.key].best != null).map((item) => {
     const best = stats[item.key].best!;
     const unit = item.unit === "sec" ? "s" : item.unit;
     return `${item.label} ${best}${unit}`;

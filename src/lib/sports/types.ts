@@ -15,8 +15,10 @@ export type SportCapabilities = {
 export type SportLabels = {
   /** 繁中運動名稱 */
   name: string;
-  /** 隊員「位置」欄位 placeholder */
+  /** 隊員「位置」欄位 placeholder（註解：保留供說明文字；表單改用 positionOptions）。 */
   positionPlaceholder: string;
+  /** 隊員位置下拉選單選項（註解：依運動類型）。 */
+  positionOptions: readonly string[];
 };
 
 /** 比賽結果 API 用 Zod（註解：向後相容別名）。 */

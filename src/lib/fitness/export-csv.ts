@@ -3,6 +3,8 @@ import {
   FITNESS_TEST_ITEMS,
   formatFitnessUnit,
   formatFitnessValue,
+  resolveFitnessTestItems,
+  type FitnessTestItemKey,
   type FitnessTestPlayerRow,
 } from "@/lib/fitness/test-schema";
 
@@ -38,10 +40,13 @@ type EventCsvInput = {
   equipmentNote: string | null;
   notes: string | null;
   playerResults: FitnessTestPlayerRow[];
+  /** 本場所選項目（註解：未填則全部 6 項）。 */
+  selectedItemKeys?: FitnessTestItemKey[];
 };
 
 /** 單場體能測試 CSV（註解：含各次嘗試 + best）。 */
 export function buildFitnessEventCsv(input: EventCsvInput): string {
+  const items = resolveFitnessTestItems(input.selectedItemKeys);
   const lines: string[] = [];
   lines.push(csvRow(["事件", input.eventTitle]));
   lines.push(csvRow(["日期", input.eventDateLabel]));
@@ -56,8 +61,8 @@ export function buildFitnessEventCsv(input: EventCsvInput): string {
   }
   lines.push("");
 
-  const headers = ["隊員"];
-  for (const item of FITNESS_TEST_ITEMS) {
+  const headers = ["隊員", "身高(cm)", "體重(kg)"];
+  for (const item of items) {
     for (let i = 0; i < item.attemptCount; i++) {
       headers.push(`${item.label}_第${i + 1}次(${item.unit})`);
     }
@@ -66,8 +71,12 @@ export function buildFitnessEventCsv(input: EventCsvInput): string {
   lines.push(csvRow(headers));
 
   for (const player of input.playerResults) {
-    const row: (string | number | null)[] = [player.displayName];
-    for (const item of FITNESS_TEST_ITEMS) {
+    const row: (string | number | null)[] = [
+      player.displayName,
+      player.heightCm != null ? player.heightCm.toFixed(1) : "",
+      player.weightKg != null ? player.weightKg.toFixed(1) : "",
+    ];
+    for (const item of items) {
       const stat = player.stats[item.key];
       for (let i = 0; i < item.attemptCount; i++) {
         const v = stat.attempts[i];

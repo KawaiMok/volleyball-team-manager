@@ -84,6 +84,11 @@ export async function duplicateEvent(tx: Tx, input: DuplicateEventInput) {
       createdByMemberId: input.actorMemberId,
       /** 同隊複製：sport 不變，企位 JSON 可沿用（註解：跨隊複製不在此 API）。 */
       courtSketch: copyCourtSketch && source.courtSketch != null ? source.courtSketch : undefined,
+      /** 體能測試：複製所選項目（註解：不含成績）。 */
+      fitnessTestItemKeys:
+        source.type === EventType.FITNESS_TEST && source.fitnessTestItemKeys != null ?
+          source.fitnessTestItemKeys
+        : undefined,
     },
   });
 

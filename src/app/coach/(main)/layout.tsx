@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { CoachMainToolbar } from "@/components/coach-main-toolbar";
+import { ActiveTeamSwitchProvider } from "@/components/active-team-switch-context";
 import { NativeAppShell } from "@/components/native-app-shell";
 import { TeamSportProvider } from "@/components/team-sport-provider";
 import { getSportModule } from "@/lib/sports/registry";
@@ -37,18 +38,20 @@ export default async function CoachMainLayout({ children }: { children: React.Re
 
   return (
     <TeamSportProvider sport={sportId}>
-      <div className="min-h-full bg-[var(--app-page-bg)] text-[var(--app-text)]">
-        <CoachMainToolbar
-          teamName={team.name}
-          sportLabel={getSportDisplayName(sportId)}
-          showLiveTactical={sportMod.capabilities.liveTactical}
-          teams={teamOptions}
-          currentTeamId={member.teamId}
-        />
-        <NativeAppShell surface="coach">
-          <div className="mx-auto max-w-5xl px-4 py-8">{children}</div>
-        </NativeAppShell>
-      </div>
+      <ActiveTeamSwitchProvider currentTeamId={member.teamId} variant="coach">
+        <div className="min-h-full bg-[var(--app-page-bg)] text-[var(--app-text)]">
+          <CoachMainToolbar
+            teamName={team.name}
+            sportLabel={getSportDisplayName(sportId)}
+            showLiveTactical={sportMod.capabilities.liveTactical}
+            teams={teamOptions}
+            currentTeamId={member.teamId}
+          />
+          <NativeAppShell surface="coach">
+            <div className="mx-auto max-w-5xl px-4 py-8">{children}</div>
+          </NativeAppShell>
+        </div>
+      </ActiveTeamSwitchProvider>
     </TeamSportProvider>
   );
 }

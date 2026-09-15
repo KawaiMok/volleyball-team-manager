@@ -12,8 +12,8 @@ import { mapTeamMemberToRosterRow } from "@/lib/team-roster-map";
 type Props = {
   initialRows: TeamRosterRow[];
   squads: string[];
-  /** 位置欄位 placeholder（註解：依隊伍運動由 server 傳入）。 */
-  positionPlaceholder: string;
+  /** 位置下拉選項（註解：依隊伍運動由 server 傳入）。 */
+  positionOptions: readonly string[];
   currentMemberId: string;
   actorIsAdmin: boolean;
 };
@@ -22,7 +22,7 @@ type Props = {
 export function TeamPageMembers({
   initialRows,
   squads,
-  positionPlaceholder,
+  positionOptions,
   currentMemberId,
   actorIsAdmin,
 }: Props) {
@@ -51,7 +51,7 @@ export function TeamPageMembers({
       <CoachEventDetailCollapsibleSection id="coach-team-add-member" title="新增隊員／隊務" defaultOpen={false}>
         <AddTeamMemberForm
           squads={squads}
-          positionPlaceholder={positionPlaceholder}
+          positionOptions={positionOptions}
           actorIsAdmin={actorIsAdmin}
           onMemberAdded={onMemberAdded}
         />
@@ -74,6 +74,7 @@ export function TeamPageMembers({
         <div className="mt-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
           <TeamRosterSection
             squads={squads}
+            positionOptions={positionOptions}
             currentMemberId={currentMemberId}
             rows={rows}
             actorIsAdmin={actorIsAdmin}

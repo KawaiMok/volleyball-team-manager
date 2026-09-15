@@ -113,7 +113,7 @@ export default async function Home() {
             <div className="min-w-0 flex-1 border-l border-violet-200 pl-4 dark:border-violet-800">
               <h2 className="font-medium text-violet-950 dark:text-violet-100">作用中隊伍</h2>
               <p className="mt-1 text-xs text-violet-900/80 dark:text-violet-200/80">
-                會影響教練端／球員端讀取的資料（cookie{" "}
+                同一帳號可跨組織管理多支隊伍；切換後教練端／球員端皆只顯示該隊資料（cookie{" "}
                 <code className="rounded bg-white px-1 dark:bg-zinc-900/80">active-team-id</code>）。
               </p>
             </div>

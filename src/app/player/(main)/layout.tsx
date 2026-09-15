@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { NativeAppShell } from "@/components/native-app-shell";
+import { ActiveTeamSwitchProvider } from "@/components/active-team-switch-context";
 import { PlayerMainToolbar } from "@/components/player-main-toolbar";
 import { TeamSportProvider } from "@/components/team-sport-provider";
 import { prismaSportToId } from "@/lib/sports/registry-server";
@@ -37,18 +38,20 @@ export default async function PlayerMainLayout({ children }: { children: React.R
 
   return (
     <TeamSportProvider sport={sportId}>
-      <div className="min-h-full bg-[var(--app-page-bg)] text-[var(--app-text)]">
-        <PlayerMainToolbar
-          teamName={team.name}
-          sportLabel={getSportDisplayName(sportId)}
-          teams={teamOptions}
-          currentTeamId={member.teamId}
-          canAccessCoach={isCoachLike(member)}
-        />
-        <NativeAppShell surface="player">
-          <div className="mx-auto max-w-lg px-4 py-8 sm:max-w-2xl">{children}</div>
-        </NativeAppShell>
-      </div>
+      <ActiveTeamSwitchProvider currentTeamId={member.teamId} variant="player">
+        <div className="min-h-full bg-[var(--app-page-bg)] text-[var(--app-text)]">
+          <PlayerMainToolbar
+            teamName={team.name}
+            sportLabel={getSportDisplayName(sportId)}
+            teams={teamOptions}
+            currentTeamId={member.teamId}
+            canAccessCoach={isCoachLike(member)}
+          />
+          <NativeAppShell surface="player">
+            <div className="mx-auto max-w-lg px-4 py-8 sm:max-w-2xl">{children}</div>
+          </NativeAppShell>
+        </div>
+      </ActiveTeamSwitchProvider>
     </TeamSportProvider>
   );
 }

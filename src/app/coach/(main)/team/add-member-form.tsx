@@ -4,11 +4,13 @@ import { useToast } from "@/components/toast-provider";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { TeamPositionField, useTeamPositionField } from "@/components/team-position-field";
+
 type Props = {
   /** 隊伍分組標籤（註解：來自 `Team.groupConfig`，與行事曆／事件篩選一致）。 */
   squads: string[];
-  /** 位置欄位 placeholder（註解：依運動類型）。 */
-  positionPlaceholder: string;
+  /** 位置下拉選項（註解：依運動類型）。 */
+  positionOptions: readonly string[];
   /** 是否可選「管理員」（註解：與 API 僅管理員可指派 ADMIN 一致）。 */
   actorIsAdmin: boolean;
   /** 新增／復籍成功後回傳 API 成員列（註解：供父層立即更新名單）。 */
@@ -36,12 +38,13 @@ function roleLabel(r: string) {
 }
 
 /** 依 Email 新增隊員／隊務（註解：POST /api/team/members；含預備姓名、位置、分組、聯絡與備註）。 */
-export function AddTeamMemberForm({ squads, positionPlaceholder, actorIsAdmin, onMemberAdded }: Props) {
+export function AddTeamMemberForm({ squads, positionOptions, actorIsAdmin, onMemberAdded }: Props) {
   const router = useRouter();
   const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
   const [squadChoice, setSquadChoice] = useState("");
   const [squadCustom, setSquadCustom] = useState("");
+  const positionField = useTeamPositionField(positionOptions);
   const rolesForInvite = actorIsAdmin ? ROLES : ROLES.filter((r) => r !== "ADMIN");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -52,7 +55,7 @@ export function AddTeamMemberForm({ squads, positionPlaceholder, actorIsAdmin, o
     const email = String(fd.get("email") ?? "").trim();
     const role = String(fd.get("role") ?? "PLAYER");
     const displayName = String(fd.get("displayName") ?? "").trim();
-    const position = String(fd.get("position") ?? "").trim();
+    const position = positionField.resolve();
     const phone = String(fd.get("phone") ?? "").trim();
     const notes = String(fd.get("notes") ?? "").trim();
     const jerseyRaw = String(fd.get("jerseyNumber") ?? "").trim();
@@ -103,6 +106,7 @@ export function AddTeamMemberForm({ squads, positionPlaceholder, actorIsAdmin, o
       form.reset();
       setSquadChoice("");
       setSquadCustom("");
+      positionField.reset();
       router.refresh();
     } catch {
       setPending(false);
@@ -180,19 +184,15 @@ export function AddTeamMemberForm({ squads, positionPlaceholder, actorIsAdmin, o
           />
         </div>
 
-        <div>
-          <label htmlFor="invite-position" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            位置（選填）
-          </label>
-          <input
-            id="invite-position"
-            name="position"
-            type="text"
-            maxLength={64}
-            placeholder={positionPlaceholder}
-            className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
-          />
-        </div>
+        <TeamPositionField
+          id="invite-position"
+          options={positionOptions}
+          optionalSuffix
+          choice={positionField.choice}
+          custom={positionField.custom}
+          onChoiceChange={positionField.setChoice}
+          onCustomChange={positionField.setCustom}
+        />
 
         <div className="sm:col-span-2">
           <label htmlFor="invite-squad-select" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">

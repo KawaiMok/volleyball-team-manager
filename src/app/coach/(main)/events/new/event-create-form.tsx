@@ -7,8 +7,13 @@ import {
   validateParticipantRuleForSubmit,
 } from "@/app/coach/(main)/events/event-participant-rule-fields";
 import { DatetimeLocalInput } from "@/components/datetime-local-input";
+import { FitnessTestItemPicker } from "@/components/fitness-test-item-picker";
 import type { ParticipantRule } from "@/lib/participant-rule-types";
 import { parseDatetimeLocalToIso } from "@/lib/datetime-local";
+import {
+  DEFAULT_FITNESS_TEST_ITEM_KEYS,
+  type FitnessTestItemKey,
+} from "@/lib/fitness/test-schema";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -23,6 +28,10 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
   const { showError, showSuccess } = useToast();
   const [pending, setPending] = useState(false);
   const [participantRule, setParticipantRule] = useState<ParticipantRule>({ kind: "ALL" });
+  const [eventType, setEventType] = useState<string>("TRAINING");
+  const [fitnessTestItemKeys, setFitnessTestItemKeys] = useState<FitnessTestItemKey[]>([
+    ...DEFAULT_FITNESS_TEST_ITEM_KEYS,
+  ]);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,7 +44,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
     setPending(true);
     const fd = new FormData(e.currentTarget);
     const title = String(fd.get("title") ?? "").trim();
-    const type = fd.get("type") as string;
+    const type = eventType;
     const startsAt = String(fd.get("startsAt") ?? "");
     const endsAt = String(fd.get("endsAt") ?? "");
     const locationName = String(fd.get("locationName") ?? "").trim() || null;
@@ -55,6 +64,7 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
           locationName,
           rsvpDeadlineAt: rsvpDeadlineRaw ? parseDatetimeLocalToIso(rsvpDeadlineRaw) : null,
           participantRule,
+          ...(type === "FITNESS_TEST" ? { fitnessTestItemKeys } : {}),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -95,7 +105,8 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
         <select
           id="type"
           name="type"
-          defaultValue="TRAINING"
+          value={eventType}
+          onChange={(e) => setEventType(e.target.value)}
           className="mt-1 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
         >
           {EVENT_TYPES.map((t) => (
@@ -105,6 +116,10 @@ export function EventCreateForm({ teamId, squads, roster }: Props) {
           ))}
         </select>
       </div>
+
+      {eventType === "FITNESS_TEST" ?
+        <FitnessTestItemPicker value={fitnessTestItemKeys} onChange={setFitnessTestItemKeys} />
+      : null}
 
       <div className="grid min-w-0 gap-4 md:grid-cols-2">
         <div className="min-w-0">

@@ -23,7 +23,7 @@ import { MatchResultPanel } from "@/app/coach/(main)/events/[id]/match-result-pa
 import { FitnessTestPanel } from "@/app/coach/(main)/events/[id]/fitness-test-panel";
 import { canManageMatchResult } from "@/lib/match-result-access";
 import { canManageFitnessTest } from "@/lib/fitness-test-access";
-import { emptyFitnessStats, normalizeFitnessStats } from "@/lib/fitness/test-schema";
+import { emptyFitnessPlayerRow, normalizeFitnessStats, normalizeFitnessTestItemKeys } from "@/lib/fitness/test-schema";
 import { CoachEventDetailCollapsibleSection } from "@/components/coach-event-detail-collapsible-section";
 import { CoachEventDetailSectionNav } from "@/components/coach-event-detail-section-nav";
 import { EventTitleWithMeta } from "@/components/event-title-with-meta";
@@ -263,8 +263,11 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
 
   const isMatchEvent = event.type === EventType.MATCH;
   const isFitnessEvent = event.type === EventType.FITNESS_TEST;
+  const fitnessSelectedItemKeys = normalizeFitnessTestItemKeys(event.fitnessTestItemKeys);
   const canManageMatch = canManageMatchResult(member, event);
   const canManageFitness = canManageFitnessTest(member, event);
+  const fitnessTestPublished = isFitnessEvent && event.status === EventStatus.PUBLISHED;
+  const fitnessTestStarted = fitnessTestPublished && event.startsAt.getTime() <= Date.now();
 
   const matchPlayerRoster = roster
     .filter((r) => isPlayerReviewSubjectRole(r.role))
@@ -278,11 +281,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
   const fitnessPlayerRoster = roster
     .filter((r) => isPlayerReviewSubjectRole(r.role))
     .filter((r) => participantMemberIds.includes(r.id))
-    .map((r) => ({
-      memberId: r.id,
-      displayName: r.displayName,
-      stats: emptyFitnessStats(),
-    }));
+    .map((r) => emptyFitnessPlayerRow(r.id, r.displayName));
 
   const initialMatchResult =
     event.matchResult && matchMod ?
@@ -314,6 +313,8 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           memberId: p.memberId,
           displayName: p.member.user?.name ?? p.member.user?.email ?? p.memberId.slice(0, 8),
           stats: normalizeFitnessStats(p.stats),
+          heightCm: p.heightCm ?? null,
+          weightKg: p.weightKg ?? null,
         })),
       }
     : null;
@@ -322,7 +323,6 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     /** 體能測試：僅保留「編輯事件」與「體能測試」區塊（註解：不顯示點名／企位／留言等）。 */
     if (isFitnessEvent) {
       if (s.id === "coach-ev-edit" && eventEnded) return false;
-      if (s.id === "coach-ev-fitness" && !eventEnded) return false;
       return s.id === "coach-ev-edit" || s.id === "coach-ev-fitness";
     }
     if (!sportMod?.capabilities.courtSketch && s.id === "coach-ev-court") return false;
@@ -405,7 +405,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         title="體能測試"
         titleExtra={
           <HintExclamationToggle>
-            測試結束後可登錄深蹲跳、CMJ、助跑跳、深度跳、折返跑與藥球投擲；每項跳類與藥球最多 3 次，折返跑 1 次。
+            發布後、測試進行中即可登錄深蹲跳、停頓跳、助跑跳、深度跳、折返跑與藥球投擲；每項跳類與藥球最多 3 次，折返跑 1 次。
           </HintExclamationToggle>
         }
       >
@@ -416,6 +416,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           canEdit={canManageFitness}
           initial={initialFitnessTest}
           roster={fitnessPlayerRoster}
+          selectedItemKeys={fitnessSelectedItemKeys}
         />
       </CoachEventDetailCollapsibleSection>
     : null;
@@ -516,7 +517,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         {eventEnded ?
           <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
             {isFitnessEvent ?
-              "此場體能測試已結束，可登錄各隊員數據。"
+              "此場體能測試已結束，可登錄或編輯各隊員數據。"
             : <>
                 此場次已結束，可檢視點名、企位、留言
                 {isMatchEvent ? "、比賽結果" : ""}
@@ -527,9 +528,17 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
           <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
             比賽結束後可登錄比分與數據。
           </p>
-        : isFitnessEvent && !eventEnded ?
+        : isFitnessEvent && fitnessTestStarted ?
           <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-            體能測試結束後可登錄各隊員數據。
+            體能測試進行中，可登錄各隊員數據。
+          </p>
+        : isFitnessEvent && fitnessTestPublished ?
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            測試開始後可登錄各隊員數據；請確認事件已發布。
+          </p>
+        : isFitnessEvent ?
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            發布事件後，測試開始即可登錄各隊員數據。
           </p>
         : null}
       </div>
@@ -537,11 +546,12 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
         {eventEnded ?
           <>
             {isMatchEvent ? matchResultSection : null}
-            {isFitnessEvent ? fitnessTestSection : null}
             {!isFitnessEvent ? feedbackSummarySection : null}
             {playerReviewsSection}
           </>
         : null}
+
+      {fitnessTestPublished ? fitnessTestSection : null}
 
       {canEditEvent ?
         <CoachEventDetailCollapsibleSection
@@ -565,6 +575,7 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
               meetAtIso: event.meetAt?.toISOString() ?? null,
               locationName: event.locationName,
               rsvpDeadlineIso: event.rsvpDeadlineAt?.toISOString() ?? null,
+              fitnessTestItemKeys: fitnessSelectedItemKeys,
             }}
             squads={squads}
             roster={roster}
