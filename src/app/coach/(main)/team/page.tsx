@@ -1,13 +1,10 @@
-import Link from "next/link";
-
 import { CoachTeamIdentitySettingsForm } from "@/app/coach/(main)/team/coach-team-identity-settings-form";
 import { CoachTeamRolesEmailPanel } from "@/app/coach/(main)/team/coach-team-roles-email-panel";
+import { CoachTeamPageView } from "@/app/coach/(main)/team/coach-team-page-view";
 import { TeamAttendanceStats } from "@/app/coach/(main)/team/team-attendance-stats";
-import { TeamPageMembers } from "@/app/coach/(main)/team/team-page-members";
 import { computeTeamAttendanceStats } from "@/lib/attendance-stats";
 import { mapTeamMemberToRosterRow } from "@/lib/team-roster-map";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
-import { CoachEventDetailCollapsibleSection } from "@/components/coach-event-detail-collapsible-section";
 import { TeamRole } from "@/generated/prisma/client";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { parseGroupConfig } from "@/lib/group-config";
@@ -15,9 +12,8 @@ import { getPrisma } from "@/lib/prisma";
 import { parseTeamNotificationSettings } from "@/lib/team-notification-settings";
 import { getSportModule } from "@/lib/sports/registry";
 import { prismaSportToId } from "@/lib/sports/registry-server";
-import { getSportDisplayName } from "@/lib/sports/sport-options";
 
-/** 隊伍／隊員：列表 + 依 Email 建隊籍（註解：編輯隊員改為全螢幕對話框，避免表單擠在表格內）。 */
+/** 隊伍／隊員：logo 入口 + BottomSheet（註解：對齊教練總覽儀表板）。 */
 export default async function CoachTeamPage() {
   const member = await getDebugTeamMember();
   if (!member) return null;
@@ -42,82 +38,44 @@ export default async function CoachTeamPage() {
   const positionOptions = sportModule?.labels.positionOptions ?? [];
   const notificationPrefs = parseTeamNotificationSettings(teamRow?.notificationSettings ?? null);
   const actorIsAdmin = member.role === TeamRole.ADMIN;
-
-  /** 切換作用中隊伍時強制重掛 client 表單（註解：defaultValue／useState 初值不會隨 router.refresh 自動更新）。 */
   const teamSettingsKey = member.teamId;
-
   const rosterRows = rows.map((r) => mapTeamMemberToRosterRow({ ...r, updatedAt: r.updatedAt }));
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-5">
       <div>
-        <Link href="/coach" className="text-sm text-blue-600 hover:underline">
-          ← 總覽
-        </Link>
-        {teamRow ?
-          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            運動：{getSportDisplayName(prismaSportToId(teamRow.sport))}（建立後不可變更）
-          </p>
-        : null}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <h1 className="min-w-0 flex-1 text-2xl font-semibold tracking-tight">隊伍／隊員</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">隊伍／隊員</h1>
           <HintExclamationToggle>
-            依對方 <strong className="font-medium text-zinc-800 dark:text-zinc-200">Clerk 登入信箱</strong>{" "}
-            建立隊籍；對方首次登入後會與此 Email 合併。正式環境請勿仰賴 Bootstrap。
+            點選下方入口操作。依對方 Clerk 登入信箱建立隊籍，對方首次登入後會合併。
           </HintExclamationToggle>
         </div>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">隊伍管理 · {teamRow?.name ?? "—"}</p>
       </div>
 
-      <CoachEventDetailCollapsibleSection
-        id="coach-team-stats-entry"
-        title="統計"
-        defaultOpen={false}
-        titleExtra={
-          <HintExclamationToggle>
-            目前提供：出席率、回饋（RPE/疲勞/疼痛）場均與榜單（註解：第一版以已發布且已結束事件為樣本）。
-          </HintExclamationToggle>
-        }
-      >
-        <Link
-          href="/coach/team/stats"
-          className="inline-flex items-center justify-center rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-        >
-          前往隊伍統計頁
-        </Link>
-      </CoachEventDetailCollapsibleSection>
-
-      <CoachEventDetailCollapsibleSection
-        id="coach-team-settings"
-        title="隊伍設定"
-        defaultOpen={false}
-        titleExtra={
-          <HintExclamationToggle>隊名、賽季與分組會影響標題列與行事曆／事件篩選。</HintExclamationToggle>
-        }
-      >
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-          <CoachTeamIdentitySettingsForm
-            key={teamSettingsKey}
-            initialName={teamRow?.name ?? ""}
-            initialSeason={teamRow?.season ?? ""}
-            initialGroupLines={squads.join("\n")}
-          />
-          <div className="lg:border-l lg:border-zinc-100 lg:pl-10 dark:lg:border-zinc-800">
-            <CoachTeamRolesEmailPanel key={teamSettingsKey} initialNotifications={notificationPrefs} />
-          </div>
-        </div>
-      </CoachEventDetailCollapsibleSection>
-
-      <CoachEventDetailCollapsibleSection id="coach-team-attendance" title="出席率統計" defaultOpen={false}>
-        <TeamAttendanceStats key={`${teamSettingsKey}-attendance`} initialData={initialAttendanceStats} embedded />
-      </CoachEventDetailCollapsibleSection>
-
-      <TeamPageMembers
+      <CoachTeamPageView
         key={teamSettingsKey}
         initialRows={rosterRows}
         squads={squads}
         positionOptions={positionOptions}
         currentMemberId={member.id}
         actorIsAdmin={actorIsAdmin}
+        settingsPanel={
+          <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
+            <CoachTeamIdentitySettingsForm
+              key={teamSettingsKey}
+              initialName={teamRow?.name ?? ""}
+              initialSeason={teamRow?.season ?? ""}
+              initialGroupLines={squads.join("\n")}
+            />
+            <div className="lg:border-l lg:border-zinc-100 lg:pl-10 dark:lg:border-zinc-800">
+              <CoachTeamRolesEmailPanel key={`${teamSettingsKey}-roles`} initialNotifications={notificationPrefs} />
+            </div>
+          </div>
+        }
+        attendancePanel={
+          <TeamAttendanceStats key={`${teamSettingsKey}-attendance`} initialData={initialAttendanceStats} embedded />
+        }
       />
     </div>
   );

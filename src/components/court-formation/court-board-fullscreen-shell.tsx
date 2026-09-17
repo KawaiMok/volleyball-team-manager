@@ -68,11 +68,11 @@ export function CourtBoardFullscreenShell({
     paddingRight: "max(0.25rem, env(safe-area-inset-right))",
   } as const;
 
-  /** 在視窗內盡量放大且完整顯示場地 */
+  /** 在視窗內盡量放大且完整顯示場地（註解：dvh 避免手機 Safari 網址列遮住底部）。 */
   const boardFitStyle = {
     aspectRatio,
-    width: `min(calc(100vw - 0.5rem), calc((100vh - 0.5rem) * ${aspectRatio}))`,
-    maxHeight: "calc(100vh - 0.5rem)",
+    width: `min(calc(100vw - 0.5rem), calc((100dvh - 0.5rem) * ${aspectRatio}))`,
+    maxHeight: "calc(100dvh - 0.5rem)",
   } as const;
 
   return (

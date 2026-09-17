@@ -3,8 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { parseGroupConfig } from "@/lib/group-config";
 import { AttendanceTable } from "@/app/coach/(main)/events/[id]/attendance-table";
-import { EventPublishButton } from "@/app/coach/(main)/events/[id]/event-detail-actions";
-import { EventDuplicateButton } from "@/components/event-duplicate-actions";
+import { EventDetailHeaderActions } from "@/app/coach/(main)/events/[id]/event-detail-actions";
 import { EventEditForm } from "@/app/coach/(main)/events/[id]/event-edit-form";
 import { CoachEventCommentsPanel } from "@/app/coach/(main)/events/[id]/coach-event-comments-panel";
 import { CoachEventTacticalVideoPanel } from "@/app/coach/(main)/events/[id]/event-tactical-video-panel";
@@ -320,19 +319,32 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
     : null;
 
   const detailSections = COACH_EVENT_DETAIL_SECTIONS.filter((s) => {
-    /** 體能測試：僅保留「編輯事件」與「體能測試」區塊（註解：不顯示點名／企位／留言等）。 */
+    /** 體能測試：導覽與實際區塊一致（註解：測試開始後才顯示體能入口）。 */
     if (isFitnessEvent) {
-      if (s.id === "coach-ev-edit" && eventEnded) return false;
-      return s.id === "coach-ev-edit" || s.id === "coach-ev-fitness";
+      if (s.id === "coach-ev-edit") {
+        return canEditEvent || event.status === EventStatus.CANCELLED;
+      }
+      if (s.id === "coach-ev-fitness") {
+        return fitnessTestPublished && fitnessTestStarted;
+      }
+      return false;
     }
-    if (!sportMod?.capabilities.courtSketch && s.id === "coach-ev-court") return false;
-    if (!sportMod?.capabilities.matchStats && s.id === "coach-ev-match") return false;
-    if (!isMatchEvent && s.id === "coach-ev-match") return false;
-    if (!isFitnessEvent && s.id === "coach-ev-fitness") return false;
-    if (!eventEnded) {
-      return s.id !== "coach-ev-reviews" && s.id !== "coach-ev-match" && s.id !== "coach-ev-fitness";
+    if (s.id === "coach-ev-edit") {
+      return canEditEvent || event.status === EventStatus.CANCELLED;
     }
-    return s.id !== "coach-ev-edit" && s.id !== "coach-ev-training";
+    if (s.id === "coach-ev-attendance") return true;
+    if (s.id === "coach-ev-training") return !eventEnded;
+    if (s.id === "coach-ev-court") return true;
+    if (s.id === "coach-ev-media" || s.id === "coach-ev-comments") return true;
+    if (s.id === "coach-ev-match") {
+      return eventEnded && isMatchEvent && (sportMod?.capabilities.matchStats ?? false);
+    }
+    if (s.id === "coach-ev-fitness") return false;
+    if (s.id === "coach-ev-reviews") {
+      return eventEnded && event.status === EventStatus.PUBLISHED;
+    }
+    if (s.id === "coach-ev-feedback") return true;
+    return false;
   });
 
   /** 已結束場次：置頂區塊順序（註解：體能測試僅體能區塊）。 */
@@ -508,10 +520,13 @@ export default async function CoachEventDetailPage({ params }: { params: Promise
               </dl>
             : null}
           </div>
-          <div className="flex flex-col items-stretch gap-2 sm:items-end">
-            <EventPublishButton eventId={event.id} isDraft={event.status === EventStatus.DRAFT} />
-            <EventDuplicateButton eventId={event.id} />
-          </div>
+          <EventDetailHeaderActions
+            eventId={event.id}
+            eventTitle={event.title}
+            isDraft={event.status === EventStatus.DRAFT}
+            isPublished={event.status === EventStatus.PUBLISHED}
+            isCancelled={event.status === EventStatus.CANCELLED}
+          />
         </div>
         <CoachEventDetailSectionNav sections={[...orderedDetailSections]} />
         {eventEnded ?

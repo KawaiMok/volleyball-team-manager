@@ -11,12 +11,19 @@ export function mapTeamMemberToRosterRow(row: {
   squad: string | null;
   phone: string | null;
   notes: string | null;
+  birthDate?: string | Date | null;
   user: {
     email: string | null;
     name: string | null;
     clerkUserId: string | null;
   };
 }): TeamRosterRow {
+  const birthDateRaw = row.birthDate;
+  const birthDateIso =
+    birthDateRaw == null ? null
+    : typeof birthDateRaw === "string" ? birthDateRaw.slice(0, 10)
+    : birthDateRaw.toISOString().slice(0, 10);
+
   return {
     id: row.id,
     updatedAt: typeof row.updatedAt === "string" ? row.updatedAt : row.updatedAt.toISOString(),
@@ -30,5 +37,6 @@ export function mapTeamMemberToRosterRow(row: {
     squad: row.squad,
     phone: row.phone,
     notes: row.notes,
+    birthDate: birthDateIso,
   };
 }

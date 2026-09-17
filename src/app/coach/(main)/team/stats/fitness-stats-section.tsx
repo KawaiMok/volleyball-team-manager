@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
+import { FitnessCompareBars } from "@/components/fitness-compare-bars";
 import {
   FITNESS_TEST_ITEMS,
   FITNESS_TEST_ITEM_BY_KEY,
@@ -43,29 +44,21 @@ export function FitnessStatsSection({ rows, sessionCount }: Props) {
     [rows],
   );
 
-  const chartDef = FITNESS_TEST_ITEM_BY_KEY[chartKey];
-  const chartBars = useMemo(() => {
-    const values = activeRows
-      .map((r) => r.latest?.stats[chartKey].best ?? null)
-      .filter((v): v is number => v != null);
-    if (values.length === 0) return [];
-    const max = Math.max(...values);
-    const min = Math.min(...values);
-    return activeRows
-      .map((r) => {
-        const value = r.latest?.stats[chartKey].best;
-        if (value == null) return null;
-        return {
-          memberId: r.memberId,
-          label: r.displayName,
-          value,
-          max: chartDef.higherIsBetter ? max : max,
-          min: chartDef.higherIsBetter ? min : min,
-          invert: !chartDef.higherIsBetter,
-        };
-      })
-      .filter((b): b is NonNullable<typeof b> => b != null);
-  }, [activeRows, chartDef.higherIsBetter, chartKey]);
+  const chartBars = useMemo(
+    () =>
+      activeRows
+        .map((r) => {
+          const value = r.latest?.stats[chartKey].best;
+          if (value == null) return null;
+          return {
+            id: r.memberId,
+            label: r.displayName,
+            value,
+          };
+        })
+        .filter((b): b is NonNullable<typeof b> => b != null),
+    [activeRows, chartKey],
+  );
 
   if (sessionCount === 0) {
     return (
@@ -164,7 +157,9 @@ export function FitnessStatsSection({ rows, sessionCount }: Props) {
       <div className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">最新一場橫向比較</h3>
-          <HintExclamationToggle>各隊員「最近一場」該項目 best 值；僅含已有數據者。</HintExclamationToggle>
+          <HintExclamationToggle>
+            各隊員「最近一場」該項目 best 值；刻度固定（跳類 0–100cm、藥球 0–10m、折返 0–50s），避免最差者空白柱。
+          </HintExclamationToggle>
         </div>
         <div className="mb-3 flex flex-wrap gap-1">
           {FITNESS_TEST_ITEMS.map((item) => (
@@ -182,35 +177,7 @@ export function FitnessStatsSection({ rows, sessionCount }: Props) {
             </button>
           ))}
         </div>
-        <div className="space-y-2">
-          {chartBars.map((b) => {
-            const range = b.max - b.min;
-            const ratio =
-              range > 0 ?
-                b.invert ?
-                  (b.max - b.value) / range
-                : (b.value - b.min) / range
-              : 1;
-            const width = `${Math.round(Math.min(1, Math.max(0, ratio)) * 100)}%`;
-            return (
-              <div key={b.memberId} className="flex items-center gap-2 text-xs">
-                <span className="w-20 shrink-0 truncate text-zinc-500 dark:text-zinc-400" title={b.label}>
-                  {b.label}
-                </span>
-                <div className="relative h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
-                  <div
-                    className="h-full rounded-full bg-[var(--brand-primary)] transition-all"
-                    style={{ width }}
-                  />
-                </div>
-                <span className="w-16 shrink-0 text-right tabular-nums text-zinc-700 dark:text-zinc-300">
-                  {formatFitnessValue(b.value, chartDef.decimalPlaces)}
-                  {formatFitnessUnit(chartDef.unit)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+        <FitnessCompareBars itemKey={chartKey} rows={chartBars} />
       </div>
     </div>
   );

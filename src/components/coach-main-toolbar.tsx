@@ -123,7 +123,9 @@ export function CoachMainToolbar({
           <div className="flex min-w-0 flex-1 items-center gap-2 md:gap-3">
             <AppLogo variant="badge" size={28} className="hidden shrink-0 sm:block" />
             {multiTeam ?
-              <ActiveTeamSwitcher teams={teams} currentTeamId={currentTeamId} variant="coach" />
+              <div className="min-w-0 flex-1 md:flex-none">
+                <ActiveTeamSwitcher teams={teams} currentTeamId={currentTeamId} variant="coach" />
+              </div>
             : (
               <div className="min-w-0">
                 <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
@@ -195,14 +197,8 @@ export function CoachMainToolbar({
             />
             <div
               id="coach-mobile-menu"
-              className="absolute left-0 right-0 top-full z-50 border-b border-zinc-200 bg-white px-4 py-4 shadow-lg md:hidden dark:border-zinc-800 dark:bg-zinc-900"
+              className="absolute left-0 right-0 top-full z-50 max-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] overflow-y-auto overscroll-contain border-b border-zinc-200 bg-white px-4 py-4 shadow-lg md:hidden dark:border-zinc-800 dark:bg-zinc-900"
             >
-              {multiTeam ?
-                <div className="mb-4 border-b border-zinc-100 pb-4 dark:border-zinc-800">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">切換隊伍</p>
-                  <ActiveTeamSwitcher teams={teams} currentTeamId={currentTeamId} variant="coach" />
-                </div>
-              : null}
               <nav className="mx-auto flex max-w-5xl flex-col gap-1" aria-label="教練端—行動版">
                 {navLinks.map((item) => (
                   <Link

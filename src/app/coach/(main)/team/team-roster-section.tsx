@@ -25,6 +25,8 @@ export type TeamRosterRow = {
   squad: string | null;
   phone: string | null;
   notes: string | null;
+  /** 出生日期 YYYY-MM-DD（註解：編輯表單用；AI 評估入口在總覽隊員名單）。 */
+  birthDate: string | null;
 };
 
 type Props = {
@@ -56,7 +58,13 @@ function roleLabel(r: string) {
 const ROSTER_EDIT_FORM_ID = "roster-edit-form";
 
 /** 隊員表格 + 詳情唯讀彈窗 + 編輯對話框（註解：主表僅列必要欄，其餘於「詳情」查看）。 */
-export function TeamRosterSection({ squads, positionOptions, currentMemberId, rows, actorIsAdmin }: Props) {
+export function TeamRosterSection({
+  squads,
+  positionOptions,
+  currentMemberId,
+  rows,
+  actorIsAdmin,
+}: Props) {
   const [editing, setEditing] = useState<TeamRosterRow | null>(null);
   const [detail, setDetail] = useState<TeamRosterRow | null>(null);
   const [editPending, setEditPending] = useState(false);
@@ -82,6 +90,12 @@ export function TeamRosterSection({ squads, positionOptions, currentMemberId, ro
     return () => window.removeEventListener("keydown", onKey);
   }, [modalOpen, closeAll]);
 
+  useEffect(() => {
+    if (!detail) return;
+    const fresh = rows.find((r) => r.id === detail.id);
+    if (fresh) setDetail(fresh);
+  }, [rows, detail?.id]);
+
   const initial: TeamMemberEditInitial | null =
     editing ?
       {
@@ -94,6 +108,7 @@ export function TeamRosterSection({ squads, positionOptions, currentMemberId, ro
         position: editing.position,
         phone: editing.phone,
         notes: editing.notes,
+        birthDate: editing.birthDate,
       }
     : null;
 

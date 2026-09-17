@@ -6,8 +6,8 @@ import { aiTrainingPlanOutputSchema, type AiTrainingPlanOutput } from "@/lib/tra
 /** DeepSeek 官方 OpenAI 相容端點（註解：可改環境變數 DEEPSEEK_BASE_URL 走代理）。 */
 const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
 
-/** 預設模型（註解：v4-flash 不支援 json_schema，須純文字 JSON + Zod 驗證）。 */
-const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash";
+/** 預設模型（註解：deepseek-flash 不支援 json_schema，須純文字 JSON + Zod 驗證）。 */
+const DEFAULT_DEEPSEEK_MODEL = "deepseek-flash";
 
 const JSON_SHAPE_HINT = `請只回傳一個 JSON 物件（勿 markdown、勿說明文字），欄位：
 {
@@ -103,7 +103,7 @@ export async function generateVolleyballTrainingPlan(
     .join("\n");
 
   const { text, usage } = await generateText({
-    /** 須用 .chat() 且勿設 Output.object：@ai-sdk/openai 會轉 json_schema，v4-flash 不支援（註解）。 */
+    /** 須用 .chat() 且勿設 Output.object：@ai-sdk/openai 會轉 json_schema，deepseek-flash 不支援（註解）。 */
     model: deepseek.chat(modelId),
     system: SYSTEM,
     prompt: userText,

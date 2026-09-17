@@ -92,7 +92,7 @@ function ActiveTeamSwitchOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[var(--app-page-bg)] px-6"
+      className="fixed inset-0 z-[200] flex min-h-[100dvh] flex-col items-center justify-center bg-[var(--app-page-bg)] px-6 pb-[env(safe-area-inset-bottom,0px)] pt-[env(safe-area-inset-top,0px)]"
       role="status"
       aria-busy="true"
       aria-live="polite"

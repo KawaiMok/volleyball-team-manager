@@ -3,35 +3,81 @@ import Link from "next/link";
 import { addDays } from "@/app/coach/(main)/calendar/calendar-utils";
 import {
   CoachDashboardProvider,
-  CoachDashboardSection,
   CoachDashboardSettingsPanel,
 } from "@/app/coach/(main)/coach-dashboard-prefs";
-import { CoachDashboardRpeChart } from "@/app/coach/(main)/coach-dashboard-rpe-chart";
-import { CoachTodayTrainingLoadSection } from "@/app/coach/(main)/today-training-load";
-import { EventStatusIndicator } from "@/components/domain-status-indicators";
+import { CoachDashboardView } from "@/app/coach/(main)/coach-dashboard-view";
+import type { DashboardEventTypeKey } from "@/app/coach/(main)/coach-dashboard-ui";
+import type { DashboardRosterMember } from "@/app/coach/(main)/coach-dashboard-roster-section";
 import { HintExclamationToggle } from "@/components/hint-exclamation-toggle";
+import type { EventStatusKey } from "@/components/domain-status-indicators";
 import { getDebugTeamMember } from "@/lib/debug-session";
 import { buildDailyRpeSeries } from "@/lib/coach-dashboard-rpe-series";
+import { buildMemberFitnessTrends, toDashboardFitnessProfile } from "@/lib/fitness/aggregate";
+import { parseMemberFitnessAiAnalysis, parseTeamFitnessTrainingAdvice } from "@/lib/team-fitness-ai-schema";
 import { getSportModule } from "@/lib/sports/registry";
 import { prismaSportToId } from "@/lib/sports/registry-server";
+import type { PlayerStatsRecord } from "@/lib/sports/match/types";
 import { getPrisma } from "@/lib/prisma";
-import { EventStatus, EventType, RsvpStatus } from "@/generated/prisma/client";
+import { EventStatus, EventType, MemberStatus, RsvpStatus } from "@/generated/prisma/client";
 import { formatDateTimeZh } from "@/lib/format-datetime";
 
-function typeLabel(t: EventType) {
-  switch (t) {
-    case EventType.TRAINING:
-      return "訓練";
-    case EventType.MATCH:
-      return "比賽";
-    case EventType.FITNESS_TEST:
-      return "體能測試";
-    default:
-      return "其他";
+function buildDashboardMatchTotals(
+  members: Array<{
+    id: string;
+    user: { name: string | null; email: string | null };
+  }>,
+  matchEvents: Array<{
+    matchResult: {
+      playerStats: Array<{ memberId: string; stats: unknown }>;
+    } | null;
+  }>,
+  matchMod: NonNullable<ReturnType<typeof getSportModule>["match"]>,
+): Map<
+  string,
+  { matchCount: number; stats: PlayerStatsRecord; overall: number | null }
+> {
+  const totals = new Map<
+    string,
+    { matchCount: number; stats: PlayerStatsRecord; overall: number | null }
+  >();
+
+  for (const m of members) {
+    totals.set(m.id, {
+      matchCount: 0,
+      stats: matchMod.emptyPlayerStats(),
+      overall: null,
+    });
   }
+
+  for (const ev of matchEvents) {
+    for (const row of ev.matchResult?.playerStats ?? []) {
+      const normalized = matchMod.normalizePlayerStats(row.stats);
+      if (!matchMod.hasAnyPlayerStats(normalized)) continue;
+      const existing = totals.get(row.memberId);
+      if (!existing) continue;
+      existing.matchCount += 1;
+      existing.stats = matchMod.addPlayerStats(existing.stats, normalized);
+    }
+  }
+
+  for (const row of totals.values()) {
+    row.overall = row.matchCount > 0 ? matchMod.computeOverallIndicator(row.stats) : null;
+  }
+
+  return totals;
 }
 
-/** 教練總覽：可配置區塊、近 30 天 RPE 趨勢（註解：對應規格 A1 Dashboard）。 */
+function formatDashboardEventTime(iso: string) {
+  return formatDateTimeZh(new Date(iso), {
+    month: "short",
+    day: "numeric",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/** 教練總覽：服務入口 + BottomSheet 操作（註解：首屏只顯示少數功能 logo）。 */
 export default async function CoachDashboardPage() {
   const member = await getDebugTeamMember();
   if (!member) return null;
@@ -39,16 +85,17 @@ export default async function CoachDashboardPage() {
   const prisma = getPrisma();
   const team = await prisma.team.findUnique({
     where: { id: member.teamId },
-    select: { sport: true },
+    select: { sport: true, fitnessTeamTrainingAdvice: true },
   });
-  const showLiveTactical = team ? getSportModule(prismaSportToId(team.sport)).capabilities.liveTactical : false;
+  const sportMod = team ? getSportModule(prismaSportToId(team.sport)) : null;
+  const showLiveTactical = sportMod?.capabilities.liveTactical ?? false;
 
   const now = new Date();
   const weekLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
   const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-  const [upcoming, draftCount] = await Promise.all([
+  const [upcoming, draftCount, recentEvents, members, fitnessEvents, matchEvents] = await Promise.all([
     prisma.event.findMany({
       where: {
         teamId: member.teamId,
@@ -63,6 +110,66 @@ export default async function CoachDashboardPage() {
     }),
     prisma.event.count({
       where: { teamId: member.teamId, status: EventStatus.DRAFT },
+    }),
+    prisma.event.findMany({
+      where: {
+        teamId: member.teamId,
+        status: EventStatus.PUBLISHED,
+        endsAt: { lte: now },
+      },
+      orderBy: { endsAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        startsAt: true,
+        endsAt: true,
+      },
+    }),
+    prisma.teamMember.findMany({
+      where: { teamId: member.teamId, status: MemberStatus.ACTIVE },
+      include: { user: { select: { name: true, email: true } } },
+      orderBy: [{ role: "asc" }, { jerseyNumber: "asc" }, { createdAt: "asc" }],
+    }),
+    prisma.event.findMany({
+      where: {
+        teamId: member.teamId,
+        status: EventStatus.PUBLISHED,
+        endsAt: { lte: now },
+        type: EventType.FITNESS_TEST,
+      },
+      select: {
+        id: true,
+        title: true,
+        startsAt: true,
+        fitnessTestSession: {
+          select: {
+            results: {
+              select: { memberId: true, stats: true, heightCm: true, weightKg: true },
+            },
+          },
+        },
+      },
+      orderBy: { startsAt: "desc" },
+      take: 50,
+    }),
+    prisma.event.findMany({
+      where: {
+        teamId: member.teamId,
+        status: EventStatus.PUBLISHED,
+        endsAt: { lte: now },
+        type: EventType.MATCH,
+      },
+      select: {
+        matchResult: {
+          select: {
+            playerStats: { select: { memberId: true, stats: true } },
+          },
+        },
+      },
+      orderBy: { endsAt: "desc" },
+      take: 200,
     }),
   ]);
 
@@ -87,14 +194,11 @@ export default async function CoachDashboardPage() {
     upcoming.map((e) => [e.id, e._count.participants]),
   );
 
-  /** 已發布且至少一人未回覆的場次（註解：教練追蹤用）。 */
   const needsRsvpFollowUp = upcoming.filter(
     (ev) =>
       ev.status === EventStatus.PUBLISHED &&
       (unansweredByEvent[ev.id] ?? 0) > 0,
   );
-
-  const totalUnansweredSlots = needsRsvpFollowUp.length;
 
   const todayTrainingEvents = await prisma.event.findMany({
     where: {
@@ -141,169 +245,120 @@ export default async function CoachDashboardPage() {
   const fbN = todayFeedbackRows.length;
   const avgRpeToday = fbN > 0 ? rpeSum / fbN : null;
 
+  const matchMod = sportMod?.match ?? null;
+  const fitnessTrendRows = buildMemberFitnessTrends(
+    members,
+    fitnessEvents
+      .filter((ev) => ev.fitnessTestSession)
+      .map((ev) => ({
+        id: ev.id,
+        title: ev.title,
+        startsAt: ev.startsAt,
+        results: ev.fitnessTestSession!.results,
+      })),
+  );
+  const fitnessByMember = new Map(fitnessTrendRows.map((r) => [r.memberId, r]));
+  const matchTotals =
+    matchMod && sportMod?.capabilities.matchStats ?
+      buildDashboardMatchTotals(members, matchEvents, matchMod)
+    : new Map();
+  const rosterMembers: DashboardRosterMember[] = members.map((m) => {
+    const fitnessRow = fitnessByMember.get(m.id);
+    const matchRow = matchTotals.get(m.id);
+    return {
+      memberId: m.id,
+      displayName: m.user.name ?? m.user.email ?? m.id.slice(0, 8),
+      jerseyNumber: m.jerseyNumber,
+      position: m.position,
+      squad: m.squad,
+      birthDate: m.birthDate ? m.birthDate.toISOString().slice(0, 10) : null,
+      fitnessAnalysis: parseMemberFitnessAiAnalysis(m.fitnessAiReport),
+      fitness: toDashboardFitnessProfile(
+        fitnessRow ?? {
+          memberId: m.id,
+          displayName: m.user.name ?? m.user.email ?? m.id.slice(0, 8),
+          jerseyNumber: m.jerseyNumber,
+          squad: m.squad,
+          sessionCount: 0,
+          sessions: [],
+          latest: null,
+          previous: null,
+          deltas: {
+            squatJump: null,
+            cmj: null,
+            approachJump: null,
+            depthJump: null,
+            courtShuttle: null,
+            medicineBallThrow: null,
+          },
+        },
+      ),
+      match:
+        matchRow && matchRow.matchCount > 0 ?
+          {
+            matchCount: matchRow.matchCount,
+            overall: matchRow.overall,
+            stats: matchRow.stats,
+          }
+        : null,
+    };
+  });
+
   return (
     <CoachDashboardProvider>
-      <div className="space-y-8">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">總覽</h1>
-              <HintExclamationToggle>
-                <span>
-                  未來 7 天行程、出席意願待追蹤與草稿狀態。前往{" "}
-                  <Link href="/coach/calendar" className="font-medium text-blue-600 hover:underline">
-                    行事曆
-                  </Link>
-                  。
-                </span>
-              </HintExclamationToggle>
-            </div>
+      <div className="space-y-5">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">總覽</h1>
+            <HintExclamationToggle>
+              <span>
+                點選下方入口查看詳情。前往{" "}
+                <Link href="/coach/calendar" className="font-medium text-blue-600 hover:underline">
+                  行事曆
+                </Link>
+                。
+              </span>
+            </HintExclamationToggle>
           </div>
-          {showLiveTactical ?
-            <Link
-              href="/coach/live-tactical"
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-zinc-800"
-            >
-              即時戰術版
-            </Link>
-          : null}
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">隊伍快捷服務入口</p>
         </div>
 
-        <CoachDashboardSettingsPanel />
+        <CoachDashboardSettingsPanel hiddenWidgets={showLiveTactical ? [] : ["liveTactical"]} />
 
-        <CoachDashboardSection id="stats">
-          <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">草稿事件</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">{draftCount}</p>
-          <Link href="/coach/events" className="mt-2 inline-block text-sm text-blue-600 hover:underline">
-            查看全部
-          </Link>
-        </div>
-        <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">未來 7 天場次</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">{upcoming.length}</p>
-        </div>
-        <div className="rounded-lg border border-amber-200 bg-amber-50/80 p-4 shadow-sm">
-          <p className="text-sm text-amber-900/80">待回覆出席意願場次</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums text-amber-950">{totalUnansweredSlots}</p>
-          <p className="mt-1 text-xs text-amber-900/70">已發布且尚有球員未回覆</p>
-        </div>
-          </div>
-        </CoachDashboardSection>
-
-        <CoachDashboardSection id="todayTraining">
-          <CoachTodayTrainingLoadSection
-            trainings={todayTrainingEvents}
-            feedbackCount={fbN}
-            avgRpe={avgRpeToday}
-            fatigue={fatigueAgg}
-            pain={painAgg}
-          />
-        </CoachDashboardSection>
-
-        <CoachDashboardSection id="rsvp">
-          <section>
-            <h2 className="mb-3 text-lg font-medium">出席意願待追蹤</h2>
-            {needsRsvpFollowUp.length > 0 ?
-              <ul className="divide-y divide-amber-200 overflow-hidden rounded-lg border border-amber-200 bg-amber-50/50">
-                {needsRsvpFollowUp.map((ev) => {
-                  const u = unansweredByEvent[ev.id] ?? 0;
-                  const total = participantsByEvent[ev.id] ?? 0;
-                  return (
-                    <li key={ev.id}>
-                      <Link
-                        href={`/coach/events/${ev.id}`}
-                        className="flex flex-col gap-1 px-4 py-3 transition hover:bg-amber-100/60 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div>
-                          <span className="font-medium text-zinc-900 dark:text-zinc-50">{ev.title}</span>
-                          <span className="ml-2 text-sm text-zinc-600 dark:text-zinc-400">{typeLabel(ev.type)}</span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="rounded-full bg-amber-200 px-2.5 py-0.5 text-xs font-semibold text-amber-950">
-                            未回覆 {u}
-                            {total > 0 ? ` / ${total}` : ""}
-                          </span>
-                          <time className="text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
-                            {formatDateTimeZh(ev.startsAt, {
-                              month: "short",
-                              day: "numeric",
-                              weekday: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </time>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            : <p className="text-sm text-zinc-500 dark:text-zinc-400">目前無待追蹤場次（未來 7 天內已發布且尚有未回覆出席意願者會出現在此）。</p>}
-          </section>
-        </CoachDashboardSection>
-
-        <CoachDashboardSection id="upcoming">
-          <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-medium">未來 7 天</h2>
-          <Link href="/coach/events/new" className="text-sm text-blue-600 hover:underline">
-            新增事件
-          </Link>
-        </div>
-        <ul className="divide-y divide-zinc-200 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-          {upcoming.length === 0 ?
-            <li className="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">尚未安排未來 7 天內事件</li>
-          : upcoming.map((ev) => {
-              const u = unansweredByEvent[ev.id] ?? 0;
-              const total = participantsByEvent[ev.id] ?? 0;
-              const showRsvp =
-                ev.status === EventStatus.PUBLISHED && total > 0;
-              return (
-                <li key={ev.id}>
-                  <Link
-                    href={`/coach/events/${ev.id}`}
-                    className="flex flex-col gap-2 px-4 py-3 transition hover:bg-zinc-50 dark:bg-zinc-950 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="font-medium text-zinc-900 dark:text-zinc-50">{ev.title}</span>
-                        <span className="text-sm text-zinc-500 dark:text-zinc-400">
-                          {typeLabel(ev.type)} <span aria-hidden className="mx-1 text-zinc-400">·</span>{" "}
-                          <EventStatusIndicator status={ev.status} />
-                        </span>
-                      </div>
-                      {showRsvp ?
-                        <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                          出席意願：{u === 0 ? "全員已回覆" : `未回覆 ${u} 人`}
-                          {total > 0 ? `（共 ${total} 位參與者）` : ""}
-                        </p>
-                      : ev.status === EventStatus.DRAFT ?
-                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">發布後球員才可回覆出席意願</p>
-                      : null}
-                    </div>
-                    <time className="shrink-0 text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
-                      {formatDateTimeZh(ev.startsAt, {
-                        month: "short",
-                        day: "numeric",
-                        weekday: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </time>
-                  </Link>
-                </li>
-              );
-            })
-          }
-        </ul>
-          </section>
-        </CoachDashboardSection>
-
-        <CoachDashboardSection id="trends">
-          <CoachDashboardRpeChart points={rpeSeries} />
-        </CoachDashboardSection>
+        <CoachDashboardView
+          draftCount={draftCount}
+          upcoming={upcoming.map((ev) => ({
+            id: ev.id,
+            title: ev.title,
+            type: ev.type as DashboardEventTypeKey,
+            status: ev.status as EventStatusKey,
+            startsAtLabel: formatDashboardEventTime(ev.startsAt.toISOString()),
+          }))}
+          recentEvents={recentEvents.map((ev) => ({
+            id: ev.id,
+            title: ev.title,
+            type: ev.type as DashboardEventTypeKey,
+            startsAtLabel: formatDashboardEventTime(ev.startsAt.toISOString()),
+          }))}
+          rosterMembers={rosterMembers}
+          teamFitnessTrainingAdvice={parseTeamFitnessTrainingAdvice(team?.fitnessTeamTrainingAdvice ?? null)}
+          needsRsvpFollowUp={needsRsvpFollowUp.map((ev) => ({
+            id: ev.id,
+            title: ev.title,
+            type: ev.type as DashboardEventTypeKey,
+            status: ev.status as EventStatusKey,
+            startsAtLabel: formatDashboardEventTime(ev.startsAt.toISOString()),
+          }))}
+          unansweredByEvent={unansweredByEvent}
+          participantsByEvent={participantsByEvent}
+          todayTrainingEvents={todayTrainingEvents}
+          feedbackCount={fbN}
+          avgRpeToday={avgRpeToday}
+          fatigueAgg={fatigueAgg}
+          painAgg={painAgg}
+          rpeSeries={rpeSeries}
+          showLiveTactical={showLiveTactical}
+        />
       </div>
     </CoachDashboardProvider>
   );

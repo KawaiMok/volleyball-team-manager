@@ -1,51 +1,51 @@
+"use client";
+
 import Link from "next/link";
 
 import {
-  EventDuplicateButton,
-} from "@/components/event-duplicate-actions";
-import {
-  EventStatusIndicator,
-} from "@/components/domain-status-indicators";
-import {
-  eventTypeLabelShort,
-  formatEventEndedListCompact,
-  formatEventListTimeCompact,
-} from "@/lib/event-display";
+  coachEventTypeLabelShort,
+  formatCoachEventEndedListCompact,
+  formatCoachEventListTimeCompact,
+  type CoachEventListRow,
+} from "@/app/coach/(main)/events/coach-events-list-types";
+import { EventStatusIndicator } from "@/components/domain-status-indicators";
 import { isEventEnded } from "@/lib/event-timing";
-import type { EventStatus, EventType } from "@/generated/prisma/client";
 
-export type CoachEventListRow = {
-  id: string;
-  title: string;
-  type: EventType;
-  status: EventStatus;
-  startsAt: Date;
-  endsAt: Date;
-  locationName: string | null;
-};
+export type { CoachEventListRow } from "@/app/coach/(main)/events/coach-events-list-types";
 
-/** 教練事件列表 — 手機卡片（註解：收起「開始／人數」獨立欄，時間併入副標）。 */
+/** 教練事件列表 — 卡片列（註解：可於 BottomSheet 內全寬顯示）。 */
 export function CoachEventsListMobile({
   events,
   emptyMessage,
+  alwaysVisible = false,
 }: {
   events: CoachEventListRow[];
   emptyMessage: string;
+  /** 在 BottomSheet 內顯示時為 true（註解：略過 md:hidden）。 */
+  alwaysVisible?: boolean;
 }) {
+  const visibility = alwaysVisible ? "" : "md:hidden";
+
   if (events.length === 0) {
     return (
-      <p className="rounded-lg border border-zinc-200 bg-white px-4 py-12 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 md:hidden">
+      <p
+        className={`rounded-lg border border-zinc-200 bg-white px-4 py-12 text-center text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 ${visibility}`}
+      >
         {emptyMessage}
       </p>
     );
   }
 
   return (
-    <ul className="divide-y divide-zinc-100 overflow-hidden rounded-lg border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 md:hidden">
+    <ul
+      className={`divide-y divide-zinc-100 overflow-hidden rounded-lg border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 ${visibility}`}
+    >
       {events.map((ev) => {
-        const ended = isEventEnded(ev.endsAt);
-        const timeLabel = ended ? formatEventEndedListCompact(ev.startsAt) : formatEventListTimeCompact(ev.startsAt);
-        const metaParts = [eventTypeLabelShort(ev.type), timeLabel];
+        const ended = isEventEnded(new Date(ev.endsAt));
+        const startsAt = new Date(ev.startsAt);
+        const timeLabel =
+          ended ? formatCoachEventEndedListCompact(startsAt) : formatCoachEventListTimeCompact(startsAt);
+        const metaParts = [coachEventTypeLabelShort(ev.type), timeLabel];
         if (!ended && ev.locationName?.trim()) {
           metaParts.push(ev.locationName.trim());
         }
@@ -59,11 +59,6 @@ export function CoachEventsListMobile({
               </Link>
               <div className="flex shrink-0 flex-col items-end gap-2">
                 <EventStatusIndicator status={ev.status} />
-                <EventDuplicateButton
-                  eventId={ev.id}
-                  label="複製"
-                  className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
-                />
               </div>
             </div>
           </li>

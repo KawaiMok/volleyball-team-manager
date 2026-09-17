@@ -1,6 +1,8 @@
 import {
   FITNESS_TEST_ITEMS,
   FITNESS_TEST_ITEM_BY_KEY,
+  compactHeightCm,
+  compactWeightKg,
   normalizeFitnessStats,
   type FitnessTestItemKey,
   type FitnessTestStats,
@@ -12,6 +14,8 @@ export type FitnessSessionSnapshot = {
   eventTitle: string;
   startsAtIso: string;
   stats: FitnessTestStats;
+  heightCm: number | null;
+  weightKg: number | null;
 };
 
 /** 隊員體能趨勢列（註解：最新 vs 上一場 Δ）。 */
@@ -21,6 +25,8 @@ export type MemberFitnessTrendRow = {
   jerseyNumber: number | null;
   squad: string | null;
   sessionCount: number;
+  /** 全部場次，新→舊（註解：供趨勢圖使用）。 */
+  sessions: FitnessSessionSnapshot[];
   latest: FitnessSessionSnapshot | null;
   previous: FitnessSessionSnapshot | null;
   /** 正值代表進步（註解：折返跑為秒數減少也算進步）。 */
@@ -31,7 +37,12 @@ export type FitnessEventRecord = {
   id: string;
   title: string;
   startsAt: Date;
-  results: Array<{ memberId: string; stats: unknown }>;
+  results: Array<{
+    memberId: string;
+    stats: unknown;
+    heightCm?: number | null;
+    weightKg?: number | null;
+  }>;
 };
 
 /** 計算單項進步量（註解：折返跑越小越好，其餘越大越好）。 */
@@ -73,13 +84,18 @@ export function buildMemberFitnessTrends(
   for (const ev of fitnessEvents) {
     for (const row of ev.results) {
       const stats = normalizeFitnessStats(row.stats);
-      const hasAny = FITNESS_TEST_ITEMS.some((item) => stats[item.key].best != null);
+      const hasAny =
+        FITNESS_TEST_ITEMS.some((item) => stats[item.key].best != null) ||
+        compactHeightCm(row.heightCm) != null ||
+        compactWeightKg(row.weightKg) != null;
       if (!hasAny) continue;
       const snap: FitnessSessionSnapshot = {
         eventId: ev.id,
         eventTitle: ev.title,
         startsAtIso: ev.startsAt.toISOString(),
         stats,
+        heightCm: compactHeightCm(row.heightCm),
+        weightKg: compactWeightKg(row.weightKg),
       };
       const list = byMember.get(row.memberId) ?? [];
       list.push(snap);
@@ -109,9 +125,56 @@ export function buildMemberFitnessTrends(
       jerseyNumber: meta?.jerseyNumber ?? null,
       squad: meta?.squad ?? null,
       sessionCount: sessions.length,
+      sessions,
       latest,
       previous,
       deltas,
     };
   });
+}
+
+/** 儀表板／popup 用：可 JSON 序列化的體能摘要。 */
+export type DashboardMemberFitnessProfile = {
+  sessionCount: number;
+  latest: {
+    eventId: string;
+    eventTitle: string;
+    startsAtIso: string;
+    heightCm: number | null;
+    weightKg: number | null;
+    stats: FitnessTestStats;
+  } | null;
+  sessions: Array<{
+    eventTitle: string;
+    startsAtIso: string;
+    heightCm: number | null;
+    weightKg: number | null;
+    stats: FitnessTestStats;
+  }>;
+  deltas: Record<FitnessTestItemKey, number | null>;
+};
+
+export function toDashboardFitnessProfile(row: MemberFitnessTrendRow): DashboardMemberFitnessProfile {
+  return {
+    sessionCount: row.sessionCount,
+    latest:
+      row.latest ?
+        {
+          eventId: row.latest.eventId,
+          eventTitle: row.latest.eventTitle,
+          startsAtIso: row.latest.startsAtIso,
+          heightCm: row.latest.heightCm,
+          weightKg: row.latest.weightKg,
+          stats: row.latest.stats,
+        }
+      : null,
+    sessions: row.sessions.slice(0, 12).map((s) => ({
+      eventTitle: s.eventTitle,
+      startsAtIso: s.startsAtIso,
+      heightCm: s.heightCm,
+      weightKg: s.weightKg,
+      stats: s.stats,
+    })),
+    deltas: row.deltas,
+  };
 }

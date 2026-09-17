@@ -30,16 +30,18 @@ export function CoachTodayTrainingLoadSection({
   const painTotal = pain.NONE + pain.MILD + pain.SEVERE;
 
   return (
-    <section className="rounded-lg border border-violet-200 bg-gradient-to-br from-violet-50/90 to-white p-4 shadow-sm">
+    <div className="rounded-xl border border-zinc-200 bg-sky-50/50 p-4 dark:border-zinc-800 dark:bg-sky-950/20 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-violet-900/90">今日訓練 · 身體回饋</h2>
-          <p className="mt-0.5 text-xs text-violet-800/80">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-800 dark:text-zinc-200">
+            今日訓練 · 身體回饋
+          </h2>
+          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
             僅統計<strong className="font-medium">今日日曆</strong>上、已發布之<strong>訓練</strong>場次；球員於事件結束後提交。
           </p>
         </div>
         {trainings.length > 0 ?
-          <span className="rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-900">
+          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-sky-950/50 dark:text-blue-200">
             {trainings.length} 場訓練
           </span>
         : null}
@@ -53,7 +55,7 @@ export function CoachTodayTrainingLoadSection({
           {trainings.map((t, i) => (
             <span key={t.id}>
               {i > 0 ? "、" : ""}
-              <Link href={`/coach/events/${t.id}`} className="font-medium text-violet-700 underline">
+              <Link href={`/coach/events/${t.id}`} className="font-medium text-blue-600 underline dark:text-blue-400">
                 {t.title}
               </Link>
             </span>
@@ -69,7 +71,7 @@ export function CoachTodayTrainingLoadSection({
             </div>
             <div>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">RPE 平均</p>
-              <p className="text-2xl font-semibold tabular-nums text-violet-900">
+              <p className="text-2xl font-semibold tabular-nums text-blue-700 dark:text-blue-300">
                 {avgRpe != null ? avgRpe.toFixed(1) : "—"}
               </p>
               <p className="text-[10px] text-zinc-500 dark:text-zinc-400">1–10 自覺強度</p>
@@ -154,7 +156,7 @@ export function CoachTodayTrainingLoadSection({
               {trainings.map((t, i) => (
                 <span key={t.id}>
                   {i > 0 ? " · " : ""}
-                  <Link href={`/coach/events/${t.id}`} className="text-violet-700 hover:underline">
+                  <Link href={`/coach/events/${t.id}`} className="text-blue-600 hover:underline dark:text-blue-400">
                     {t.title}
                   </Link>
                 </span>
@@ -163,6 +165,6 @@ export function CoachTodayTrainingLoadSection({
           : null}
         </div>
       )}
-    </section>
+    </div>
   );
 }

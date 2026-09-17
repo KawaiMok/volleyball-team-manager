@@ -97,11 +97,51 @@ export const FITNESS_TEST_ITEMS: readonly {
   /** 越大越好（折返跑為 false） */
   higherIsBetter: boolean;
   decimalPlaces: number;
+  /** 橫向比較圖固定刻度下限 */
+  chartScaleMin: number;
+  /** 橫向比較圖固定刻度上限（註解：跳類 0–100cm、藥球 0–10m、折返 0–50s） */
+  chartScaleMax: number;
 }[] = [
-  { key: "squatJump", label: "深蹲跳", unit: "cm", attemptCount: 3, higherIsBetter: true, decimalPlaces: 1 },
-  { key: "cmj", label: "停頓跳", unit: "cm", attemptCount: 3, higherIsBetter: true, decimalPlaces: 1 },
-  { key: "approachJump", label: "助跑跳", unit: "cm", attemptCount: 3, higherIsBetter: true, decimalPlaces: 1 },
-  { key: "depthJump", label: "深度跳", unit: "cm", attemptCount: 3, higherIsBetter: true, decimalPlaces: 1 },
+  {
+    key: "squatJump",
+    label: "深蹲跳",
+    unit: "cm",
+    attemptCount: 3,
+    higherIsBetter: true,
+    decimalPlaces: 1,
+    chartScaleMin: 0,
+    chartScaleMax: 100,
+  },
+  {
+    key: "cmj",
+    label: "停頓跳",
+    unit: "cm",
+    attemptCount: 3,
+    higherIsBetter: true,
+    decimalPlaces: 1,
+    chartScaleMin: 0,
+    chartScaleMax: 100,
+  },
+  {
+    key: "approachJump",
+    label: "助跑跳",
+    unit: "cm",
+    attemptCount: 3,
+    higherIsBetter: true,
+    decimalPlaces: 1,
+    chartScaleMin: 0,
+    chartScaleMax: 100,
+  },
+  {
+    key: "depthJump",
+    label: "深度跳",
+    unit: "cm",
+    attemptCount: 3,
+    higherIsBetter: true,
+    decimalPlaces: 1,
+    chartScaleMin: 0,
+    chartScaleMax: 100,
+  },
   {
     key: "courtShuttle",
     label: "排球場折返跑",
@@ -109,6 +149,8 @@ export const FITNESS_TEST_ITEMS: readonly {
     attemptCount: 1,
     higherIsBetter: false,
     decimalPlaces: 2,
+    chartScaleMin: 0,
+    chartScaleMax: 50,
   },
   {
     key: "medicineBallThrow",
@@ -117,12 +159,32 @@ export const FITNESS_TEST_ITEMS: readonly {
     attemptCount: 3,
     higherIsBetter: true,
     decimalPlaces: 2,
+    chartScaleMin: 0,
+    chartScaleMax: 10,
   },
 ] as const;
 
 export const FITNESS_TEST_ITEM_BY_KEY = Object.fromEntries(
   FITNESS_TEST_ITEMS.map((item) => [item.key, item]),
 ) as Record<FitnessTestItemKey, (typeof FITNESS_TEST_ITEMS)[number]>;
+
+/** 橫向比較圖刻度標籤（註解：如 0–100、0–50）。 */
+export function fitnessChartScaleLabel(key: FitnessTestItemKey): string {
+  const def = FITNESS_TEST_ITEM_BY_KEY[key];
+  return `${def.chartScaleMin}–${def.chartScaleMax}`;
+}
+
+/** 依固定刻度計算柱寬比例 0–1（註解：折返跑越小柱越長）。 */
+export function fitnessChartBarRatio(key: FitnessTestItemKey, value: number): number {
+  const def = FITNESS_TEST_ITEM_BY_KEY[key];
+  const range = def.chartScaleMax - def.chartScaleMin;
+  if (range <= 0 || !Number.isFinite(value)) return 0;
+  const clamped = Math.min(def.chartScaleMax, Math.max(def.chartScaleMin, value));
+  if (def.higherIsBetter) {
+    return (clamped - def.chartScaleMin) / range;
+  }
+  return (def.chartScaleMax - clamped) / range;
+}
 
 /** 預設全部 6 項（註解：fitnessTestItemKeys 為 null 時視同此列表）。 */
 export const DEFAULT_FITNESS_TEST_ITEM_KEYS: FitnessTestItemKey[] = FITNESS_TEST_ITEMS.map(

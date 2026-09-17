@@ -178,3 +178,28 @@ export async function PATCH(req: Request, ctx: Ctx) {
 
   return NextResponse.json(updated);
 }
+
+/** 刪除事件（註解：教練／管理員；連關聯資料一併 cascade 刪除）。 */
+export async function DELETE(_req: Request, ctx: Ctx) {
+  const { id: eventId } = await ctx.params;
+  const member = await getDebugTeamMember();
+  if (!member) {
+    return NextResponse.json({ error: "未授權" }, { status: 401 });
+  }
+  if (!isCoachLike(member)) {
+    return NextResponse.json({ error: "需要教練或管理員權限" }, { status: 403 });
+  }
+
+  const prisma = getPrisma();
+  const existing = await prisma.event.findFirst({
+    where: { id: eventId, teamId: member.teamId },
+    select: { id: true },
+  });
+  if (!existing) {
+    return NextResponse.json({ error: "找不到事件" }, { status: 404 });
+  }
+
+  await prisma.event.delete({ where: { id: eventId } });
+
+  return NextResponse.json({ ok: true });
+}

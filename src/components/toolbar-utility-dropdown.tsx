@@ -102,7 +102,7 @@ export function ToolbarUtilityDropdown({ surface, currentView, canAccessCoach }:
 
       {open ?
         <div
-          className={`absolute right-0 top-[calc(100%+0.375rem)] z-[60] w-[min(calc(100vw-2rem),20rem)] rounded-xl border p-3 shadow-lg ring-1 ${panel}`}
+          className={`absolute right-0 top-[calc(100%+0.375rem)] z-[60] max-h-[min(24rem,calc(100dvh-5rem-env(safe-area-inset-top,0px)))] w-[min(calc(100vw-2rem),20rem)] overflow-y-auto overscroll-contain rounded-xl border p-3 shadow-lg ring-1 ${panel}`}
           role="menu"
           aria-label="顯示與端別"
         >

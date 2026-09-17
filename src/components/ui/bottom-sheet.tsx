@@ -51,20 +51,23 @@ export function BottomSheet({
 
   if (!open) return null;
 
+  /** 手機 Web 用 dvh + safe-area（註解：避免 vh 超出可視區、底部被瀏覽器列遮住）。 */
+  const safeTop = "env(safe-area-inset-top, 0px)";
+  const safeBottom = "env(safe-area-inset-bottom, 0px)";
   const maxH =
     tall ?
       native ?
-        "min(calc(92vh - 4.5rem - env(safe-area-inset-bottom)), 820px)"
-      : "min(92vh,880px)"
+        `min(calc(92dvh - 4.5rem - ${safeBottom}), 820px)`
+      : `min(calc(92dvh - ${safeTop} - ${safeBottom}), 880px)`
     : native ?
-      "min(calc(88vh - 4.5rem - env(safe-area-inset-bottom)), 600px)"
-    : "min(88vh,640px)";
+      `min(calc(88dvh - 4.5rem - ${safeBottom}), 600px)`
+    : `min(calc(85dvh - ${safeTop} - ${safeBottom}), 640px)`;
 
   /** 原生殼 bottom tab 高度（註解：與 NativeAppContentPad 對齊，避免 footer 被擋）。 */
   const nativeTabLift =
     native ?
       "mb-[calc(4.25rem+env(safe-area-inset-bottom))] max-sm:rounded-b-xl sm:mb-0"
-    : "";
+    : "max-sm:pb-[env(safe-area-inset-bottom,0px)]";
 
   return (
     <div
@@ -80,36 +83,39 @@ export function BottomSheet({
         onClick={onClose}
       />
       <div
-        className={`relative z-10 flex w-full max-w-lg flex-col overflow-hidden rounded-t-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:rounded-2xl bottom-sheet-enter ${nativeTabLift}`}
-        style={{ maxHeight: maxH }}
+        className={`relative z-10 grid w-full max-w-lg overflow-hidden rounded-t-2xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:rounded-2xl bottom-sheet-enter ${nativeTabLift}`}
+        style={{
+          maxHeight: maxH,
+          gridTemplateRows: footer ? "auto minmax(0, 1fr) auto" : "auto minmax(0, 1fr)",
+        }}
       >
         {/* 拖曳把手（註解：手機 sheet 視覺提示） */}
-        <div className="flex shrink-0 justify-center pt-2 sm:hidden" aria-hidden>
-          <span className="h-1 w-10 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-        </div>
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
-          <div className="min-w-0">
-            <h3 id={titleId} className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              {title}
-            </h3>
-            {subtitle ?
-              <p className="mt-1 truncate text-sm text-zinc-600 dark:text-zinc-400">{subtitle}</p>
-            : null}
+        <div>
+          <div className="flex justify-center pt-2 sm:hidden" aria-hidden>
+            <span className="h-1 w-10 rounded-full bg-zinc-300 dark:bg-zinc-600" />
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            aria-label="關閉"
-          >
-            <span className="text-xl leading-none">×</span>
-          </button>
+          <div className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800">
+            <div className="min-w-0 flex-1">
+              <h3 id={titleId} className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                {title}
+              </h3>
+              {subtitle ?
+                <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{subtitle}</p>
+              : null}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 rounded-md p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800"
+              aria-label="關閉"
+            >
+              <span className="text-xl leading-none">×</span>
+            </button>
+          </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-4 touch-pan-y">{children}</div>
         {footer ?
-          <div
-            className="shrink-0 border-t border-zinc-100 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] dark:border-zinc-800 sm:pb-4"
-          >
+          <div className="border-t border-zinc-100 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] dark:border-zinc-800 sm:pb-4">
             {footer}
           </div>
         : null}

@@ -35,6 +35,8 @@ export type TeamMemberEditInitial = {
   position: string | null;
   phone: string | null;
   notes: string | null;
+  /** 出生日期 YYYY-MM-DD（註解：供 AI 體能評估）。 */
+  birthDate: string | null;
 };
 
 type Props = {
@@ -108,6 +110,7 @@ export function TeamMemberEditForm({
       positionChoice === "__custom" ? positionCustom.trim() || null : positionChoice.trim() || null;
     const phone = String(fd.get("phone") ?? "").trim();
     const notes = String(fd.get("notes") ?? "").trim();
+    const birthDateRaw = String(fd.get("birthDate") ?? "").trim();
     const jerseyRaw = String(fd.get("jerseyNumber") ?? "").trim();
     const emailRaw = String(fd.get("email") ?? "").trim();
 
@@ -167,6 +170,7 @@ export function TeamMemberEditForm({
           position: position || null,
           phone: phone || null,
           notes: notes || null,
+          birthDate: birthDateRaw === "" ? null : birthDateRaw,
           displayName,
           ...(!clerkLinked ? { email: emailRaw } : {}),
         }),
@@ -291,6 +295,16 @@ export function TeamMemberEditForm({
           onCustomChange={setPositionCustom}
           className="[&_select]:mt-1.5 [&_input]:mt-2"
         />
+        <div>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">出生日期（選填）</label>
+          <input
+            name="birthDate"
+            type="date"
+            defaultValue={initial.birthDate ?? ""}
+            className="mt-1.5 w-full rounded-md border border-zinc-300 dark:border-zinc-600 px-3 py-2 text-sm shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900"
+          />
+          <p className="mt-1.5 text-xs text-zinc-600 dark:text-zinc-400">供總覽 AI 體能評估計算年齡；身高／體重取自體測紀錄。</p>
+        </div>
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">分組</label>
           {squads.length > 0 ?

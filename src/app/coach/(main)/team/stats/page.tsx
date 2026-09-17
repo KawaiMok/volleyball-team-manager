@@ -195,7 +195,7 @@ export default async function CoachTeamStatsPage() {
         fitnessTestSession: {
           select: {
             results: {
-              select: { memberId: true, stats: true },
+              select: { memberId: true, stats: true, heightCm: true, weightKg: true },
             },
           },
         },

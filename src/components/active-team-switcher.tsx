@@ -97,7 +97,7 @@ export function ActiveTeamSwitcher({ teams, currentTeamId, variant, display = "d
       title="切換隊伍"
       subtitle={showOrg ? "你可管理多個組織下的隊伍" : "選擇要檢視的隊伍"}
     >
-      <ul className="divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-700">
+      <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-700">
         {teams.map((t) => {
           const selected = t.id === currentTeamId;
           return (
@@ -150,13 +150,13 @@ export function ActiveTeamSwitcher({ teams, currentTeamId, variant, display = "d
   }
 
   return (
-    <div className="shrink-0">
+    <div className="min-w-0 max-w-full">
       {/* 手機：大按鈕 + BottomSheet */}
       <button
         type="button"
         disabled={pending}
         onClick={() => setSheetOpen(true)}
-        className={`md:hidden ${selectClass} flex min-h-11 w-full max-w-full items-center justify-between gap-2 text-left`}
+        className={`md:hidden ${selectClass} flex min-h-11 w-full min-w-0 max-w-full items-center justify-between gap-2 text-left`}
         aria-label={`目前隊伍：${currentLabel}，點此切換`}
       >
         <span className="min-w-0 truncate">{currentLabel}</span>

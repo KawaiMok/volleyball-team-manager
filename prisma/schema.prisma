@@ -237,6 +237,8 @@ model Team {
   notificationSettings Json?
   /** 即時戰術版 JSON（註解：與 Event.courtSketch 同結構；供總覽進入之白板）。 */
   liveTacticalSketch Json?
+  /** 最新 AI 團體體能訓練建議（註解：每次呼叫覆寫；JSON 見 team-fitness-ai-schema）。 */
+  fitnessTeamTrainingAdvice Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -263,6 +265,10 @@ model TeamMember {
   emergencyContactName   String?
   emergencyContactPhone  String?
   notes                  String?
+  /** 出生日期（註解：供 AI 體能評估計算年齡；選填）。 */
+  birthDate              DateTime?
+  /** 最新 AI 體能分析（註解：排名 + 評語；JSON 見 team-fitness-ai-schema）。 */
+  fitnessAiReport        Json?
   createdAt              DateTime     @default(now())
   updatedAt              DateTime     @updatedAt
 

@@ -15,6 +15,8 @@ const patchSchema = z.object({
   position: z.union([z.string().max(64), z.null()]),
   phone: z.union([z.string().max(32), z.null()]),
   notes: z.union([z.string().max(2000), z.null()]),
+  /** 出生日期 YYYY-MM-DD（註解：供 AI 體能評估計算年齡；空字串視為清空）。 */
+  birthDate: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(""), z.null()]).optional(),
   /** 顯示姓名：同步寫入 User.name（註解：空字串則清空）。 */
   displayName: z.string().max(120),
   /** 登入信箱：僅在未連結 Clerk 時可改（註解：修正邀請時輸入錯誤）。 */
@@ -75,6 +77,18 @@ export async function PATCH(req: Request, ctx: Ctx) {
   const phoneTrim = body.phone === null ? null : body.phone.trim() || null;
   const notesTrim = body.notes === null ? null : body.notes.trim() || null;
   const displayTrim = body.displayName.trim();
+  let birthDateValue: Date | null | undefined;
+  if (body.birthDate !== undefined) {
+    if (body.birthDate === null || body.birthDate === "") {
+      birthDateValue = null;
+    } else {
+      const parsed = new Date(`${body.birthDate}T12:00:00`);
+      if (Number.isNaN(parsed.getTime())) {
+        return NextResponse.json({ error: "出生日期格式錯誤" }, { status: 400 });
+      }
+      birthDateValue = parsed;
+    }
+  }
 
   if (body.jerseyNumber != null) {
     const clash = await prisma.teamMember.findFirst({
@@ -136,6 +150,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
         position: positionTrim,
         phone: phoneTrim,
         notes: notesTrim,
+        ...(birthDateValue !== undefined ? { birthDate: birthDateValue } : {}),
       },
       include: {
         user: { select: { id: true, email: true, name: true, clerkUserId: true } },

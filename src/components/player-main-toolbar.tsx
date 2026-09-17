@@ -112,7 +112,9 @@ export function PlayerMainToolbar({ teamName, sportLabel, teams, currentTeamId, 
             <AppLogo variant="badge" size={28} className="shrink-0" />
             {multiTeam ?
               <>
-                <ActiveTeamSwitcher teams={teams} currentTeamId={currentTeamId} variant="player" />
+                <div className="min-w-0 flex-1 sm:flex-none">
+                  <ActiveTeamSwitcher teams={teams} currentTeamId={currentTeamId} variant="player" />
+                </div>
                 <div className="hidden min-w-0 flex-col justify-center border-l border-slate-200 pl-2 dark:border-slate-700 sm:flex">
                   <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     球員端
@@ -165,14 +167,8 @@ export function PlayerMainToolbar({ teamName, sportLabel, teams, currentTeamId, 
             />
             <div
               id="player-mobile-menu"
-              className="absolute left-0 right-0 top-full z-50 border-b border-slate-200 bg-white px-4 py-4 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+              className="absolute left-0 right-0 top-full z-50 max-h-[calc(100dvh-3.5rem-env(safe-area-inset-top,0px))] overflow-y-auto overscroll-contain border-b border-slate-200 bg-white px-4 py-4 shadow-lg dark:border-slate-700 dark:bg-slate-900"
             >
-              {multiTeam ?
-                <div className="mb-4 border-b border-slate-100 pb-4 dark:border-slate-800">
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">切換隊伍</p>
-                  <ActiveTeamSwitcher teams={teams} currentTeamId={currentTeamId} variant="player" />
-                </div>
-              : null}
               <nav className="flex flex-col gap-1" aria-label="球員端主選單">
                 {NAV_LINKS.map((item) => (
                   <Link
