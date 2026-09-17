@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { CoachPlayerViewSwitch } from "@/components/coach-player-view-switch";
 import { DataViewModeToggle } from "@/components/data-view-mode-toggle";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { useMobileViewport } from "@/hooks/use-mobile-viewport";
 
 type Surface = "coach" | "player";
 
@@ -20,27 +22,70 @@ type Props = {
   canAccessCoach: boolean;
 };
 
-/**
- * 教練／球員頂列：齒輪下拉，收合「端別」與「外觀（系統／淺／深）」。
- */
-export function ToolbarUtilityDropdown({ surface, currentView, canAccessCoach }: Props) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
+function UtilityPanelContent({
+  surface,
+  currentView,
+  canAccessCoach,
+  onNavigate,
+  labelMuted,
+  sep,
+}: {
+  surface: Surface;
+  currentView: "coach" | "player";
+  canAccessCoach: boolean;
+  onNavigate?: () => void;
+  labelMuted: string;
+  sep: string;
+}) {
   const coachSwitch = surface === "coach";
   const showViewSection = coachSwitch || canAccessCoach;
   const switchCanAccess = coachSwitch ? true : canAccessCoach;
   const switchVariant = surface;
 
+  return (
+    <div className="space-y-4">
+      {showViewSection ?
+        <div>
+          <p className={`mb-2 text-[11px] font-semibold uppercase tracking-wide ${labelMuted}`}>端別</p>
+          <div className="flex justify-stretch">
+            <CoachPlayerViewSwitch
+              current={currentView}
+              canAccessCoach={switchCanAccess}
+              variant={switchVariant}
+              onNavigate={onNavigate}
+            />
+          </div>
+        </div>
+      : null}
+      <div className={showViewSection ? `border-t pt-3 ${sep}` : ""}>
+        <p className={`mb-2 text-[11px] font-semibold uppercase tracking-wide ${labelMuted}`}>數據檢視</p>
+        <DataViewModeToggle variant={surface} />
+      </div>
+      <div className={`border-t pt-3 ${sep}`}>
+        <p className={`mb-2 text-[11px] font-semibold uppercase tracking-wide ${labelMuted}`}>外觀</p>
+        <ThemeSwitcher variant={surface} />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 教練／球員頂列：齒輪設定（註解：手機 Web 用 BottomSheet，桌面用下拉）。
+ */
+export function ToolbarUtilityDropdown({ surface, currentView, canAccessCoach }: Props) {
+  const mobile = useMobileViewport();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    if (open) {
+    if (open && !mobile) {
       window.addEventListener("keydown", onEsc);
       return () => window.removeEventListener("keydown", onEsc);
     }
-  }, [open]);
+  }, [open, mobile]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -48,11 +93,11 @@ export function ToolbarUtilityDropdown({ surface, currentView, canAccessCoach }:
         setOpen(false);
       }
     };
-    if (open) {
+    if (open && !mobile) {
       document.addEventListener("mousedown", onDoc);
       return () => document.removeEventListener("mousedown", onDoc);
     }
-  }, [open]);
+  }, [open, mobile]);
 
   const btnOpen =
     surface === "coach"
@@ -84,6 +129,17 @@ export function ToolbarUtilityDropdown({ surface, currentView, canAccessCoach }:
       ? "border-zinc-100 dark:border-zinc-800"
       : "border-slate-100 dark:border-slate-800";
 
+  const panelContent = (
+    <UtilityPanelContent
+      surface={surface}
+      currentView={currentView}
+      canAccessCoach={canAccessCoach}
+      onNavigate={() => setOpen(false)}
+      labelMuted={labelMuted}
+      sep={sep}
+    />
+  );
+
   return (
     <div className="relative shrink-0" ref={rootRef}>
       <button
@@ -92,45 +148,30 @@ export function ToolbarUtilityDropdown({ surface, currentView, canAccessCoach }:
           open ? btnOpen : btnIdle
         }`}
         aria-expanded={open}
-        aria-haspopup="menu"
+        aria-haspopup={mobile ? "dialog" : "menu"}
         aria-label="顯示與端別設定"
         onClick={() => setOpen((o) => !o)}
       >
-        {/** 僅齒輪圖示（註解：無障礙靠 aria-label）。 */}
         <span aria-hidden>⚙</span>
       </button>
 
-      {open ?
+      {mobile ?
+        <BottomSheet
+          open={open}
+          onClose={() => setOpen(false)}
+          title="顯示與端別"
+          subtitle="切換教練／球員端、數據檢視與外觀"
+          fitContent
+        >
+          {panelContent}
+        </BottomSheet>
+      : open ?
         <div
           className={`absolute right-0 top-[calc(100%+0.375rem)] z-[60] max-h-[min(24rem,calc(100dvh-5rem-env(safe-area-inset-top,0px)))] w-[min(calc(100vw-2rem),20rem)] overflow-y-auto overscroll-contain rounded-xl border p-3 shadow-lg ring-1 ${panel}`}
           role="menu"
           aria-label="顯示與端別"
         >
-          <div className="space-y-4">
-            {showViewSection ?
-              <div>
-                <p className={`mb-2 text-[11px] font-semibold uppercase tracking-wide ${labelMuted}`}>端別</p>
-                <div className="flex justify-stretch">
-                  <CoachPlayerViewSwitch
-                    current={currentView}
-                    canAccessCoach={switchCanAccess}
-                    variant={switchVariant}
-                    onNavigate={() => setOpen(false)}
-                  />
-                </div>
-              </div>
-            : null}
-            <div className={showViewSection ? `border-t pt-3 ${sep}` : ""}>
-              <p className={`mb-2 text-[11px] font-semibold uppercase tracking-wide ${labelMuted}`}>
-                數據檢視
-              </p>
-              <DataViewModeToggle variant={surface} />
-            </div>
-            <div className={`border-t pt-3 ${sep}`}>
-              <p className={`mb-2 text-[11px] font-semibold uppercase tracking-wide ${labelMuted}`}>外觀</p>
-              <ThemeSwitcher variant={surface} />
-            </div>
-          </div>
+          {panelContent}
         </div>
       : null}
     </div>

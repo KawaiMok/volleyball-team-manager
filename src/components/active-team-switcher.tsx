@@ -96,6 +96,7 @@ export function ActiveTeamSwitcher({ teams, currentTeamId, variant, display = "d
       onClose={() => setSheetOpen(false)}
       title="切換隊伍"
       subtitle={showOrg ? "你可管理多個組織下的隊伍" : "選擇要檢視的隊伍"}
+      fitContent
     >
       <ul className="divide-y divide-zinc-100 rounded-xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-700">
         {teams.map((t) => {
